@@ -1,0 +1,9 @@
+
+    Fusera V1 is an AI product for independent sellers, small teams, media buyers, and cross-border merchants.
+    The product's primary goal is to generate a high-conversion, brand-forward single-page landing page from basic product information.
+    Detailed input requirements, quality expectations, user modes, and more are covered in this document.
+
+    Key Product Features:
+    - Input: product images, name, selling points, target audience, brand keywords, CTA
+    - Output: High-quality landing page with conversion logic, supporting one-click deployment
+    

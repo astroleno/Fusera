@@ -1,0 +1,8 @@
+
+    The system is designed with modular components, where the front end handles user interactions, the backend processes inputs to generate a page, and the AI orchestration layer handles design and content synthesis.
+
+    Key Components:
+    - Frontend: React + Next.js for UI, TailwindCSS for styles
+    - Backend: Supabase for database, AI models for content generation
+    - AI orchestration: Involves product brief generation, page strategy planning, and content synthesis
+    

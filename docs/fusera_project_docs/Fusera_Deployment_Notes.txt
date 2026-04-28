@@ -1,0 +1,5 @@
+
+    Deployment Details:
+    - Vercel, Cloudflare, and other platforms support one-click deployment from generated files.
+    - In future releases, custom domain integration and full SEO support will be added.
+    

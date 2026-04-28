@@ -1,0 +1,6 @@
+
+    Quality Control Guidelines:
+    - Each generated page should undergo automated checks for design consistency, typography, and user interface coherence.
+    - Use AI-powered review loops to ensure content structure supports conversion rate optimization (e.g., strategic CTA placement).
+    - Introduce a scoring system to assess the quality of generated pages in design, content, and usability.
+    
