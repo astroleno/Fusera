@@ -1,0 +1,431 @@
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import type { CodexAdapterMode } from "../adapters/codex/adapter.ts";
+import { runCiIsolatedLive, runCiLive, runCiMock, runLiveStability } from "./ci-gates.ts";
+import { inspectRun, formatInspectionText } from "./inspect-run.ts";
+import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "./run-stage.ts";
+import { verifyLiveCodexQuality } from "./verify-live-codex-quality.ts";
+import { verifyLivePreviewPublish } from "./verify-live-preview-publish.ts";
+import { verifyP0Harness } from "./verify-p0-harness.ts";
+
+type CliResult = Record<string, unknown>;
+
+export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
+  const [command, subcommand, ...rest] = argv;
+
+  if (!command || command === "help" || command === "--help" || command === "-h") {
+    return {
+      ok: true,
+      usage: usage()
+    };
+  }
+
+  if (command === "run") {
+    return runCommand(subcommand, rest);
+  }
+
+  if (command === "proof") {
+    return proofCommand(subcommand, rest);
+  }
+
+  if (command === "continue") {
+    return continueCommand(subcommand, rest);
+  }
+
+  if (command === "resume") {
+    return resumeCommand(subcommand, rest);
+  }
+
+  if (command === "inspect") {
+    return inspectCommand(subcommand, rest);
+  }
+
+  if (command === "verify") {
+    return verifyCommand(subcommand, rest);
+  }
+
+  if (command === "ci") {
+    return ciCommand(subcommand, rest);
+  }
+
+  if (command === "live-stability") {
+    return liveStabilityCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
+  }
+
+  throw new Error(`Unknown command: ${command}\n\n${usage()}`);
+}
+
+async function runCommand(mode: string | undefined, args: string[]): Promise<CliResult> {
+  const inputPath = positional(args, 0);
+
+  if (mode === "mock-publish") {
+    return withEnv({ FUSERA_CODEX_ADAPTER: "mock" }, async () => ({
+      ok: true,
+      command: "run mock-publish",
+      result: await runFixture({
+        inputPath,
+        mode: "publish",
+        adapterMode: "mock"
+      })
+    }));
+  }
+
+  if (mode === "qa-failure") {
+    return withEnv({ FUSERA_CODEX_ADAPTER: "mock" }, async () => ({
+      ok: true,
+      command: "run qa-failure",
+      result: await runFixture({
+        inputPath,
+        mode: "qa-failure",
+        adapterMode: "mock"
+      })
+    }));
+  }
+
+  if (mode === "live-publish") {
+    return withEnv({ FUSERA_CODEX_ADAPTER: "real" }, async () => {
+      const result = await runFixture({
+        inputPath,
+        mode: "publish",
+        adapterMode: "real"
+      });
+      const previewReport = await verifyLivePreviewPublish({
+        runDir: result.run_dir
+      });
+
+      return {
+        ok: previewReport.ok,
+        command: "run live-publish",
+        result,
+        verification: {
+          live_preview_publish_ok: previewReport.ok,
+          report_path: path.join(result.run_dir, "live-preview-publish-report.json")
+        }
+      };
+    });
+  }
+
+  throw new Error(`Unknown run mode: ${mode ?? "(missing)"}\n\n${usage()}`);
+}
+
+async function proofCommand(targetStage: string | undefined, args: string[]): Promise<CliResult> {
+  if (!targetStage) {
+    throw new Error(`proof requires a target stage\n\n${usage()}`);
+  }
+
+  const live = args.includes("--live");
+  const inputPath = positional(args.filter((arg) => arg !== "--live"), 0);
+  const adapterMode = live ? "real" : "mock";
+
+  return withEnv({ FUSERA_CODEX_ADAPTER: adapterMode }, async () => ({
+    ok: true,
+    command: live ? "proof --live" : "proof",
+    target_stage: targetStage,
+    result: await runStageProof({
+      targetStage,
+      inputPath,
+      adapterMode
+    })
+  }));
+}
+
+async function continueCommand(runDir: string | undefined, args: string[]): Promise<CliResult> {
+  const targetStage = positional(args, 0);
+  const adapterMode = adapterModeFlag(args);
+
+  if (!runDir || !targetStage) {
+    throw new Error(`continue requires a run directory and target stage\n\n${usage()}`);
+  }
+
+  return {
+    ok: true,
+    command: "continue",
+    result: await continueStageProof({
+      runDir,
+      targetStage,
+      adapterMode
+    })
+  };
+}
+
+async function resumeCommand(runDir: string | undefined, args: string[]): Promise<CliResult> {
+  const adapterMode = adapterModeFlag(args);
+
+  if (!runDir) {
+    throw new Error(`resume requires a run directory\n\n${usage()}`);
+  }
+
+  return {
+    ok: true,
+    command: "resume",
+    result: await resumeFailedRun({
+      runDir,
+      adapterMode
+    })
+  };
+}
+
+async function inspectCommand(runDir: string | undefined, args: string[]): Promise<CliResult> {
+  if (!runDir) {
+    throw new Error(`inspect requires a run directory\n\n${usage()}`);
+  }
+
+  const recentEventIndex = args.indexOf("--recent-events");
+  const recentEventCount = recentEventIndex === -1 ? undefined : Number(args[recentEventIndex + 1]);
+  const inspection = await inspectRun({
+    runDir,
+    recentEventCount: Number.isFinite(recentEventCount) ? recentEventCount : undefined
+  });
+
+  if (args.includes("--json")) {
+    return {
+      ok: true,
+      command: "inspect",
+      inspection
+    };
+  }
+
+  return {
+    ok: true,
+    command: "inspect",
+    text: formatInspectionText(inspection)
+  };
+}
+
+async function verifyCommand(target: string | undefined, args: string[]): Promise<CliResult> {
+  if (target === "p0") {
+    const summary = await verifyP0Harness();
+
+    return {
+      ok: summary.ok,
+      command: "verify p0",
+      summary
+    };
+  }
+
+  if (target === "live-preview") {
+    const runDir = positional(args, 0);
+
+    if (!runDir) {
+      throw new Error("verify live-preview requires a run directory");
+    }
+
+    const report = await verifyLivePreviewPublish({ runDir });
+
+    return {
+      ok: report.ok,
+      command: "verify live-preview",
+      report
+    };
+  }
+
+  if (target === "live-quality") {
+    const runDir = positional(args, 0);
+    const targetStage = positional(args, 1) ?? "design-system-pass";
+
+    if (!runDir) {
+      throw new Error("verify live-quality requires a run directory");
+    }
+
+    const report = await verifyLiveCodexQuality({
+      runDir,
+      targetStage
+    });
+
+    return {
+      ok: report.ok,
+      command: "verify live-quality",
+      report
+    };
+  }
+
+  throw new Error(`Unknown verify target: ${target ?? "(missing)"}\n\n${usage()}`);
+}
+
+async function ciCommand(target: string | undefined, args: string[]): Promise<CliResult> {
+  if (target === "mock") {
+    const report = await runCiMock();
+
+    return {
+      ok: report.ok,
+      command: "ci mock",
+      report
+    };
+  }
+
+  if (target === "live") {
+    const inputPath = positionalWithoutValueFlags(args, 0, []);
+    const report = await withEnv({ FUSERA_CODEX_ADAPTER: "real" }, () =>
+      runCiLive({
+        inputPath,
+        adapterMode: "real"
+      })
+    );
+
+    return {
+      ok: report.ok,
+      command: "ci live",
+      report
+    };
+  }
+
+  if (target === "isolated-live") {
+    const caseIds = parseCaseFilter(positional(args, 0));
+    const targetStage = positional(args, 1);
+    const report = await runCiIsolatedLive({
+      caseIds,
+      targetStage
+    });
+
+    return {
+      ok: report.ok,
+      command: "ci isolated-live",
+      report
+    };
+  }
+
+  throw new Error(`Unknown ci target: ${target ?? "(missing)"}\n\n${usage()}`);
+}
+
+async function liveStabilityCommand(args: string[]): Promise<CliResult> {
+  const runs = numberFlag(args, "--runs");
+  const adapterMode: CodexAdapterMode = args.includes("--mock") ? "mock" : "real";
+  const inputPath = positionalWithoutValueFlags(args, 0, ["--runs"]);
+  const report = await withEnv({ FUSERA_CODEX_ADAPTER: adapterMode }, () =>
+    runLiveStability({
+      inputPath,
+      iterations: runs,
+      adapterMode
+    })
+  );
+
+  return {
+    ok: report.ok,
+    command: "live-stability",
+    report
+  };
+}
+
+function usage(): string {
+  return [
+    "Usage:",
+    "  node --experimental-strip-types superpowers/runner/cli.ts run mock-publish [input.json]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts run live-publish [input.json]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts run qa-failure [input.json]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts proof <target-stage> [input.json] [--live]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts continue <run-dir> <target-stage> [--live|--mock]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts resume <run-dir> [--live|--mock]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts verify p0",
+    "  node --experimental-strip-types superpowers/runner/cli.ts verify live-preview <run-dir>",
+    "  node --experimental-strip-types superpowers/runner/cli.ts verify live-quality <run-dir> [target-stage]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts ci mock",
+    "  node --experimental-strip-types superpowers/runner/cli.ts ci live [input.json]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live [case-ids] [target-stage]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts live-stability [--runs <n>] [input.json] [--mock]"
+  ].join("\n");
+}
+
+function positional(args: string[], index: number): string | undefined {
+  return args.filter((arg) => !arg.startsWith("--"))[index];
+}
+
+function positionalWithoutValueFlags(args: string[], index: number, valueFlags: string[]): string | undefined {
+  const values: string[] = [];
+
+  for (let argIndex = 0; argIndex < args.length; argIndex += 1) {
+    const arg = args[argIndex];
+
+    if (valueFlags.includes(arg)) {
+      argIndex += 1;
+      continue;
+    }
+
+    if (!arg.startsWith("--")) {
+      values.push(arg);
+    }
+  }
+
+  return values[index];
+}
+
+function numberFlag(args: string[], flag: string): number | undefined {
+  const flagIndex = args.indexOf(flag);
+
+  if (flagIndex === -1) {
+    return undefined;
+  }
+
+  const value = Number(args[flagIndex + 1]);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function parseCaseFilter(value: string | undefined): string[] | undefined {
+  if (!value || value.trim().length === 0 || value.trim() === "all") {
+    return undefined;
+  }
+
+  return value
+    .split(",")
+    .map((caseId) => caseId.trim())
+    .filter(Boolean);
+}
+
+function adapterModeFlag(args: string[]): CodexAdapterMode | undefined {
+  const live = args.includes("--live");
+  const mock = args.includes("--mock");
+
+  if (live && mock) {
+    throw new Error("Choose only one adapter mode flag: --live or --mock");
+  }
+
+  if (live) {
+    return "real";
+  }
+
+  if (mock) {
+    return "mock";
+  }
+
+  return undefined;
+}
+
+async function withEnv<T>(env: Record<string, string>, callback: () => Promise<T>): Promise<T> {
+  const prior = new Map<string, string | undefined>();
+
+  for (const [key, value] of Object.entries(env)) {
+    prior.set(key, process.env[key]);
+    process.env[key] = value;
+  }
+
+  try {
+    return await callback();
+  } finally {
+    for (const [key, value] of prior.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+  try {
+    const result = await runCli();
+
+    if (typeof result.text === "string" && Object.keys(result).length === 3) {
+      console.log(result.text);
+    } else if (typeof result.usage === "string") {
+      console.log(result.usage);
+    } else {
+      console.log(JSON.stringify(result, null, 2));
+    }
+
+    process.exit(result.ok === false ? 1 : 0);
+  } catch (error) {
+    console.error((error as Error).message);
+    process.exit(1);
+  }
+}

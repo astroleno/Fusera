@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "id": "proof-required-rich",
+      "fixture": "proof-required-rich.json",
+      "target_stage": "design-system-pass",
+      "expected_ok": true,
+      "focus": ["claim_policy:proof-required", "proof_bindings", "professional visual direction"]
+    },
+    {
+      "id": "low-proof-no-proof",
+      "fixture": "low-proof-no-proof.json",
+      "target_stage": "design-system-pass",
+      "expected_ok": true,
+      "focus": ["claim_policy:low-proof", "empty proof_inputs allowed", "warm professional direction"]
+    },
+    {
+      "id": "no-claims-utility",
+      "fixture": "no-claims-utility.json",
+      "target_stage": "design-system-pass",
+      "expected_ok": true,
+      "focus": ["claim_policy:no-claims", "no proof required", "terminal visual direction"]
+    },
+    {
+      "id": "bauhaus-visual-direction",
+      "fixture": "bauhaus-visual-direction.json",
+      "target_stage": "design-system-pass",
+      "expected_ok": true,
+      "focus": ["bauhaus visual direction", "proof-required", "anti-generic layout"]
+    },
+    {
+      "id": "industrial-visual-direction",
+      "fixture": "industrial-visual-direction.json",
+      "target_stage": "design-system-pass",
+      "expected_ok": true,
+      "focus": ["industrial visual direction", "proof-required", "tactile token system"]
+    }
+  ]
+}

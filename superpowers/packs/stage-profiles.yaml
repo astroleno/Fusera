@@ -1,0 +1,70 @@
+stages:
+  - stage: normalize-input
+    primary_task: tasks/normalize-input
+    allowed_auxiliary_tasks: []
+    allowed_outputs: []
+    default_verifier: none
+    default_backend: codex
+    next_stage: product-and-brand-brief
+  - stage: product-and-brand-brief
+    primary_task: tasks/product-brief
+    allowed_auxiliary_tasks:
+      - tasks/brand-profile
+    allowed_outputs:
+      - ProductBrief
+      - BrandProfile
+    default_verifier: none
+    default_backend: codex
+    next_stage: page-strategy
+  - stage: page-strategy
+    primary_task: tasks/page-strategy
+    allowed_auxiliary_tasks: []
+    allowed_outputs:
+      - PagePlan
+    default_verifier: none
+    default_backend: codex
+    next_stage: section-planning
+  - stage: section-planning
+    primary_task: tasks/section-graph
+    allowed_auxiliary_tasks: []
+    allowed_outputs:
+      - SectionGraph
+    default_verifier: none
+    default_backend: codex
+    next_stage: design-system-pass
+  - stage: design-system-pass
+    primary_task: tasks/design-pass
+    allowed_auxiliary_tasks: []
+    context_packs:
+      - base/web-design-engineer
+      - styles/designprompts-directions
+      - modifiers/anti-slop
+    allowed_outputs:
+      - ThemeTokens
+    default_verifier: none
+    default_backend: codex
+    next_stage: page-compile
+  - stage: page-compile
+    primary_task: tasks/page-compile
+    allowed_auxiliary_tasks: []
+    allowed_outputs:
+      - PageSpec
+    default_verifier: none
+    default_backend: codex
+    next_stage: verify-publishable-page
+  - stage: verify-publishable-page
+    primary_task: verifiers/publishable-page
+    allowed_auxiliary_tasks: []
+    allowed_outputs:
+      - QAReport
+    default_verifier: verifiers/publishable-page
+    default_backend: codex
+    next_stage: publish-preview
+  - stage: publish-preview
+    primary_task: deploy/publish-preview
+    allowed_auxiliary_tasks: []
+    allowed_outputs:
+      - PublishVersion
+    default_verifier: none
+    default_backend: codex
+    next_stage: end

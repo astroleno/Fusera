@@ -1,0 +1,18 @@
+{
+  "product_name": "BlockHaus",
+  "audiences": ["architecture educators", "workshop facilitators"],
+  "core_problem": "Educators need a workshop landing page that feels geometric and memorable while keeping signup details readable.",
+  "value_props": [
+    "Explains workshop modules in a strong visual hierarchy",
+    "Makes schedule and materials easy to scan",
+    "Gives facilitators a distinctive page without custom design work"
+  ],
+  "cta_goal": "Reserve a workshop seat",
+  "proof_inputs": ["published syllabus", "sample workshop material"],
+  "claim_policy": "proof-required",
+  "brand_traits": ["geometric", "bold", "instructional"],
+  "tone_keywords": ["clear", "energetic", "structured"],
+  "visual_directions": ["bauhaus", "primary color blocking", "hard shadow"],
+  "positioning": "Geometric workshop landing pages for design education",
+  "do_not_use": ["soft pastel SaaS styling", "fake student outcomes", "generic rounded cards"]
+}

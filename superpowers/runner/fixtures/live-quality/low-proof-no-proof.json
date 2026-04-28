@@ -1,0 +1,18 @@
+{
+  "product_name": "StudioQueue",
+  "audiences": ["independent design studios", "creative operations managers"],
+  "core_problem": "Small studios need a clear way to explain intake, scheduling, and delivery without making hard performance claims.",
+  "value_props": [
+    "Turns scattered project requests into a shared queue",
+    "Keeps client approvals visible",
+    "Shows next actions without a heavy project management system"
+  ],
+  "cta_goal": "Book a workflow walkthrough",
+  "proof_inputs": [],
+  "claim_policy": "low-proof",
+  "brand_traits": ["warm", "organized", "approachable"],
+  "tone_keywords": ["plainspoken", "calm", "useful"],
+  "visual_directions": ["professional", "warm editorial", "soft contrast"],
+  "positioning": "Lightweight operations queue for boutique studios",
+  "do_not_use": ["guaranteed delivery times", "fake client quotes", "enterprise jargon"]
+}

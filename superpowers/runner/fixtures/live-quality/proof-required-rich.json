@@ -1,0 +1,22 @@
+{
+  "product_name": "ProofLedger",
+  "audiences": ["regulated fintech operators", "compliance leads"],
+  "core_problem": "Teams need a launch page that makes strong trust claims only when every claim is tied to audit evidence.",
+  "value_props": [
+    "Maps every trust claim to an evidence reference",
+    "Separates proof-backed claims from positioning copy",
+    "Produces a preview that can be reviewed before publish"
+  ],
+  "cta_goal": "Request an evidence review",
+  "proof_inputs": [
+    "SOC 2 Type II report available under NDA",
+    "99.95% uptime report for the previous quarter",
+    "customer security questionnaire workflow"
+  ],
+  "claim_policy": "proof-required",
+  "brand_traits": ["careful", "authoritative", "transparent"],
+  "tone_keywords": ["precise", "measured", "trustworthy"],
+  "visual_directions": ["professional", "editorial restraint", "warm ivory"],
+  "positioning": "Proof-controlled launch pages for regulated teams",
+  "do_not_use": ["unverified compliance claims", "fake customer logos", "growth promises"]
+}

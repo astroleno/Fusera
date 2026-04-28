@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fusera.local/superpowers/contracts/artifacts/theme-tokens.schema.json",
+  "title": "ThemeTokens Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "artifact_id",
+    "run_id",
+    "status",
+    "producer_stage",
+    "input_refs",
+    "validation",
+    "payload"
+  ],
+  "properties": {
+    "artifact_type": { "const": "ThemeTokens" },
+    "schema_version": { "const": "1.0.0" },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["draft", "validated", "rejected", "superseded"] },
+    "producer_stage": { "const": "design-system-pass" },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "errors"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["colors", "typography", "spacing", "radii", "shadows", "motion"],
+      "properties": {
+        "colors": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "required": ["background", "surface", "text", "accent"]
+        },
+        "typography": { "type": "object", "additionalProperties": true },
+        "spacing": { "type": "object", "additionalProperties": true },
+        "radii": { "type": "object", "additionalProperties": true },
+        "shadows": { "type": "object", "additionalProperties": true },
+        "motion": { "type": "object", "additionalProperties": true }
+      }
+    }
+  }
+}

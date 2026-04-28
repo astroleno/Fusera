@@ -1,0 +1,18 @@
+{
+  "product_name": "PanelWorks",
+  "audiences": ["hardware operations teams", "factory floor supervisors"],
+  "core_problem": "Operations teams need a landing page that presents control-panel software with tactile clarity and no abstract automation hype.",
+  "value_props": [
+    "Shows machine status groups at a glance",
+    "Separates alerts from routine operator tasks",
+    "Documents handoff steps between shifts"
+  ],
+  "cta_goal": "Schedule a floor walkthrough",
+  "proof_inputs": ["operator workflow screenshots", "shift handoff checklist"],
+  "claim_policy": "proof-required",
+  "brand_traits": ["tactile", "durable", "precise"],
+  "tone_keywords": ["practical", "grounded", "confident"],
+  "visual_directions": ["industrial", "mechanical realism", "safety accent"],
+  "positioning": "Control-panel landing pages for industrial operations software",
+  "do_not_use": ["neon cyberpunk styling", "unverified reliability claims", "decorative gradient blobs"]
+}

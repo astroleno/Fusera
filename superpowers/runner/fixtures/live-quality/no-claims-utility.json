@@ -1,0 +1,18 @@
+{
+  "product_name": "PatchNote",
+  "audiences": ["open-source maintainers", "developer tool teams"],
+  "core_problem": "Maintainers need a landing page that explains a utility clearly without testimonials, benchmarks, or market claims.",
+  "value_props": [
+    "Summarizes release notes from merged pull requests",
+    "Groups changes by user-facing impact",
+    "Exports markdown ready for review"
+  ],
+  "cta_goal": "Try the demo repository",
+  "proof_inputs": [],
+  "claim_policy": "no-claims",
+  "brand_traits": ["technical", "direct", "minimal"],
+  "tone_keywords": ["concise", "matter-of-fact", "developer-native"],
+  "visual_directions": ["terminal", "monochrome", "high-density"],
+  "positioning": "Release note drafting utility for maintainers",
+  "do_not_use": ["performance benchmarks", "customer logos", "testimonial quotes"]
+}

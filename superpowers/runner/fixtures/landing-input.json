@@ -1,0 +1,17 @@
+{
+  "product_name": "Fusera",
+  "audiences": ["founder-led teams", "design-forward operators"],
+  "core_problem": "Teams need a deterministic path from product intent to a publishable landing page preview.",
+  "value_props": [
+    "Turns messy launch input into stable artifacts",
+    "Keeps generation auditable through every stage",
+    "Publishes preview handoffs only after QA binding checks"
+  ],
+  "cta_goal": "Start a preview run",
+  "proof_inputs": ["artifact ledger", "preview publish handoff"],
+  "brand_traits": ["precise", "calm", "operational"],
+  "tone_keywords": ["direct", "clear", "credible"],
+  "visual_directions": ["editorial grid", "high contrast", "restrained accent color"],
+  "positioning": "Artifact-first landing page generation harness",
+  "do_not_use": ["vague automation claims", "unverifiable growth promises"]
+}

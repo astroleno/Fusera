@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fusera.local/superpowers/contracts/artifacts/publish-version.schema.json",
+  "title": "PublishVersion Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "artifact_id",
+    "run_id",
+    "status",
+    "producer_stage",
+    "input_refs",
+    "validation",
+    "payload"
+  ],
+  "properties": {
+    "artifact_type": { "const": "PublishVersion" },
+    "schema_version": { "const": "1.0.0" },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["draft", "validated", "rejected", "superseded"] },
+    "producer_stage": { "const": "publish-preview" },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "errors"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publish_version_id",
+        "page_spec_ref",
+        "qa_report_ref",
+        "preview_url",
+        "published_at",
+        "publish_target",
+        "previous_active_pointer",
+        "pointer_transaction_ref"
+      ],
+      "properties": {
+        "publish_version_id": { "type": "string", "minLength": 1 },
+        "page_spec_ref": { "type": "string", "minLength": 1 },
+        "qa_report_ref": { "type": "string", "minLength": 1 },
+        "preview_url": { "type": "string", "minLength": 1 },
+        "published_at": { "type": "string", "minLength": 1 },
+        "publish_target": { "const": "preview" },
+        "previous_active_pointer": {
+          "anyOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 }
+          ]
+        },
+        "pointer_transaction_ref": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

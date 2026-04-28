@@ -1,0 +1,656 @@
+packs:
+  - id: tasks/generate-landing
+    path: superpowers/packs/tasks/generate-landing/SKILL.md
+    kind: task
+    description: Landing-page workflow entry pack that resolves the P0 stage map.
+    priority: 100
+    selection_role: primary
+    stage: workflow-entry
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - generate landing
+      - landing page
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+      - workspace.search
+      - process.exec
+    required_inputs:
+      - raw_request
+    required_artifacts: []
+    produces_artifacts: []
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: none
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: tasks/normalize-input
+    path: superpowers/packs/tasks/normalize-input/SKILL.md
+    kind: task
+    description: Normalize the incoming landing-page request into a run-owned input bundle.
+    priority: 90
+    selection_role: primary
+    stage: normalize-input
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - raw landing request
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - raw_request
+    required_artifacts: []
+    produces_artifacts: []
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: run-owned-normalized-input-bundle
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: tasks/product-brief
+    path: superpowers/packs/tasks/product-brief/SKILL.md
+    kind: task
+    description: Produce the ProductBrief artifact for the product-and-brand-brief stage.
+    priority: 90
+    selection_role: primary
+    stage: product-and-brand-brief
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - product brief
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts: []
+    produces_artifacts:
+      - ProductBrief
+    task_role: primary
+    allowed_auxiliary_tasks:
+      - tasks/brand-profile
+    stage_outputs:
+      - ProductBrief
+    output_contract: superpowers/contracts/artifacts/product-brief.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: tasks/brand-profile
+    path: superpowers/packs/tasks/brand-profile/SKILL.md
+    kind: task
+    description: Produce the BrandProfile artifact as the approved auxiliary brief task.
+    priority: 80
+    selection_role: auxiliary
+    stage: product-and-brand-brief
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - brand profile
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts: []
+    produces_artifacts:
+      - BrandProfile
+    task_role: auxiliary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - BrandProfile
+    output_contract: superpowers/contracts/artifacts/brand-profile.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: tasks/page-strategy
+    path: superpowers/packs/tasks/page-strategy/SKILL.md
+    kind: task
+    description: Produce the PagePlan artifact from validated brief artifacts.
+    priority: 90
+    selection_role: primary
+    stage: page-strategy
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - page strategy
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - PagePlan
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - PagePlan
+    output_contract: superpowers/contracts/artifacts/page-plan.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: tasks/section-graph
+    path: superpowers/packs/tasks/section-graph/SKILL.md
+    kind: task
+    description: Produce the SectionGraph artifact from the validated PagePlan.
+    priority: 90
+    selection_role: primary
+    stage: section-planning
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - section graph
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - SectionGraph
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - SectionGraph
+    output_contract: superpowers/contracts/artifacts/section-graph.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: tasks/design-pass
+    path: superpowers/packs/tasks/design-pass/SKILL.md
+    kind: task
+    description: Produce the ThemeTokens artifact from briefs and page strategy.
+    priority: 90
+    selection_role: primary
+    stage: design-system-pass
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - theme tokens
+      - design pass
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - ThemeTokens
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - ThemeTokens
+    output_contract: superpowers/contracts/artifacts/theme-tokens.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: base/web-design-engineer
+    path: superpowers/packs/base/web-design-engineer/SKILL.md
+    kind: base
+    description: Design-forward web generation base context grounded in web-design-skill.
+    priority: 85
+    selection_role: composable
+    stage: design-system-pass
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - landing page design system
+      - web visual quality
+      - design-forward page
+    negative_triggers:
+      - app ui only
+      - publish only
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts: []
+    task_role: context
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: none
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+    references:
+      - reference/design/web-design-skill/README.md
+      - reference/design/web-design-skill/.agents/skills/web-design-engineer/SKILL.md
+      - reference/design/web-design-skill/prompt/claude-design-system-prompt.md
+  - id: base/interface-design
+    path: superpowers/packs/base/interface-design/SKILL.md
+    kind: base
+    description: App UI consistency base context grounded in interface-design.
+    priority: 80
+    selection_role: composable
+    stage: design-system-pass
+    output_modes:
+      - app-ui-design
+    positive_triggers:
+      - app ui design
+      - dashboard design
+      - admin interface
+      - tool surface
+    negative_triggers:
+      - marketing landing only
+      - publish only
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts: []
+    task_role: context
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: none
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+    references:
+      - reference/design/claude-design-skill/repos/interface-design/README.md
+      - reference/design/claude-design-skill/repos/interface-design/reference/system-template.md
+      - reference/design/claude-design-skill/repos/interface-design/reference/examples/system-precision.md
+      - reference/design/claude-design-skill/repos/interface-design/reference/examples/system-warmth.md
+  - id: styles/designprompts-directions
+    path: superpowers/packs/styles/designprompts-directions/SKILL.md
+    kind: style
+    description: Named visual direction vocabulary mined from designprompts.dev.
+    priority: 70
+    selection_role: composable
+    stage: design-system-pass
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - visual direction
+      - style vocabulary
+      - theme tokens
+    negative_triggers:
+      - app ui only
+      - publish only
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts: []
+    task_role: context
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: none
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+    references:
+      - reference/design/designprompts.dev/saas.md
+      - reference/design/designprompts.dev/professional.md
+      - reference/design/designprompts.dev/bauhaus.md
+      - reference/design/designprompts.dev/industrial.md
+      - reference/design/designprompts.dev/monochrome.md
+      - reference/design/designprompts.dev/enterprise.md
+      - reference/design/designprompts.dev/terminal.md
+  - id: modifiers/anti-slop
+    path: superpowers/packs/modifiers/anti-slop/SKILL.md
+    kind: modifier
+    description: Anti-pattern and quality-hardening modifier mined from impeccable and web-design-skill.
+    priority: 75
+    selection_role: composable
+    stage: design-system-pass
+    output_modes:
+      - landing-page
+      - app-ui-design
+    positive_triggers:
+      - polish
+      - anti slop
+      - visual quality
+      - theme tokens
+    negative_triggers:
+      - publish only
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts: []
+    task_role: context
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: none
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+    references:
+      - reference/design/impeccable/source/skills/impeccable/SKILL.md
+      - reference/design/impeccable/source/skills/impeccable/reference/typography.md
+      - reference/design/impeccable/source/skills/impeccable/reference/color-and-contrast.md
+      - reference/design/impeccable/source/skills/impeccable/reference/spatial-design.md
+      - reference/design/impeccable/source/skills/impeccable/reference/responsive-design.md
+      - reference/design/web-design-skill/.agents/skills/web-design-engineer/SKILL.md
+  - id: tasks/page-compile
+    path: superpowers/packs/tasks/page-compile/SKILL.md
+    kind: task
+    description: Invoke the deterministic page compiler to produce PageSpec and preview build metadata.
+    priority: 95
+    selection_role: primary
+    stage: page-compile
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - compile page
+    negative_triggers: []
+    backend_support:
+      tier: backend-preferred
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: SectionGraph
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: ThemeTokens
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - PageSpec
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - PageSpec
+    output_contract: superpowers/contracts/artifacts/page-spec.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: verifiers/publishable-page
+    path: superpowers/packs/verifiers/publishable-page/SKILL.md
+    kind: verifier
+    description: Verify that the compiled preview build is publishable.
+    priority: 100
+    selection_role: primary
+    stage: verify-publishable-page
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - verify publishable page
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - preview_build_ref
+    required_artifacts:
+      - artifact_type: PageSpec
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - QAReport
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - QAReport
+    output_contract: superpowers/contracts/artifacts/qa-report.schema.json
+    verifier_pack: verifiers/publishable-page
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+  - id: deploy/publish-preview
+    path: superpowers/packs/deploy/publish-preview/SKILL.md
+    kind: deploy
+    description: Create the immutable preview-scoped PublishVersion handoff artifact.
+    priority: 100
+    selection_role: primary
+    stage: publish-preview
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - publish preview
+    negative_triggers: []
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - preview_build_ref
+    required_artifacts:
+      - artifact_type: PageSpec
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: QAReport
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - PublishVersion
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - PublishVersion
+    output_contract: superpowers/contracts/artifacts/publish-version.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial

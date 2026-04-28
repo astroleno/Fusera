@@ -1,0 +1,152 @@
+name: Fusera Harness
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "docs/superpowers/harness/**"
+      - "superpowers/**"
+      - ".github/workflows/harness.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "AGENTS.md"
+      - "docs/superpowers/harness/**"
+      - "superpowers/**"
+      - ".github/workflows/harness.yml"
+  workflow_dispatch:
+    inputs:
+      live_gate:
+        description: "Optional live gate to run on a Codex-authenticated self-hosted runner."
+        required: true
+        default: "none"
+        type: choice
+        options:
+          - "none"
+          - "ci-live"
+          - "live-stability"
+          - "ci-isolated-live"
+      stability_runs:
+        description: "Run count for live-stability."
+        required: true
+        default: "3"
+        type: string
+      case_ids:
+        description: "Comma-separated case ids for ci-isolated-live, or all."
+        required: true
+        default: "all"
+        type: string
+      target_stage:
+        description: "Target stage for ci-isolated-live."
+        required: true
+        default: "design-system-pass"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ci-mock:
+    name: ci mock
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Prepare harness runtime directory
+        run: |
+          rm -rf .fusera/runs
+          mkdir -p .fusera/runs
+
+      - name: Run deterministic harness gate
+        run: node --experimental-strip-types superpowers/runner/cli.ts ci mock
+
+      - name: Upload harness evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fusera-harness-runs-mock-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .fusera/runs/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  ci-live:
+    name: live gate
+    if: github.event_name == 'workflow_dispatch' && inputs.live_gate != 'none'
+    runs-on:
+      - self-hosted
+      - fusera-live
+    timeout-minutes: 180
+    concurrency:
+      group: fusera-live-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Prepare harness runtime directory
+        run: |
+          rm -rf .fusera/runs
+          mkdir -p .fusera/runs
+
+      - name: Check live runner readiness
+        run: |
+          set -o pipefail
+          node --experimental-strip-types superpowers/runner/check-live-runner.ts --strict-github-actions --auth-probe | tee .fusera/runs/live-runner-preflight.json
+
+      - name: Run selected live gate
+        env:
+          LIVE_GATE: ${{ inputs.live_gate }}
+          STABILITY_RUNS: ${{ inputs.stability_runs }}
+          CASE_IDS: ${{ inputs.case_ids }}
+          TARGET_STAGE: ${{ inputs.target_stage }}
+        run: |
+          set -euo pipefail
+
+          LIVE_GATE="${LIVE_GATE:-}"
+          STABILITY_RUNS="${STABILITY_RUNS:-3}"
+          CASE_IDS="${CASE_IDS:-all}"
+          TARGET_STAGE="${TARGET_STAGE:-design-system-pass}"
+
+          case "$LIVE_GATE" in
+            ci-live)
+              node --experimental-strip-types superpowers/runner/cli.ts ci live
+              ;;
+            live-stability)
+              node --experimental-strip-types superpowers/runner/cli.ts live-stability --runs "$STABILITY_RUNS"
+              ;;
+            ci-isolated-live)
+              if [ "$CASE_IDS" = "all" ]; then
+                node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live all "$TARGET_STAGE"
+              else
+                node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live "$CASE_IDS" "$TARGET_STAGE"
+              fi
+              ;;
+            *)
+              echo "Unsupported LIVE_GATE=$LIVE_GATE" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Upload harness evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fusera-harness-runs-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .fusera/runs/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30

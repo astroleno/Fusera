@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fusera.local/superpowers/contracts/artifacts/page-plan.schema.json",
+  "title": "PagePlan Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "artifact_id",
+    "run_id",
+    "status",
+    "producer_stage",
+    "input_refs",
+    "validation",
+    "payload"
+  ],
+  "properties": {
+    "artifact_type": { "const": "PagePlan" },
+    "schema_version": { "const": "1.0.0" },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["draft", "validated", "rejected", "superseded"] },
+    "producer_stage": { "const": "page-strategy" },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "errors"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "page_goal",
+        "narrative_arc",
+        "section_intents",
+        "cta_strategy",
+        "proof_strategy"
+      ],
+      "properties": {
+        "page_goal": { "type": "string", "minLength": 1 },
+        "narrative_arc": { "type": "string", "minLength": 1 },
+        "section_intents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["section_id", "intent"],
+            "properties": {
+              "section_id": { "type": "string", "minLength": 1 },
+              "intent": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "cta_strategy": { "type": "string", "minLength": 1 },
+        "proof_strategy": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
