@@ -1,0 +1,90 @@
+[
+  {
+    "key": "qian",
+    "slug": "qian",
+    "name_cn": "乾",
+    "title_cn": "乾为天",
+    "pinyin": "qian",
+    "element_cn": "天",
+    "signature": "111",
+    "concept": "穹顶、天印、纯阳、主导",
+    "rationale": "以双层穹弧和中轴星点表达天空的张力与统摄感，不直接画三阳爻，而是把“天”的压顶与提举做成徽记。"
+  },
+  {
+    "key": "kun",
+    "slug": "kun",
+    "name_cn": "坤",
+    "title_cn": "坤为地",
+    "pinyin": "kun",
+    "element_cn": "地",
+    "signature": "000",
+    "concept": "地势、承载、田畴、厚德",
+    "rationale": "用三层递进的地势台面表现承载与展开，让坤更像地貌与平台，而不是三阴爻翻译。"
+  },
+  {
+    "key": "zhen",
+    "slug": "zhen",
+    "name_cn": "震",
+    "title_cn": "震为雷",
+    "pinyin": "zhen",
+    "element_cn": "雷",
+    "signature": "001",
+    "concept": "霹雳、冲击、启动、爆发",
+    "rationale": "主视觉是向下击穿的雷电和落点回响，强调惊起、发动、破静成势。"
+  },
+  {
+    "key": "xun",
+    "slug": "xun",
+    "name_cn": "巽",
+    "title_cn": "巽为风",
+    "pinyin": "xun",
+    "element_cn": "风",
+    "signature": "110",
+    "concept": "风旋、渗透、入、顺势",
+    "rationale": "以两道前后错位的风迹表达“入而不撞”的渗透感，避免把巽画成普通涡旋图标。"
+  },
+  {
+    "key": "kan",
+    "slug": "kan",
+    "name_cn": "坎",
+    "title_cn": "坎为水",
+    "pinyin": "kan",
+    "element_cn": "水",
+    "signature": "010",
+    "concept": "重渊、水滴、险中有心",
+    "rationale": "以双层水滴和中芯空腔表现坎的“中实外险”，既是水，也是深渊。"
+  },
+  {
+    "key": "li",
+    "slug": "li",
+    "name_cn": "离",
+    "title_cn": "离为火",
+    "pinyin": "li",
+    "element_cn": "火",
+    "signature": "101",
+    "concept": "明焰、附丽、光核、照见",
+    "rationale": "外焰包裹内核，表达离的附着与照明，不采用传统火苗剪影，而是偏徽章化。"
+  },
+  {
+    "key": "gen",
+    "slug": "gen",
+    "name_cn": "艮",
+    "title_cn": "艮为山",
+    "pinyin": "gen",
+    "element_cn": "山",
+    "signature": "100",
+    "concept": "山门、止、界碑、凝定",
+    "rationale": "用山峰和山门之间的负形表达“止于其所”，它既像山，也像一个被守住的入口。"
+  },
+  {
+    "key": "dui",
+    "slug": "dui",
+    "name_cn": "兑",
+    "title_cn": "兑为泽",
+    "pinyin": "dui",
+    "element_cn": "泽",
+    "signature": "011",
+    "concept": "泽、悦、开口、水面反照",
+    "rationale": "上为平线，下为弧池，把泽的开口与悦纳感做成一个轻微上扬的水面徽记。"
+  }
+]
