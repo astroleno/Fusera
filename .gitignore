@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Local environment
+.env
+.env.*
+*.local
+
+# Fusera runtime output
+.fusera/
+
+# Local reference corpus (kept outside the canonical repo history)
+reference/
+
+# Node / TypeScript build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Python cache / virtualenv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Generated asset output
+hexagram-logo-system/output/
+
+# Logs / temp
+*.log
+tmp/
+.tmp/
