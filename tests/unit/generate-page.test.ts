@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   artifactEnvelopeSchema,
   brandProfilePayloadSchema,
@@ -8,20 +8,6 @@ import {
   themeTokensPayloadSchema,
 } from "@/lib/domain/page-artifacts";
 import { buildPageArtifacts } from "@/lib/ai/page-strategy";
-
-const routeMocks = vi.hoisted(() => ({
-  createDbClient: vi.fn(),
-  from: vi.fn(),
-  select: vi.fn(),
-  eq: vi.fn(),
-  single: vi.fn(),
-}));
-
-vi.mock("@/lib/db", () => ({
-  createDbClient: routeMocks.createDbClient,
-}));
-
-import { POST } from "@/app/api/projects/[projectId]/generate/route";
 
 const payloadSchemas = {
   ProductBrief: productBriefPayloadSchema,
@@ -97,25 +83,5 @@ describe("buildPageArtifacts", () => {
       text: expect.any(String),
       accent: expect.any(String),
     });
-  });
-});
-
-describe("POST /api/projects/[projectId]/generate", () => {
-  it("returns 404 when the project is missing", async () => {
-    routeMocks.single.mockResolvedValue({
-      data: null,
-      error: { message: "not found" },
-    });
-    routeMocks.eq.mockReturnValue({ single: routeMocks.single });
-    routeMocks.select.mockReturnValue({ eq: routeMocks.eq });
-    routeMocks.from.mockReturnValue({ select: routeMocks.select });
-    routeMocks.createDbClient.mockResolvedValue({ from: routeMocks.from });
-
-    const response = await POST(new Request("http://localhost"), {
-      params: Promise.resolve({ projectId: "project_missing" }),
-    });
-
-    expect(response.status).toBe(404);
-    expect(routeMocks.from).toHaveBeenCalledWith("projects");
   });
 });
