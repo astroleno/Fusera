@@ -281,7 +281,7 @@ git commit -m "feat: scaffold fusera app baseline"
 - Create: `src/lib/db.ts`
 - Test: `tests/unit/project-input.test.ts`
 
-- [ ] **Step 1: Write the failing intake validation test**
+- [x] **Step 1: Write the failing intake validation test**
 
 ```ts
 // tests/unit/project-input.test.ts
@@ -303,13 +303,13 @@ describe("projectInputSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/project-input.test.ts`
 
 Expected: FAIL with `Cannot find module '@/lib/domain/project-input'`.
 
-- [ ] **Step 3: Define the intake and artifact schemas**
+- [x] **Step 3: Define the intake and artifact schemas**
 
 Architecture alignment note:
 
@@ -431,7 +431,7 @@ export function createArtifactEnvelope<TPayload>(params: {
 }
 ```
 
-- [ ] **Step 4: Add persistence skeleton and migration**
+- [x] **Step 4: Add persistence skeleton and migration**
 
 ```sql
 -- supabase/migrations/0001_initial.sql
@@ -481,7 +481,7 @@ export function createDbClient() {
 }
 ```
 
-- [ ] **Step 5: Rerun the validation test and commit**
+- [x] **Step 5: Rerun the validation test and commit**
 
 Run: `npm run test -- tests/unit/project-input.test.ts`
 
