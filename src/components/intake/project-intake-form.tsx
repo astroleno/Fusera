@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 type SubmitState =
@@ -16,6 +17,7 @@ function splitLines(value: FormDataEntryValue | null): string[] {
 }
 
 export default function ProjectIntakeForm() {
+  const router = useRouter();
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
     message: "",
@@ -57,10 +59,34 @@ export default function ProjectIntakeForm() {
         return;
       }
 
+      if (!result.projectId) {
+        setSubmitState({
+          status: "error",
+          message: "Project creation failed.",
+        });
+        return;
+      }
+
+      const generationResponse = await fetch(
+        `/api/projects/${result.projectId}/generate`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (!generationResponse.ok) {
+        setSubmitState({
+          status: "error",
+          message: "Generation could not be started.",
+        });
+        return;
+      }
+
       setSubmitState({
         status: "success",
         message: `Project ${result.projectId} created`,
       });
+      router.push(`/projects/${result.projectId}`);
     } catch {
       setSubmitState({
         status: "error",
