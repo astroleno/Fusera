@@ -12,6 +12,7 @@ create table generation_runs (
   created_at timestamptz not null default now(),
   status text not null default 'queued',
   latest_product_brief_ref text,
+  latest_brand_profile_ref text,
   latest_page_plan_ref text,
   latest_section_graph_ref text,
   latest_theme_tokens_ref text,

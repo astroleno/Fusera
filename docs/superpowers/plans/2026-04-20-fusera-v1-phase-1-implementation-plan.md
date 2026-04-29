@@ -653,6 +653,13 @@ git commit -m "feat: add guided intake flow"
 
 ## Task 4: Add Canonical Generation And Async Orchestration
 
+**Implementation note:** The historical snippets in this task predate the
+strict app-side artifact schemas. The completed implementation follows
+`src/lib/domain/page-artifacts.ts`: `PagePlan.section_intents` are objects,
+`SectionGraph` uses `section_id` / `section_type` / `title` / `props`,
+`ThemeTokens.colors` includes `background` / `surface` / `text` / `accent`,
+and `SectionGraph.producer_stage` is `section-planning`.
+
 **Files:**
 - Create: `src/lib/ai/product-brief.ts`
 - Create: `src/lib/ai/page-strategy.ts`
@@ -660,7 +667,7 @@ git commit -m "feat: add guided intake flow"
 - Create: `src/app/api/projects/[projectId]/generate/route.ts`
 - Test: `tests/unit/generate-page.test.ts`
 
-- [ ] **Step 1: Write the failing generation contract test**
+- [x] **Step 1: Write the failing generation contract test**
 
 ```ts
 // tests/unit/generate-page.test.ts
@@ -694,13 +701,13 @@ describe("buildPageArtifacts", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/generate-page.test.ts`
 
 Expected: FAIL with missing module import.
 
-- [ ] **Step 3: Implement deterministic placeholder generation functions**
+- [x] **Step 3: Implement deterministic placeholder generation functions**
 
 ```ts
 // src/lib/ai/product-brief.ts
@@ -820,7 +827,7 @@ export async function buildPageArtifacts({ runId, ...input }: BuildPageArtifacts
 }
 ```
 
-- [ ] **Step 4: Add the async generation job and API route**
+- [x] **Step 4: Add the async generation job and API route**
 
 ```ts
 // src/trigger/generate-page.ts
@@ -908,7 +915,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 5: Rerun tests and commit**
+- [x] **Step 5: Rerun tests and commit**
 
 Run: `npm run test -- tests/unit/generate-page.test.ts`
 
