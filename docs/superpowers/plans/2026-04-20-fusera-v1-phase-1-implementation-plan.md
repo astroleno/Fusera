@@ -500,7 +500,7 @@ git commit -m "feat: add intake schemas and project persistence"
 - Create: `src/app/api/projects/route.ts`
 - Test: `tests/unit/project-intake-form.test.tsx`
 
-- [ ] **Step 1: Write the failing form test**
+- [x] **Step 1: Write the failing form test**
 
 ```tsx
 // tests/unit/project-intake-form.test.tsx
@@ -516,13 +516,13 @@ describe("ProjectIntakeForm", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/project-intake-form.test.tsx`
 
 Expected: FAIL with missing component import.
 
-- [ ] **Step 3: Create the intake form and route**
+- [x] **Step 3: Create the intake form and route**
 
 ```tsx
 // src/components/intake/project-intake-form.tsx
@@ -621,7 +621,7 @@ export async function POST(request: Request) {
 }
 ```
 
-- [ ] **Step 4: Rerun the form test and add an API test**
+- [x] **Step 4: Rerun the form test and add an API test**
 
 ```ts
 // tests/unit/projects-route.test.ts
@@ -644,7 +644,7 @@ Run: `npm run test -- tests/unit/project-intake-form.test.tsx tests/unit/project
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/intake/project-intake-form.tsx src/app/projects/new/page.tsx src/app/api/projects/route.ts tests/unit/project-intake-form.test.tsx tests/unit/projects-route.test.ts
