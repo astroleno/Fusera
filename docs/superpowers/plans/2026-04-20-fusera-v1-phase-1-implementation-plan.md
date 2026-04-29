@@ -6,9 +6,11 @@
 
 **Harness note:** Background only for the harness subsystem. Harness bootstrapping is now governed by `docs/superpowers/harness/2026-04-25-p0-harness-implementation-plan.md`, with current source under `superpowers/`. This plan remains the app-consumer delivery plan and should not be used as the canonical source for building the harness subsystem itself.
 
+**Continuation note, 2026-04-29:** Tasks 1-4 are implemented on branch `codex/app-baseline` through commit `cc90363`. For the next work, use `docs/superpowers/plans/2026-04-29-fusera-phase-1-continuation-plan.md` as the executable continuation plan. That plan supersedes the older Task 5-8 snippets below where they conflict with the current strict artifact schemas, App Router route shapes, or existing CSS patterns.
+
 **Architecture:** The app is a single Next.js App Router application backed by Supabase for auth, data, and storage. Generation is driven through structured artifacts (`ProductBrief`, `PagePlan`, `SectionGraph`, `ThemeTokens`) and a bounded section registry, with Trigger.dev handling async generation and screenshot-based quality scoring.
 
-**Tech Stack:** Next.js App Router, TypeScript, Tailwind CSS, Supabase, AI SDK, Trigger.dev, Vitest, Playwright
+**Tech Stack:** Next.js App Router, TypeScript, global CSS with controlled tokens, Supabase, AI SDK, Trigger.dev, Vitest, Playwright
 
 ---
 

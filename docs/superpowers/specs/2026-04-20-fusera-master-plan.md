@@ -1,8 +1,34 @@
 # Fusera Master Plan
 
 Date: 2026-04-20
-Status: Draft for review
+Status: Active program plan, app Phase 1 in progress
 Purpose: Hardened program plan built from the V1 PRD, technical design, and supplemental project docs
+
+## Current Implementation Checkpoint
+
+Updated: 2026-04-29
+
+Current app branch: `codex/app-baseline`
+
+Implemented:
+
+- Harness P1 path is closed through live/model-owned artifacts, deterministic `PageSpec` compilation, deterministic QA, and preview `PublishVersion`.
+- App Phase 1 Task 1 is complete: Next.js App Router shell, global styles, Vitest, Playwright, and production build baseline.
+- App Phase 1 Task 2 is complete: project intake schema, canonical app-side artifact envelope and payload schemas, Supabase persistence skeleton, and initial migration.
+- App Phase 1 Task 3 is complete: `/projects/new` guided intake page and `POST /api/projects` invalid-input path.
+- App Phase 1 Task 4 is complete: deterministic placeholder generation for `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, and `ThemeTokens`; generation trigger task; and `POST /api/projects/[projectId]/generate`.
+
+Not yet implemented:
+
+- App-side section registry and preview compiler.
+- Project preview route backed by persisted artifacts.
+- Micro-adjustments and partial regeneration.
+- Quality scoring and publish flow.
+- Full intake-to-preview E2E path.
+
+Current continuation plan:
+
+- `docs/superpowers/plans/2026-04-29-fusera-phase-1-continuation-plan.md`
 
 ## 1. Executive Summary
 
@@ -128,7 +154,8 @@ Evolve into an AI growth platform for independent commerce while preserving the 
 
 The plan should assume:
 
-- greenfield repository with no app implementation yet
+- the harness is already implemented under `superpowers/`
+- the app has completed Phase 1 Tasks 1-4 on `codex/app-baseline`
 - limited initial engineering bandwidth
 - quality is more important than breadth
 - design reputation is a core part of the moat
@@ -348,7 +375,7 @@ Defer to Phase 2 or later:
 The current preferred direction remains:
 
 - Next.js App Router for the application surface
-- React and Tailwind with controlled design tokens for rendering
+- React with controlled design tokens for rendering; the current app baseline uses global CSS, with Tailwind still optional for later UI system work
 - Supabase for data, auth, and early storage
 - AI SDK for model abstraction and structured generation
 - Trigger.dev for asynchronous generation and QA workflows
