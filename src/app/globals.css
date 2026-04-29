@@ -363,6 +363,17 @@ h1 {
   padding-top: 20px;
 }
 
+.project-page {
+  min-height: 100vh;
+  padding: clamp(24px, 5vw, 64px);
+}
+
+.empty-preview {
+  display: grid;
+  align-content: center;
+  min-height: 70vh;
+}
+
 .generated-preview {
   display: grid;
   gap: 1px;
