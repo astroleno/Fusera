@@ -58,7 +58,7 @@ Planned files and responsibilities:
 - Create: `playwright.config.ts`
 - Test: `tests/unit/app-shell.test.tsx`
 
-- [ ] **Step 1: Write the failing shell test**
+- [x] **Step 1: Write the failing shell test**
 
 ```tsx
 // tests/unit/app-shell.test.tsx
@@ -75,13 +75,13 @@ describe("HomePage", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/app-shell.test.tsx`
 
 Expected: FAIL with `Cannot find module '@/app/page'` or missing test config.
 
-- [ ] **Step 3: Create the baseline app files**
+- [x] **Step 3: Create the baseline app files**
 
 ```json
 // package.json
@@ -215,7 +215,7 @@ export default function HomePage() {
 }
 ```
 
-- [ ] **Step 4: Add test config and rerun the unit test**
+- [x] **Step 4: Add test config and rerun the unit test**
 
 ```ts
 // vitest.config.ts
@@ -265,7 +265,7 @@ Run: `npm run test -- tests/unit/app-shell.test.tsx`
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json next.config.ts tsconfig.json vitest.config.ts playwright.config.ts src/app/layout.tsx src/app/page.tsx src/app/globals.css tests/unit/app-shell.test.tsx tests/unit/setup.ts
