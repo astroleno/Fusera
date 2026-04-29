@@ -363,6 +363,59 @@ h1 {
   padding-top: 20px;
 }
 
+.generated-preview {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--line);
+}
+
+.preview-section {
+  background: var(--surface);
+  padding: clamp(28px, 5vw, 64px);
+}
+
+.preview-section h2,
+.preview-section h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 520;
+  letter-spacing: 0;
+}
+
+.preview-section h2 {
+  max-width: 760px;
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  line-height: 0.95;
+}
+
+.preview-section h3 {
+  font-size: clamp(1.7rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.preview-section p,
+.preview-section li {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.preview-section button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: var(--surface);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0 18px;
+}
+
 .single-column {
   grid-template-columns: 1fr;
 }
