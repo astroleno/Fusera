@@ -1,3 +1,4 @@
+import MicroAdjustmentsPanel from "@/components/editor/micro-adjustments-panel";
 import PagePreview from "@/components/editor/page-preview";
 import { loadProjectPreview } from "@/lib/projects/load-project-preview";
 
@@ -17,7 +18,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         <a href="/projects/new">New project</a>
       </nav>
       {page ? (
-        <PagePreview page={page} />
+        <section className="project-preview-layout">
+          <PagePreview page={page} />
+          <MicroAdjustmentsPanel projectId={projectId} />
+        </section>
       ) : (
         <section className="empty-preview">
           <p className="eyebrow">Preview pending</p>

@@ -374,6 +374,13 @@ h1 {
   min-height: 70vh;
 }
 
+.project-preview-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+}
+
 .generated-preview {
   display: grid;
   gap: 1px;
@@ -427,6 +434,33 @@ h1 {
   padding: 0 18px;
 }
 
+.adjustment-panel {
+  position: sticky;
+  top: 32px;
+  display: grid;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.adjustment-panel div {
+  display: grid;
+  gap: 10px;
+}
+
+.adjustment-panel button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0 14px;
+  text-align: left;
+}
+
 .single-column {
   grid-template-columns: 1fr;
 }
@@ -451,7 +485,15 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .project-preview-layout {
+    grid-template-columns: 1fr;
+  }
+
   .readiness-panel {
+    position: static;
+  }
+
+  .adjustment-panel {
     position: static;
   }
 }
