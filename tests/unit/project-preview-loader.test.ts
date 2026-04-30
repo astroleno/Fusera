@@ -113,4 +113,10 @@ describe("loadProjectPreview", () => {
 
     await expect(loadProjectPreview("project_missing")).resolves.toBeNull();
   });
+
+  it("returns null when preview storage is not configured", async () => {
+    mocks.createDbClient.mockRejectedValue(new Error("supabaseUrl is required"));
+
+    await expect(loadProjectPreview("project_local")).resolves.toBeNull();
+  });
 });

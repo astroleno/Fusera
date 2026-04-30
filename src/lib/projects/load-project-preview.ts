@@ -6,7 +6,14 @@ import {
 import { compilePage } from "@/lib/page-spec/compile-page";
 
 export async function loadProjectPreview(projectId: string) {
-  const db = await createDbClient();
+  let db: Awaited<ReturnType<typeof createDbClient>>;
+
+  try {
+    db = await createDbClient();
+  } catch {
+    return null;
+  }
+
   const { data: run, error: runError } = await db
     .from("generation_runs")
     .select("id, latest_section_graph_ref, latest_theme_tokens_ref")
