@@ -23,7 +23,7 @@ Latest implemented app commits:
 - `4c49e5a feat(app): start generation from intake`
 - `d3edcfd feat(app): add bounded adjustment controls`
 - `2f7e2b4 feat(app): add quality scoring and publish skeleton`
-- `9bea7b9 test(app): add phase 1 browser smoke`
+- `4768748 test(app): add phase 1 browser smoke`
 
 Phase 1 app progress:
 
