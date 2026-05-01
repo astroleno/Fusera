@@ -15,6 +15,9 @@ on:
       - "docs/superpowers/harness/**"
       - "superpowers/**"
       - ".github/workflows/harness.yml"
+  schedule:
+    - cron: "17 19 * * *"
+    - cron: "37 20 * * 0"
   workflow_dispatch:
     inputs:
       live_gate:
@@ -49,6 +52,7 @@ permissions:
 jobs:
   ci-mock:
     name: ci mock
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -80,7 +84,7 @@ jobs:
 
   ci-live:
     name: live gate
-    if: github.event_name == 'workflow_dispatch' && inputs.live_gate != 'none'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.live_gate != 'none')
     runs-on:
       - self-hosted
       - fusera-live
@@ -109,6 +113,8 @@ jobs:
 
       - name: Run selected live gate
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
           LIVE_GATE: ${{ inputs.live_gate }}
           STABILITY_RUNS: ${{ inputs.stability_runs }}
           CASE_IDS: ${{ inputs.case_ids }}
@@ -116,10 +122,30 @@ jobs:
         run: |
           set -euo pipefail
 
+          EVENT_NAME="${EVENT_NAME:-}"
+          EVENT_SCHEDULE="${EVENT_SCHEDULE:-}"
           LIVE_GATE="${LIVE_GATE:-}"
           STABILITY_RUNS="${STABILITY_RUNS:-3}"
           CASE_IDS="${CASE_IDS:-all}"
           TARGET_STAGE="${TARGET_STAGE:-design-system-pass}"
+
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            case "$EVENT_SCHEDULE" in
+              "17 19 * * *")
+                LIVE_GATE="ci-isolated-live"
+                CASE_IDS="all"
+                TARGET_STAGE="design-system-pass"
+                ;;
+              "37 20 * * 0")
+                LIVE_GATE="live-stability"
+                STABILITY_RUNS="3"
+                ;;
+              *)
+                echo "Unsupported schedule=$EVENT_SCHEDULE" >&2
+                exit 1
+                ;;
+            esac
+          fi
 
           case "$LIVE_GATE" in
             ci-live)
