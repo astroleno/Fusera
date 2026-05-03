@@ -65,7 +65,7 @@ node --experimental-strip-types superpowers/runner/verify-live-codex-isolated-ba
 - `FUSERA_LIVE_TOOL_USE_POLICY=fail`
 - `FUSERA_LIVE_MATRIX_RETRY_POLICY=retryable`
 
-It clears ambient Codex args, workspace-inspection, Codex workdir, matrix path, case-selection, and target-stage overrides before running. Manual full-matrix runs and scheduled CI jobs call this entrypoint without arguments. Ad hoc local subset runs may pass case ids and a target stage as CLI arguments.
+It clears ambient Codex args, workspace-inspection, Codex workdir, matrix path, case-selection, and target-stage overrides before running. Manual full-matrix runs call this entrypoint without arguments. Future scheduled CI jobs should call it the same way only after the live runner and Codex auth are proven in GitHub Actions. Ad hoc local subset runs may pass case ids and a target stage as CLI arguments.
 
 Each baseline run writes a full matrix report under `.fusera/runs/live-quality-matrix_*.json` and updates the stable latest pointer:
 
@@ -93,7 +93,7 @@ When `ci live` or `live-stability` runs in real adapter mode, the runner applies
 
 These defaults are recorded in the live stability report as `canonical_live_defaults`, and each real adapter attempt records the effective model, reasoning effort, and timeout in `adapter-result.json`.
 
-`ci isolated-live` is the hard-isolation live gate. With no arguments it runs the full live quality fixture matrix through `verify-live-codex-isolated-baseline.ts`. Local subset runs may pass case ids and a target stage. GitHub Actions runs the full `all design-system-pass` gate manually through `workflow_dispatch` and daily through the scheduled live-only gate.
+`ci isolated-live` is the hard-isolation live gate. With no arguments it runs the full live quality fixture matrix through `verify-live-codex-isolated-baseline.ts`. Local subset runs may pass case ids and a target stage. GitHub Actions runs the full `all design-system-pass` gate manually through `workflow_dispatch`; scheduled live gates should be added only after the `fusera-live` runner and Codex auth are registered, monitored, and proven through downloadable workflow artifacts.
 
 The live quality matrix retries retryable model-owned stage failures when `FUSERA_LIVE_MATRIX_RETRY_POLICY=retryable`. Reports record per-case retry evidence, retry recoveries, and timeout provenance. Recovered retries preserve the initial failure details in the case result instead of hiding the event.
 
@@ -110,7 +110,7 @@ GitHub Actions wiring lives at `.github/workflows/harness.yml`:
 
 - PR and `main` push run `ci mock` on `ubuntu-latest`; this is the required deterministic gate.
 - Manual `workflow_dispatch` can run `ci-live`, `live-stability`, or `ci-isolated-live`.
-- Scheduled runs are live-only: daily `ci-isolated-live all design-system-pass` at `17 19 * * *` UTC and weekly `live-stability --runs 3` at `37 20 * * 0` UTC. `ci mock` is explicitly skipped for `schedule` events.
+- No scheduled live gates are enabled yet. Add `schedule` only after manual live gates prove the self-hosted runner, Codex auth, preflight report, and artifact upload path in GitHub Actions.
 - Live gates require a self-hosted runner labeled `fusera-live` with Codex CLI installed and authenticated.
 - Live jobs clean `.fusera/runs/` before running, then write `live-runner-preflight.json` from `check-live-runner.ts --strict-github-actions --auth-probe` before the selected gate.
 - Mock and live jobs upload `.fusera/runs/**` with `if: always()` when they run, so failed gates preserve run evidence, raw adapter attempts, reports, and event ledgers as workflow artifacts.
@@ -121,7 +121,7 @@ GitHub Actions wiring lives at `.github/workflows/harness.yml`:
 - Codex CLI is installed in `PATH`, authenticated for non-interactive `codex exec`, and can run the preflight auth probe.
 - Node 24 is available through `actions/setup-node`.
 - The runner workspace permits deleting and recreating `.fusera/runs/`; that directory is runtime evidence only.
-- Manual `ci-isolated-live`, `ci-live`, and `live-stability` artifacts should remain downloadable from the GitHub Actions run now that scheduled live gates are enabled.
+- Manual `ci-isolated-live`, `ci-live`, and `live-stability` artifacts should be downloadable from the GitHub Actions run before adding scheduled live gates.
 
 `continue` locks adapter mode to the run. It reads `run.json.adapter_mode` first, then falls back to existing stage evidence for legacy runs. `--live` and `--mock` are explicit assertions; if the flag conflicts with the run's locked mode, the runner fails closed.
 
@@ -296,7 +296,8 @@ This closes the P1 live Codex artifact-to-preview proof. It does not yet close:
 Recommended P2 work:
 
 1. configure and monitor the `fusera-live` self-hosted runner with Codex CLI auth
-2. monitor scheduled `ci-isolated-live` and weekly `live-stability --runs 3` artifacts on the `fusera-live` runner
-3. review accumulated `live-stability --runs 3` samples before increasing sample size
-4. improve cost accounting beyond current duration/model/timeout/accounting metadata if Codex CLI exposes token or billing fields
-5. start `claude-code` adapter compatibility only after Codex-first live retry behavior remains stable
+2. run `ci-isolated-live` and `live-stability` manually until runner health is proven
+3. add nightly `ci-isolated-live` and weekly `live-stability --runs 3` only after manual GitHub Actions evidence is stable
+4. review accumulated `live-stability --runs 3` samples before increasing sample size
+5. improve cost accounting beyond current duration/model/timeout/accounting metadata if Codex CLI exposes token or billing fields
+6. start `claude-code` adapter compatibility only after Codex-first live retry behavior remains stable
