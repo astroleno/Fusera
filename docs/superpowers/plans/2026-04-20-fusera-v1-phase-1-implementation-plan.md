@@ -6,9 +6,11 @@
 
 **Harness note:** Background only for the harness subsystem. Harness bootstrapping is now governed by `docs/superpowers/harness/2026-04-25-p0-harness-implementation-plan.md`, with current source under `superpowers/`. This plan remains the app-consumer delivery plan and should not be used as the canonical source for building the harness subsystem itself.
 
+**Continuation note, 2026-04-29:** Tasks 1-4 are implemented on branch `codex/app-baseline` through commit `cc90363`. For the next work, use `docs/superpowers/plans/2026-04-29-fusera-phase-1-continuation-plan.md` as the executable continuation plan. That plan supersedes the older Task 5-8 snippets below where they conflict with the current strict artifact schemas, App Router route shapes, or existing CSS patterns.
+
 **Architecture:** The app is a single Next.js App Router application backed by Supabase for auth, data, and storage. Generation is driven through structured artifacts (`ProductBrief`, `PagePlan`, `SectionGraph`, `ThemeTokens`) and a bounded section registry, with Trigger.dev handling async generation and screenshot-based quality scoring.
 
-**Tech Stack:** Next.js App Router, TypeScript, Tailwind CSS, Supabase, AI SDK, Trigger.dev, Vitest, Playwright
+**Tech Stack:** Next.js App Router, TypeScript, global CSS with controlled tokens, Supabase, AI SDK, Trigger.dev, Vitest, Playwright
 
 ---
 
@@ -58,7 +60,7 @@ Planned files and responsibilities:
 - Create: `playwright.config.ts`
 - Test: `tests/unit/app-shell.test.tsx`
 
-- [ ] **Step 1: Write the failing shell test**
+- [x] **Step 1: Write the failing shell test**
 
 ```tsx
 // tests/unit/app-shell.test.tsx
@@ -75,13 +77,13 @@ describe("HomePage", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/app-shell.test.tsx`
 
 Expected: FAIL with `Cannot find module '@/app/page'` or missing test config.
 
-- [ ] **Step 3: Create the baseline app files**
+- [x] **Step 3: Create the baseline app files**
 
 ```json
 // package.json
@@ -215,7 +217,7 @@ export default function HomePage() {
 }
 ```
 
-- [ ] **Step 4: Add test config and rerun the unit test**
+- [x] **Step 4: Add test config and rerun the unit test**
 
 ```ts
 // vitest.config.ts
@@ -265,7 +267,7 @@ Run: `npm run test -- tests/unit/app-shell.test.tsx`
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json next.config.ts tsconfig.json vitest.config.ts playwright.config.ts src/app/layout.tsx src/app/page.tsx src/app/globals.css tests/unit/app-shell.test.tsx tests/unit/setup.ts
@@ -281,7 +283,7 @@ git commit -m "feat: scaffold fusera app baseline"
 - Create: `src/lib/db.ts`
 - Test: `tests/unit/project-input.test.ts`
 
-- [ ] **Step 1: Write the failing intake validation test**
+- [x] **Step 1: Write the failing intake validation test**
 
 ```ts
 // tests/unit/project-input.test.ts
@@ -303,13 +305,13 @@ describe("projectInputSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/project-input.test.ts`
 
 Expected: FAIL with `Cannot find module '@/lib/domain/project-input'`.
 
-- [ ] **Step 3: Define the intake and artifact schemas**
+- [x] **Step 3: Define the intake and artifact schemas**
 
 Architecture alignment note:
 
@@ -431,7 +433,7 @@ export function createArtifactEnvelope<TPayload>(params: {
 }
 ```
 
-- [ ] **Step 4: Add persistence skeleton and migration**
+- [x] **Step 4: Add persistence skeleton and migration**
 
 ```sql
 -- supabase/migrations/0001_initial.sql
@@ -481,7 +483,7 @@ export function createDbClient() {
 }
 ```
 
-- [ ] **Step 5: Rerun the validation test and commit**
+- [x] **Step 5: Rerun the validation test and commit**
 
 Run: `npm run test -- tests/unit/project-input.test.ts`
 
@@ -500,7 +502,7 @@ git commit -m "feat: add intake schemas and project persistence"
 - Create: `src/app/api/projects/route.ts`
 - Test: `tests/unit/project-intake-form.test.tsx`
 
-- [ ] **Step 1: Write the failing form test**
+- [x] **Step 1: Write the failing form test**
 
 ```tsx
 // tests/unit/project-intake-form.test.tsx
@@ -516,13 +518,13 @@ describe("ProjectIntakeForm", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/project-intake-form.test.tsx`
 
 Expected: FAIL with missing component import.
 
-- [ ] **Step 3: Create the intake form and route**
+- [x] **Step 3: Create the intake form and route**
 
 ```tsx
 // src/components/intake/project-intake-form.tsx
@@ -621,7 +623,7 @@ export async function POST(request: Request) {
 }
 ```
 
-- [ ] **Step 4: Rerun the form test and add an API test**
+- [x] **Step 4: Rerun the form test and add an API test**
 
 ```ts
 // tests/unit/projects-route.test.ts
@@ -644,7 +646,7 @@ Run: `npm run test -- tests/unit/project-intake-form.test.tsx tests/unit/project
 
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/intake/project-intake-form.tsx src/app/projects/new/page.tsx src/app/api/projects/route.ts tests/unit/project-intake-form.test.tsx tests/unit/projects-route.test.ts
@@ -653,6 +655,13 @@ git commit -m "feat: add guided intake flow"
 
 ## Task 4: Add Canonical Generation And Async Orchestration
 
+**Implementation note:** The historical snippets in this task predate the
+strict app-side artifact schemas. The completed implementation follows
+`src/lib/domain/page-artifacts.ts`: `PagePlan.section_intents` are objects,
+`SectionGraph` uses `section_id` / `section_type` / `title` / `props`,
+`ThemeTokens.colors` includes `background` / `surface` / `text` / `accent`,
+and `SectionGraph.producer_stage` is `section-planning`.
+
 **Files:**
 - Create: `src/lib/ai/product-brief.ts`
 - Create: `src/lib/ai/page-strategy.ts`
@@ -660,7 +669,7 @@ git commit -m "feat: add guided intake flow"
 - Create: `src/app/api/projects/[projectId]/generate/route.ts`
 - Test: `tests/unit/generate-page.test.ts`
 
-- [ ] **Step 1: Write the failing generation contract test**
+- [x] **Step 1: Write the failing generation contract test**
 
 ```ts
 // tests/unit/generate-page.test.ts
@@ -694,13 +703,13 @@ describe("buildPageArtifacts", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- tests/unit/generate-page.test.ts`
 
 Expected: FAIL with missing module import.
 
-- [ ] **Step 3: Implement deterministic placeholder generation functions**
+- [x] **Step 3: Implement deterministic placeholder generation functions**
 
 ```ts
 // src/lib/ai/product-brief.ts
@@ -820,7 +829,7 @@ export async function buildPageArtifacts({ runId, ...input }: BuildPageArtifacts
 }
 ```
 
-- [ ] **Step 4: Add the async generation job and API route**
+- [x] **Step 4: Add the async generation job and API route**
 
 ```ts
 // src/trigger/generate-page.ts
@@ -908,7 +917,7 @@ export async function POST(
 }
 ```
 
-- [ ] **Step 5: Rerun tests and commit**
+- [x] **Step 5: Rerun tests and commit**
 
 Run: `npm run test -- tests/unit/generate-page.test.ts`
 
