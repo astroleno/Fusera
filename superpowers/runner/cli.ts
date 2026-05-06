@@ -1,7 +1,11 @@
+import { spawnSync } from "node:child_process";
+import { constants } from "node:fs";
+import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { CodexAdapterMode } from "../adapters/codex/adapter.ts";
 import { runCiIsolatedLive, runCiLive, runCiMock, runLiveStability } from "./ci-gates.ts";
+import { checkLiveRunner } from "./check-live-runner.ts";
 import { inspectRun, formatInspectionText } from "./inspect-run.ts";
 import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "./run-stage.ts";
 import { verifyLiveCodexQuality } from "./verify-live-codex-quality.ts";
@@ -9,6 +13,12 @@ import { verifyLivePreviewPublish } from "./verify-live-preview-publish.ts";
 import { verifyP0Harness } from "./verify-p0-harness.ts";
 
 type CliResult = Record<string, unknown>;
+type DoctorCheck = {
+  name: string;
+  ok: boolean;
+  details?: Record<string, unknown>;
+  error?: string;
+};
 
 export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
   const [command, subcommand, ...rest] = argv;
@@ -50,6 +60,14 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (command === "live-stability") {
     return liveStabilityCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
+  }
+
+  if (command === "doctor") {
+    return doctorCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
+  }
+
+  if (command === "skills") {
+    return skillsCommand(subcommand, rest);
   }
 
   throw new Error(`Unknown command: ${command}\n\n${usage()}`);
@@ -306,6 +324,64 @@ async function liveStabilityCommand(args: string[]): Promise<CliResult> {
   };
 }
 
+async function doctorCommand(args: string[]): Promise<CliResult> {
+  const live = args.includes("--live");
+  const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+  const checks: DoctorCheck[] = [
+    await checkReadable("artifact-schemas", path.join(sourceRoot, "superpowers/contracts/artifacts")),
+    await checkReadable("pack-registry", path.join(sourceRoot, "superpowers/packs/registry.yaml")),
+    await checkReadable("stage-profiles", path.join(sourceRoot, "superpowers/packs/stage-profiles.yaml")),
+    await checkWritableRuntime(sourceRoot)
+  ];
+
+  let liveReport: Record<string, unknown> | undefined;
+
+  if (live) {
+    const report = await checkLiveRunner({
+      rootDir: sourceRoot,
+      authProbe: args.includes("--auth-probe"),
+      strictGithubActions: args.includes("--strict-github-actions")
+    });
+    liveReport = report as unknown as Record<string, unknown>;
+    checks.push(
+      ...report.checks.map((check) => ({
+        ...check,
+        name: `live:${check.name}`
+      }))
+    );
+  }
+
+  return {
+    ok: checks.every((check) => check.ok),
+    command: "doctor --deep",
+    source_root: sourceRoot,
+    workspace_root: process.env.FUSERA_WORKSPACE_ROOT ?? process.cwd(),
+    live,
+    live_report: liveReport,
+    checks
+  };
+}
+
+async function skillsCommand(subcommand: string | undefined, args: string[]): Promise<CliResult> {
+  if (subcommand !== "install") {
+    throw new Error(`Unknown skills command: ${subcommand ?? "(missing)"}\n\n${usage()}`);
+  }
+
+  const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+  const scriptPath = path.join(sourceRoot, "scripts/install-skills.mjs");
+  const result = spawnSync(process.execPath, [scriptPath, ...args], {
+    cwd: sourceRoot,
+    env: process.env,
+    encoding: "utf8"
+  });
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr || result.stdout || result.error?.message || "skills install failed");
+  }
+
+  return JSON.parse(result.stdout) as CliResult;
+}
+
 function usage(): string {
   return [
     "Usage:",
@@ -316,13 +392,15 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts continue <run-dir> <target-stage> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts resume <run-dir> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts doctor [--deep] [--live] [--auth-probe]",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify p0",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-preview <run-dir>",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-quality <run-dir> [target-stage]",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci mock",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci live [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live [case-ids] [target-stage]",
-    "  node --experimental-strip-types superpowers/runner/cli.ts live-stability [--runs <n>] [input.json] [--mock]"
+    "  node --experimental-strip-types superpowers/runner/cli.ts live-stability [--runs <n>] [input.json] [--mock]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts skills install --scope <codex-global|repo-local> [--workspace-root <path>] [--dry-run]"
   ].join("\n");
 }
 
@@ -388,6 +466,37 @@ function adapterModeFlag(args: string[]): CodexAdapterMode | undefined {
   }
 
   return undefined;
+}
+
+async function checkReadable(name: string, targetPath: string): Promise<DoctorCheck> {
+  try {
+    await access(targetPath, constants.R_OK);
+    return { name, ok: true, details: { path: targetPath } };
+  } catch (error) {
+    return {
+      name,
+      ok: false,
+      details: { path: targetPath },
+      error: (error as Error).message
+    };
+  }
+}
+
+async function checkWritableRuntime(sourceRoot: string): Promise<DoctorCheck> {
+  const runtimeDir = path.join(sourceRoot, ".fusera/runs");
+
+  try {
+    await mkdir(runtimeDir, { recursive: true });
+    await access(runtimeDir, constants.R_OK | constants.W_OK);
+    return { name: "runtime-directory", ok: true, details: { path: runtimeDir } };
+  } catch (error) {
+    return {
+      name: "runtime-directory",
+      ok: false,
+      details: { path: runtimeDir },
+      error: (error as Error).message
+    };
+  }
 }
 
 async function withEnv<T>(env: Record<string, string>, callback: () => Promise<T>): Promise<T> {
