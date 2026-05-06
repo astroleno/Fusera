@@ -10,6 +10,7 @@
 .fusera/
 
 # Local reference corpus (kept outside the canonical repo history)
+reference
 reference/
 
 # Node / TypeScript build output

@@ -61,6 +61,31 @@ Node policy:
 - Local `fusera` startup, `doctor --bootstrap-only`, and mock harness commands require Node `>=22.22.0`.
 - Live Codex readiness is checked by `fusera doctor --live`, which composes the existing live-runner preflight and may require a stricter Node version. As of this plan, `checkLiveRunner()` requires Node `>=24`.
 
+## Fusera Harness CLI
+
+```bash
+npm link
+fusera doctor
+fusera verify p0
+fusera run mock-publish path/to/input.json
+fusera inspect path/to/run-dir --json
+```
+
+The installed CLI resolves its Fusera `source_root` from the linked package. It resolves caller-provided relative paths from the directory where `fusera` was invoked before delegating to the harness runner.
+
+## Companion Skills Install
+
+```bash
+fusera skills install --scope codex-global
+fusera skills install --scope repo-local
+```
+
+`codex-global` writes to `~/.codex/skills/fusera`.
+
+`repo-local` writes to `<workspace_root>/.agents/skills/fusera`.
+
+The skills install is a companion bundle for a local Fusera checkout. Copied pack files are only a reading index; authoritative registry, references, contracts, and runner behavior resolve through `source_root`. Runtime execution is Codex-first. Claude Code usage is instruction-only until a future `superpowers/adapters/claude-code/` adapter exists.
+
 The app expects Supabase credentials for real project creation and generation:
 
 ```bash
