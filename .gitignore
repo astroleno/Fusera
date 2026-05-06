@@ -38,3 +38,4 @@ hexagram-logo-system/output/
 *.log
 tmp/
 .tmp/
+.worktrees/
