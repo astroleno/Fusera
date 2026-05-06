@@ -25,3 +25,9 @@
 - P0 is codex-first.
 - Backend-specific execution behavior belongs under `superpowers/adapters/`.
 - `claude-code` compatibility is a future adapter target, not the P0 driver.
+
+## Startup Distribution
+
+- Startup distribution follows `docs/superpowers/harness/2026-05-05-startup-distribution-contract.md`.
+- Skills-only installs are companion bundles for a local Fusera checkout, not self-contained external pack distributions.
+- Copied pack files in a companion bundle are reading indexes; authoritative pack resolution remains under `superpowers/`.
