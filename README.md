@@ -56,6 +56,11 @@ npm run test:e2e
 node --experimental-strip-types superpowers/runner/cli.ts ci mock
 ```
 
+Node policy:
+
+- Local `fusera` startup, `doctor --bootstrap-only`, and mock harness commands require Node `>=22.22.0`.
+- Live Codex readiness is checked by `fusera doctor --live`, which composes the existing live-runner preflight and may require a stricter Node version. As of this plan, `checkLiveRunner()` requires Node `>=24`.
+
 The app expects Supabase credentials for real project creation and generation:
 
 ```bash

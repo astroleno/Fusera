@@ -2,7 +2,18 @@
   "name": "fusera",
   "private": true,
   "type": "module",
+  "bin": {
+    "fusera": "./bin/fusera.mjs"
+  },
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "scripts": {
+    "fusera": "node ./bin/fusera.mjs",
+    "harness:verify": "node ./bin/fusera.mjs verify p0",
+    "harness:mock": "node ./bin/fusera.mjs run mock-publish",
+    "harness:live": "node ./bin/fusera.mjs run live-publish",
+    "harness:startup": "node scripts/verify-startup-distribution.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

@@ -33,6 +33,8 @@ venv/
 
 # Generated asset output
 hexagram-logo-system/output/
+.agents/
+.opencode/
 
 # Logs / temp
 *.log
