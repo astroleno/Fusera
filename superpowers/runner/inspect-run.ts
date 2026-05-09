@@ -65,6 +65,8 @@ type ArtifactInspection = {
   status?: string;
   producer_stage?: string;
   validation_valid?: boolean;
+  rejected?: boolean;
+  validation_errors?: string[];
 };
 
 const DEFAULT_RECENT_EVENT_COUNT = 12;
@@ -179,6 +181,10 @@ export function formatInspectionText(inspection: RunInspection): string {
     lines.push(
       `- ${artifact.file_name}: ${artifact.artifact_type ?? "unknown"} ${artifact.status ?? "unknown"} ${artifact.artifact_id ?? ""}`.trim()
     );
+
+    if (artifact.validation_errors && artifact.validation_errors.length > 0) {
+      lines.push(`  errors: ${artifact.validation_errors.join("; ")}`);
+    }
   }
 
   if (inspection.failed_stage || inspection.failure_message) {
@@ -250,10 +256,16 @@ async function inspectArtifacts(runDir: string): Promise<ArtifactInspection[]> {
   const artifactsDir = path.join(runDir, "artifacts");
   const fileNames = await readDirIfPresent(artifactsDir);
   const artifactFiles = fileNames.filter((fileName) => fileName.endsWith(".json")).sort();
+  const rejectedDir = path.join(artifactsDir, "rejected");
+  const rejectedArtifactFiles = (await readDirIfPresent(rejectedDir))
+    .filter((fileName) => fileName.endsWith(".json"))
+    .sort()
+    .map((fileName) => `rejected/${fileName}`);
 
   return Promise.all(
-    artifactFiles.map(async (fileName) => {
+    [...artifactFiles, ...rejectedArtifactFiles].map(async (fileName) => {
       const artifact = await readJson(path.join(artifactsDir, fileName));
+      const validation = isRecord(artifact.validation) ? artifact.validation : {};
 
       return {
         file_name: fileName,
@@ -262,11 +274,11 @@ async function inspectArtifacts(runDir: string): Promise<ArtifactInspection[]> {
         status: stringOrUndefined(artifact.status),
         producer_stage: stringOrUndefined(artifact.producer_stage),
         validation_valid:
-          typeof artifact.validation === "object" &&
-          artifact.validation !== null &&
-          typeof (artifact.validation as Record<string, unknown>).valid === "boolean"
-            ? Boolean((artifact.validation as Record<string, unknown>).valid)
-            : undefined
+          typeof validation.valid === "boolean" ? Boolean(validation.valid) : undefined,
+        rejected: fileName.startsWith("rejected/"),
+        validation_errors: Array.isArray(validation.errors)
+          ? validation.errors.filter((error): error is string => typeof error === "string")
+          : undefined
       };
     })
   );
@@ -393,6 +405,7 @@ function stageOrder(stage: string): number {
     "page-strategy",
     "section-planning",
     "design-system-pass",
+    "design-spec-pass",
     "page-compile",
     "verify-publishable-page",
     "publish-preview"

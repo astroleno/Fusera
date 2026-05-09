@@ -8,7 +8,11 @@ import { publishPreview } from "./publish-preview.ts";
 import { persistRepairDecision } from "./repair-run.ts";
 import { decideRetry, persistRetryDecision } from "./retry-policy.ts";
 import { resolveStage, type StageResolution } from "./resolve-packs.ts";
-import { validateAndPersistArtifact, type ArtifactEnvelope } from "./validate-artifact.ts";
+import {
+  readValidatedArtifact,
+  validateAndPersistArtifact,
+  type ArtifactEnvelope
+} from "./validate-artifact.ts";
 import { verifyRun } from "./verify-run.ts";
 import { writeRunEvent } from "./write-run-event.ts";
 
@@ -837,7 +841,13 @@ export async function persistAdapterArtifactCandidates(options: {
       artifact: candidate,
       contractsDir: options.contractsDir,
       runDir: options.runDir,
-      additionalErrors: routeErrors
+      additionalErrors: [
+        ...routeErrors,
+        ...(await crossArtifactErrorsForCandidate({
+          runDir: options.runDir,
+          candidate
+        }))
+      ]
     });
 
     if (!validation.valid) {
@@ -860,6 +870,90 @@ export async function persistAdapterArtifactCandidates(options: {
   }
 
   return persisted;
+}
+
+async function crossArtifactErrorsForCandidate(options: {
+  runDir: string;
+  candidate: ArtifactEnvelope;
+}): Promise<string[]> {
+  if (options.candidate.artifact_type !== "DesignSpec") {
+    return [];
+  }
+
+  return designSpecCrossArtifactErrors(options.runDir, options.candidate);
+}
+
+async function designSpecCrossArtifactErrors(runDir: string, candidate: ArtifactEnvelope): Promise<string[]> {
+  const requiredArtifactTypes = ["ProductBrief", "BrandProfile", "PagePlan", "SectionGraph", "ThemeTokens"];
+  const errors: string[] = [];
+  const upstreamArtifacts = new Map<string, ArtifactEnvelope>();
+
+  for (const artifactType of requiredArtifactTypes) {
+    try {
+      upstreamArtifacts.set(artifactType, await readValidatedArtifact(runDir, artifactType));
+    } catch (error) {
+      errors.push(`DesignSpec requires current validated ${artifactType}: ${(error as Error).message}`);
+    }
+  }
+
+  const inputRefs = new Set(Array.isArray(candidate.input_refs) ? candidate.input_refs : []);
+
+  for (const artifactType of requiredArtifactTypes) {
+    const artifact = upstreamArtifacts.get(artifactType);
+
+    if (artifact && !inputRefs.has(artifact.artifact_id)) {
+      errors.push(`DesignSpec.input_refs must include current ${artifactType} artifact_id ${artifact.artifact_id}`);
+    }
+  }
+
+  const productBrief = upstreamArtifacts.get("ProductBrief");
+  const sectionGraph = upstreamArtifacts.get("SectionGraph");
+  const candidatePayload = isRecord(candidate.payload) ? candidate.payload : {};
+  const constraints = isRecord(candidatePayload.claim_and_proof_constraints)
+    ? candidatePayload.claim_and_proof_constraints
+    : {};
+
+  if (productBrief) {
+    const expectedClaimPolicy = productBrief.payload.claim_policy;
+
+    if (
+      typeof expectedClaimPolicy === "string" &&
+      constraints.claim_policy !== expectedClaimPolicy
+    ) {
+      errors.push(
+        `DesignSpec.claim_and_proof_constraints.claim_policy must match ProductBrief.claim_policy ${expectedClaimPolicy}`
+      );
+    }
+  }
+
+  if (sectionGraph) {
+    const sectionOrder = stringArray(sectionGraph.payload.section_order);
+    const expectedSections = new Set(sectionOrder);
+    const sectionIntents = Array.isArray(candidatePayload.section_design_intents)
+      ? candidatePayload.section_design_intents
+      : [];
+    const intentSectionIds = sectionIntents
+      .map((intent) => (isRecord(intent) && typeof intent.section_id === "string" ? intent.section_id : ""))
+      .filter(Boolean);
+    const intentSectionSet = new Set(intentSectionIds);
+    const duplicateSectionIds = intentSectionIds.filter((sectionId, index) => intentSectionIds.indexOf(sectionId) !== index);
+    const unknownSectionIds = [...intentSectionSet].filter((sectionId) => !expectedSections.has(sectionId));
+    const omittedSectionIds = sectionOrder.filter((sectionId) => !intentSectionSet.has(sectionId));
+
+    if (duplicateSectionIds.length > 0) {
+      errors.push(`DesignSpec.section_design_intents contains duplicate section_id values: ${[...new Set(duplicateSectionIds)].join(", ")}`);
+    }
+
+    if (unknownSectionIds.length > 0) {
+      errors.push(`DesignSpec.section_design_intents contains unknown section_id values: ${unknownSectionIds.join(", ")}`);
+    }
+
+    if (omittedSectionIds.length > 0) {
+      errors.push(`DesignSpec.section_design_intents omits SectionGraph sections: ${omittedSectionIds.join(", ")}`);
+    }
+  }
+
+  return errors;
 }
 
 export type RepairBudget = {
@@ -966,6 +1060,7 @@ async function inferAdapterModeFromEvidence(runDir: string): Promise<CodexAdapte
     "page-strategy",
     "section-planning",
     "design-system-pass",
+    "design-spec-pass",
     "page-compile",
     "verify-publishable-page",
     "publish-preview"
@@ -1161,6 +1256,16 @@ async function readCompletedStages(runDir: string): Promise<Set<string>> {
 
 function isArtifactEnvelope(value: unknown): value is ArtifactEnvelope {
   return typeof value === "object" && value !== null && typeof (value as Record<string, unknown>).artifact_type === "string";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
 }
 
 function numberFrom(value: unknown, fallback: number): number {

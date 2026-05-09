@@ -43,6 +43,14 @@ stages:
       - ThemeTokens
     default_verifier: none
     default_backend: codex
+    next_stage: design-spec-pass
+  - stage: design-spec-pass
+    primary_task: tasks/design-spec
+    allowed_auxiliary_tasks: []
+    allowed_outputs:
+      - DesignSpec
+    default_verifier: none
+    default_backend: codex
     next_stage: page-compile
   - stage: page-compile
     primary_task: tasks/page-compile

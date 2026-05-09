@@ -35,7 +35,8 @@ const MODEL_OWNED_STAGES = new Set([
   "product-and-brand-brief",
   "page-strategy",
   "section-planning",
-  "design-system-pass"
+  "design-system-pass",
+  "design-spec-pass"
 ]);
 
 export function decideRetry(options: {

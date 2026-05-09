@@ -144,7 +144,8 @@ const MODEL_OWNED_STAGES = [
   "product-and-brand-brief",
   "page-strategy",
   "section-planning",
-  "design-system-pass"
+  "design-system-pass",
+  "design-spec-pass"
 ];
 const CANONICAL_LIVE_ENV: Record<string, string> = {
   FUSERA_CODEX_MODEL: "gpt-5.2",

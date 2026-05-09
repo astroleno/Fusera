@@ -128,7 +128,8 @@ const ARTIFACT_FILES: Record<string, string> = {
   BrandProfile: "brand-profile.json",
   PagePlan: "page-plan.json",
   SectionGraph: "section-graph.json",
-  ThemeTokens: "theme-tokens.json"
+  ThemeTokens: "theme-tokens.json",
+  DesignSpec: "design-spec.json"
 };
 
 export async function verifyLiveCodexMatrix(options: {
@@ -600,6 +601,16 @@ async function artifactSummary(runDir: unknown, artifactType: string): Promise<R
 
     if (artifactType === "ThemeTokens") {
       return pickSummary(payload, ["colors", "typography", "radii"]);
+    }
+
+    if (artifactType === "DesignSpec") {
+      return pickSummary(payload, [
+        "visual_thesis",
+        "token_directives",
+        "section_design_intents",
+        "claim_and_proof_constraints",
+        "anti_patterns"
+      ]);
     }
 
     return undefined;

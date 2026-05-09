@@ -30,6 +30,7 @@ export const ARTIFACT_FILE_NAMES: Record<string, string> = {
   PagePlan: "page-plan.json",
   SectionGraph: "section-graph.json",
   ThemeTokens: "theme-tokens.json",
+  DesignSpec: "design-spec.json",
   PageSpec: "page-spec.json",
   QAReport: "qa-report.json",
   PublishVersion: "publish-version.json"
@@ -41,6 +42,7 @@ export const SCHEMA_FILE_NAMES: Record<string, string> = {
   PagePlan: "page-plan.schema.json",
   SectionGraph: "section-graph.schema.json",
   ThemeTokens: "theme-tokens.schema.json",
+  DesignSpec: "design-spec.schema.json",
   PageSpec: "page-spec.schema.json",
   QAReport: "qa-report.schema.json",
   PublishVersion: "publish-version.schema.json"
@@ -254,6 +256,37 @@ function validateArtifactInvariants(candidate: unknown): string[] {
     errors.push("$.payload.proof_bindings must not be empty when claim_policy is proof-required");
   }
 
+  if (artifact.artifact_type === "DesignSpec") {
+    const constraints = isPlainObject(payload.claim_and_proof_constraints)
+      ? payload.claim_and_proof_constraints
+      : {};
+    const antiPatterns = isPlainObject(payload.anti_patterns) ? payload.anti_patterns : {};
+
+    if (!Array.isArray(payload.section_design_intents) || payload.section_design_intents.length === 0) {
+      errors.push("$.payload.section_design_intents must not be empty");
+    }
+
+    if (!hasNonEmptyStringArray(antiPatterns.visual)) {
+      errors.push("$.payload.anti_patterns.visual must not be empty");
+    }
+
+    if (!hasNonEmptyStringArray(antiPatterns.copy)) {
+      errors.push("$.payload.anti_patterns.copy must not be empty");
+    }
+
+    if (!hasNonEmptyStringArray(antiPatterns.proof)) {
+      errors.push("$.payload.anti_patterns.proof must not be empty");
+    }
+
+    if (
+      constraints.claim_policy !== "proof-required" &&
+      constraints.claim_policy !== "low-proof" &&
+      constraints.claim_policy !== "no-claims"
+    ) {
+      errors.push("$.payload.claim_and_proof_constraints.claim_policy must be a supported claim policy");
+    }
+  }
+
   if (artifact.artifact_type === "QAReport") {
     const issues = Array.isArray(payload.issues) ? payload.issues : [];
     const gateResults = Array.isArray(payload.gate_results) ? payload.gate_results : [];
@@ -306,6 +339,10 @@ function matchesType(value: unknown, expected: string | string[]): boolean {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasNonEmptyStringArray(value: unknown): boolean {
+  return Array.isArray(value) && value.some((item) => typeof item === "string" && item.trim().length > 0);
 }
 
 function safeRef(value: unknown): string {

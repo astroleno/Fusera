@@ -131,13 +131,13 @@ async function proofCommand(targetStage: string | undefined, args: string[]): Pr
     throw new Error(`proof requires a target stage\n\n${usage()}`);
   }
 
-  const live = args.includes("--live");
-  const inputPath = positional(args.filter((arg) => arg !== "--live"), 0);
-  const adapterMode = live ? "real" : "mock";
+  const explicitAdapterMode = adapterModeFlag(args);
+  const adapterMode = explicitAdapterMode ?? "mock";
+  const inputPath = positional(args.filter((arg) => arg !== "--live" && arg !== "--mock"), 0);
 
   return withEnv({ FUSERA_CODEX_ADAPTER: adapterMode }, async () => ({
     ok: true,
-    command: live ? "proof --live" : "proof",
+    command: adapterMode === "real" ? "proof --live" : explicitAdapterMode === "mock" ? "proof --mock" : "proof",
     target_stage: targetStage,
     result: await runStageProof({
       targetStage,
@@ -388,7 +388,7 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts run mock-publish [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts run live-publish [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts run qa-failure [input.json]",
-    "  node --experimental-strip-types superpowers/runner/cli.ts proof <target-stage> [input.json] [--live]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts proof <target-stage> [input.json] [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts continue <run-dir> <target-stage> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts resume <run-dir> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>]",

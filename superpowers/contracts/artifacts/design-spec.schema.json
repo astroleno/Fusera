@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fusera.local/superpowers/contracts/artifacts/design-spec.schema.json",
+  "title": "DesignSpec Artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "artifact_id",
+    "run_id",
+    "status",
+    "producer_stage",
+    "input_refs",
+    "validation",
+    "payload"
+  ],
+  "properties": {
+    "artifact_type": { "const": "DesignSpec" },
+    "schema_version": { "const": "1.0.0" },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["draft", "validated", "rejected", "superseded"] },
+    "producer_stage": { "const": "design-spec-pass" },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valid", "errors"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "visual_thesis",
+        "brand_alignment",
+        "token_directives",
+        "layout_directives",
+        "motion_directives",
+        "section_design_intents",
+        "claim_and_proof_constraints",
+        "anti_patterns"
+      ],
+      "properties": {
+        "visual_thesis": { "type": "string", "minLength": 1 },
+        "brand_alignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["traits", "audience", "positioning"],
+          "properties": {
+            "traits": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "audience": { "type": "string", "minLength": 1 },
+            "positioning": { "type": "string", "minLength": 1 }
+          }
+        },
+        "token_directives": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["color", "typography", "spacing", "radii", "shadows"],
+          "properties": {
+            "color": { "type": "object", "additionalProperties": true },
+            "typography": { "type": "object", "additionalProperties": true },
+            "spacing": { "type": "object", "additionalProperties": true },
+            "radii": { "type": "object", "additionalProperties": true },
+            "shadows": { "type": "object", "additionalProperties": true }
+          }
+        },
+        "layout_directives": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["variance", "rules"],
+          "properties": {
+            "variance": { "type": "integer" },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "motion_directives": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["intensity", "rules"],
+          "properties": {
+            "intensity": { "type": "integer" },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "section_design_intents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["section_id", "layout", "media", "copy", "proof", "motion"],
+            "properties": {
+              "section_id": { "type": "string", "minLength": 1 },
+              "layout": { "type": "string", "minLength": 1 },
+              "media": { "type": "string", "minLength": 1 },
+              "copy": { "type": "string", "minLength": 1 },
+              "proof": { "type": "string", "minLength": 1 },
+              "motion": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "claim_and_proof_constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["claim_policy", "rules"],
+          "properties": {
+            "claim_policy": { "enum": ["proof-required", "low-proof", "no-claims"] },
+            "rules": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "anti_patterns": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["visual", "copy", "proof"],
+          "properties": {
+            "visual": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "copy": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "proof": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}
