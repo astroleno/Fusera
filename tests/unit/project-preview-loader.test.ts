@@ -69,6 +69,55 @@ describe("loadProjectPreview", () => {
           id: "run_01",
           latest_section_graph_ref: "section-graph_01",
           latest_theme_tokens_ref: "theme-tokens_01",
+          latest_design_spec_ref: "design-spec_01",
+        },
+        error: null,
+      }),
+    };
+    const artifactQuery = {
+      select: vi.fn().mockReturnThis(),
+      in: vi.fn().mockResolvedValue({
+        data: [
+          { artifact_type: "SectionGraph", payload: sectionGraphPayload },
+          { artifact_type: "ThemeTokens", payload: themeTokensPayload },
+          { artifact_type: "DesignSpec", payload: { visual_thesis: "Conservative handoff" } },
+        ],
+        error: null,
+      }),
+    };
+
+    mocks.from.mockReturnValueOnce(runQuery).mockReturnValueOnce(artifactQuery);
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const page = await loadProjectPreview("project_01");
+
+    expect(page?.sections[0]).toMatchObject({
+      key: "hero:hero",
+      sectionType: "hero",
+    });
+    expect(page?.theme.colors.accent).toBe("#315f52");
+    expect(runQuery.select).toHaveBeenCalledWith(
+      "id, latest_section_graph_ref, latest_theme_tokens_ref, latest_design_spec_ref",
+    );
+    expect(artifactQuery.in).toHaveBeenCalledWith("artifact_id", [
+      "section-graph_01",
+      "theme-tokens_01",
+      "design-spec_01",
+    ]);
+  });
+
+  it("compiles legacy completed runs when DesignSpec is missing", async () => {
+    const runQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          id: "run_legacy_01",
+          latest_section_graph_ref: "section-graph_legacy",
+          latest_theme_tokens_ref: "theme-tokens_legacy",
+          latest_design_spec_ref: null,
         },
         error: null,
       }),
@@ -87,13 +136,13 @@ describe("loadProjectPreview", () => {
     mocks.from.mockReturnValueOnce(runQuery).mockReturnValueOnce(artifactQuery);
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const page = await loadProjectPreview("project_01");
+    const page = await loadProjectPreview("project_legacy");
 
-    expect(page?.sections[0]).toMatchObject({
-      key: "hero:hero",
-      sectionType: "hero",
-    });
-    expect(page?.theme.colors.accent).toBe("#315f52");
+    expect(page?.sections[0]?.sectionId).toBe("hero");
+    expect(artifactQuery.in).toHaveBeenCalledWith("artifact_id", [
+      "section-graph_legacy",
+      "theme-tokens_legacy",
+    ]);
   });
 
   it("returns null when no completed run exists", async () => {

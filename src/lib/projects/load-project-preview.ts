@@ -16,7 +16,7 @@ export async function loadProjectPreview(projectId: string) {
 
   const { data: run, error: runError } = await db
     .from("generation_runs")
-    .select("id, latest_section_graph_ref, latest_theme_tokens_ref")
+    .select("id, latest_section_graph_ref, latest_theme_tokens_ref, latest_design_spec_ref")
     .eq("project_id", projectId)
     .eq("status", "completed")
     .order("created_at", { ascending: false })
@@ -30,6 +30,7 @@ export async function loadProjectPreview(projectId: string) {
   const artifactIds = [
     run.latest_section_graph_ref,
     run.latest_theme_tokens_ref,
+    run.latest_design_spec_ref,
   ].filter(Boolean);
 
   const { data: artifacts, error: artifactError } = await db

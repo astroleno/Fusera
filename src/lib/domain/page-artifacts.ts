@@ -125,11 +125,71 @@ export const themeTokensPayloadSchema = z.object({
   motion: z.record(z.unknown()),
 }).strict();
 
+export const designSpecPayloadSchema = z.object({
+  visual_thesis: nonEmptyString,
+  brand_alignment: z
+    .object({
+      traits: z.array(nonEmptyString).min(1),
+      audience: nonEmptyString,
+      positioning: nonEmptyString,
+    })
+    .strict(),
+  token_directives: z
+    .object({
+      color: z.record(z.unknown()),
+      typography: z.record(z.unknown()),
+      spacing: z.record(z.unknown()),
+      radii: z.record(z.unknown()),
+      shadows: z.record(z.unknown()),
+    })
+    .strict(),
+  layout_directives: z
+    .object({
+      variance: z.number().int(),
+      rules: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+  motion_directives: z
+    .object({
+      intensity: z.number().int(),
+      rules: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+  section_design_intents: z
+    .array(
+      z
+        .object({
+          section_id: nonEmptyString,
+          layout: nonEmptyString,
+          media: nonEmptyString,
+          copy: nonEmptyString,
+          proof: nonEmptyString,
+          motion: nonEmptyString,
+        })
+        .strict(),
+    )
+    .min(1),
+  claim_and_proof_constraints: z
+    .object({
+      claim_policy: claimPolicySchema,
+      rules: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+  anti_patterns: z
+    .object({
+      visual: z.array(nonEmptyString).min(1),
+      copy: z.array(nonEmptyString).min(1),
+      proof: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+}).strict();
+
 export type ProductBriefPayload = z.infer<typeof productBriefPayloadSchema>;
 export type BrandProfilePayload = z.infer<typeof brandProfilePayloadSchema>;
 export type PagePlanPayload = z.infer<typeof pagePlanPayloadSchema>;
 export type SectionGraphPayload = z.infer<typeof sectionGraphPayloadSchema>;
 export type ThemeTokensPayload = z.infer<typeof themeTokensPayloadSchema>;
+export type DesignSpecPayload = z.infer<typeof designSpecPayloadSchema>;
 
 export function createArtifactEnvelope<TPayload>(params: {
   artifactType: string;
