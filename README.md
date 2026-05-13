@@ -105,5 +105,27 @@ supabase db push
 - Original Phase 1 executable plan: `docs/superpowers/plans/2026-04-20-fusera-v1-phase-1-implementation-plan.md`
 - Current continuation plan: `docs/superpowers/plans/2026-04-29-fusera-phase-1-continuation-plan.md`
 - Harness status: `docs/superpowers/harness/2026-04-28-p1-live-codex-status.md`
+- **Knowledge Graph**: `graphify-out/GRAPH_REPORT.md` - 代码架构图谱
 
 Use the continuation plan for app-side Phase 1 completion notes. It supersedes older Task 5-8 snippets where those snippets conflict with the current strict artifact schemas or the established CSS/App Router patterns.
+
+## Knowledge Graph
+
+This project maintains a [graphify](https://github.com/safishamsi/graphify) knowledge graph at `graphify-out/`.
+
+### Quick Reference
+
+- **475 code symbols** across **42 communities**
+- **Core abstractions**: `verifyP0Harness()`, `verifyLiveCodexQuality()`, `resumeFailedRun()`
+- **Bridge nodes**: `createCodexAdapter()`, `invokeBackend()` (cross-community connectors)
+
+### Usage
+
+```bash
+# Explore architecture
+/graphify explain "verifyP0Harness"
+/graphify path "resumeFailedRun" "verifyP0Harness"
+/graphify query "How does error recovery work?"
+```
+
+See [CLAUDE.md](CLAUDE.md) for detailed graph integration guidelines.
