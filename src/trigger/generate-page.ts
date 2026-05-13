@@ -71,6 +71,7 @@ export const generatePageTask = task({
           latest_page_plan_ref: result.latestRefs.pagePlanRef,
           latest_section_graph_ref: result.latestRefs.sectionGraphRef,
           latest_theme_tokens_ref: result.latestRefs.themeTokensRef,
+          latest_design_spec_ref: result.latestRefs.designSpecRef,
         })
         .eq("id", run.id);
 

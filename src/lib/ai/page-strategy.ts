@@ -2,6 +2,7 @@ import {
   createArtifactEnvelope,
   type ArtifactEnvelope,
   type BrandProfilePayload,
+  type DesignSpecPayload,
   type PagePlanPayload,
   type ProductBriefPayload,
   type SectionGraphPayload,
@@ -21,6 +22,7 @@ export type GeneratedPageArtifacts = {
     ArtifactEnvelope<PagePlanPayload>,
     ArtifactEnvelope<SectionGraphPayload>,
     ArtifactEnvelope<ThemeTokensPayload>,
+    ArtifactEnvelope<DesignSpecPayload>,
   ];
   latestRefs: {
     productBriefRef: string;
@@ -28,6 +30,7 @@ export type GeneratedPageArtifacts = {
     pagePlanRef: string;
     sectionGraphRef: string;
     themeTokensRef: string;
+    designSpecRef: string;
   };
   payloads: {
     productBrief: ProductBriefPayload;
@@ -35,8 +38,46 @@ export type GeneratedPageArtifacts = {
     pagePlan: PagePlanPayload;
     sectionGraph: SectionGraphPayload;
     themeTokens: ThemeTokensPayload;
+    designSpec: DesignSpecPayload;
   };
 };
+
+function buildSectionDesignIntents(params: {
+  pagePlan: PagePlanPayload;
+  sectionGraph: SectionGraphPayload;
+  trustSignals: string[];
+  imageUrls: string[];
+}): DesignSpecPayload["section_design_intents"] {
+  const intentsBySection = new Map(
+    params.pagePlan.section_intents.map((intent) => [
+      intent.section_id,
+      intent.intent,
+    ]),
+  );
+  const nodesBySection = new Map(
+    params.sectionGraph.nodes.map((node) => [node.section_id, node]),
+  );
+
+  return params.sectionGraph.section_order.map((sectionId) => {
+    const node = nodesBySection.get(sectionId);
+    const planIntent = intentsBySection.get(sectionId) ?? "Keep this section focused.";
+
+    return {
+      section_id: sectionId,
+      layout: `Use the ${node?.section_type ?? "section"} role to support the page sequence without adding extra sections.`,
+      media:
+        sectionId === "hero" && params.imageUrls.length > 0
+          ? "Use supplied product imagery as the primary visual evidence."
+          : "Prefer token-driven hierarchy over decorative media.",
+      copy: planIntent,
+      proof:
+        params.trustSignals.length > 0
+          ? "Use only supplied trust signals for proof language."
+          : "Avoid proof claims beyond the provided product inputs.",
+      motion: "Keep transitions restrained and secondary to readability.",
+    };
+  });
+}
 
 export async function buildPageArtifacts({
   runId,
@@ -205,14 +246,103 @@ export async function buildPageArtifacts({
     payload: themeTokensPayload,
   });
 
+  const designSpecPayload: DesignSpecPayload = {
+    visual_thesis: `A restrained product-first landing page for ${input.productName}, anchored in supplied proof and brand keywords.`,
+    brand_alignment: {
+      traits: brandProfilePayload.brand_traits,
+      audience: input.targetAudience,
+      positioning: brandProfilePayload.positioning,
+    },
+    token_directives: {
+      color: {
+        background: themeTokensPayload.colors.background,
+        surface: themeTokensPayload.colors.surface,
+        text: themeTokensPayload.colors.text,
+        accent: themeTokensPayload.colors.accent,
+      },
+      typography: themeTokensPayload.typography,
+      spacing: themeTokensPayload.spacing,
+      radii: themeTokensPayload.radii,
+      shadows: themeTokensPayload.shadows,
+    },
+    layout_directives: {
+      variance: 3,
+      rules: [
+        "Preserve SectionGraph.section_order as the page hierarchy.",
+        "Keep the layout product-focused and avoid nested card structures.",
+      ],
+    },
+    motion_directives: {
+      intensity: 2,
+      rules: [
+        "Use motion only for restrained hover and focus feedback.",
+        "Do not rely on motion to communicate proof or claims.",
+      ],
+    },
+    section_design_intents: buildSectionDesignIntents({
+      pagePlan: pagePlanPayload,
+      sectionGraph: sectionGraphPayload,
+      trustSignals: input.trustSignals,
+      imageUrls: input.imageUrls,
+    }),
+    claim_and_proof_constraints: {
+      claim_policy: productBriefPayload.claim_policy,
+      rules:
+        input.trustSignals.length > 0
+          ? [
+              "Bind claims to supplied trust signals only.",
+              "Do not invent metrics, testimonials, certifications, or review counts.",
+            ]
+          : [
+              "Avoid quantified proof claims until evidence is supplied.",
+              "Do not invent testimonials, certifications, or review counts.",
+            ],
+    },
+    anti_patterns: {
+      visual: [
+        "Generic purple-blue AI gradients unrelated to the product.",
+        "Decorative nested cards that obscure the product hierarchy.",
+      ],
+      copy: [
+        "Unsupported superlatives not grounded in the intake.",
+        "Vague premium language that does not name a concrete benefit.",
+      ],
+      proof: [
+        "Invented metrics, badges, testimonials, or review counts.",
+        "Proof language that exceeds the supplied trust signals.",
+      ],
+    },
+  };
+  const designSpec = createArtifactEnvelope({
+    artifactType: "DesignSpec",
+    runId,
+    producerStage: "design-spec-pass",
+    inputRefs: [
+      productBrief.artifact_id,
+      brandProfile.artifact_id,
+      pagePlan.artifact_id,
+      sectionGraph.artifact_id,
+      themeTokens.artifact_id,
+    ],
+    payload: designSpecPayload,
+  });
+
   return {
-    artifacts: [productBrief, brandProfile, pagePlan, sectionGraph, themeTokens],
+    artifacts: [
+      productBrief,
+      brandProfile,
+      pagePlan,
+      sectionGraph,
+      themeTokens,
+      designSpec,
+    ],
     latestRefs: {
       productBriefRef: productBrief.artifact_id,
       brandProfileRef: brandProfile.artifact_id,
       pagePlanRef: pagePlan.artifact_id,
       sectionGraphRef: sectionGraph.artifact_id,
       themeTokensRef: themeTokens.artifact_id,
+      designSpecRef: designSpec.artifact_id,
     },
     payloads: {
       productBrief: productBriefPayload,
@@ -220,6 +350,7 @@ export async function buildPageArtifacts({
       pagePlan: pagePlanPayload,
       sectionGraph: sectionGraphPayload,
       themeTokens: themeTokensPayload,
+      designSpec: designSpecPayload,
     },
   };
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   artifactEnvelopeSchema,
   brandProfilePayloadSchema,
+  designSpecPayloadSchema,
   pagePlanPayloadSchema,
   productBriefPayloadSchema,
   sectionGraphPayloadSchema,
@@ -15,6 +16,7 @@ const payloadSchemas = {
   PagePlan: pagePlanPayloadSchema,
   SectionGraph: sectionGraphPayloadSchema,
   ThemeTokens: themeTokensPayloadSchema,
+  DesignSpec: designSpecPayloadSchema,
 };
 
 const producerStages = {
@@ -23,6 +25,7 @@ const producerStages = {
   PagePlan: "page-strategy",
   SectionGraph: "section-planning",
   ThemeTokens: "design-system-pass",
+  DesignSpec: "design-spec-pass",
 };
 
 describe("buildPageArtifacts", () => {
@@ -39,16 +42,29 @@ describe("buildPageArtifacts", () => {
       referenceUrls: [],
     });
 
-    const artifactsByType = Object.fromEntries(
-      result.artifacts.map((artifact) => [artifact.artifact_type, artifact]),
-    );
+    const [
+      productBrief,
+      brandProfile,
+      pagePlan,
+      sectionGraph,
+      themeTokens,
+      designSpec,
+    ] = result.artifacts;
+    const artifactsByType = {
+      ProductBrief: productBrief,
+      BrandProfile: brandProfile,
+      PagePlan: pagePlan,
+      SectionGraph: sectionGraph,
+      ThemeTokens: themeTokens,
+      DesignSpec: designSpec,
+    };
 
     expect(Object.keys(artifactsByType).sort()).toEqual(
       Object.keys(payloadSchemas).sort(),
     );
 
     for (const [artifactType, schema] of Object.entries(payloadSchemas)) {
-      const artifact = artifactsByType[artifactType];
+      const artifact = artifactsByType[artifactType as keyof typeof artifactsByType];
       expect(artifactEnvelopeSchema.safeParse(artifact).success).toBe(true);
       expect(schema.safeParse(artifact.payload).success).toBe(true);
       expect(artifact.producer_stage).toBe(
@@ -69,6 +85,9 @@ describe("buildPageArtifacts", () => {
     expect(result.latestRefs.themeTokensRef).toBe(
       artifactsByType.ThemeTokens.artifact_id,
     );
+    expect(result.latestRefs.designSpecRef).toBe(
+      artifactsByType.DesignSpec.artifact_id,
+    );
     expect(artifactsByType.ProductBrief.payload.product_name).toBe("Atlas Bottle");
     expect(artifactsByType.ProductBrief.payload.claim_policy).toBe(
       "proof-required",
@@ -82,6 +101,30 @@ describe("buildPageArtifacts", () => {
       surface: expect.any(String),
       text: expect.any(String),
       accent: expect.any(String),
+    });
+    expect(artifactsByType.DesignSpec.input_refs).toEqual([
+      artifactsByType.ProductBrief.artifact_id,
+      artifactsByType.BrandProfile.artifact_id,
+      artifactsByType.PagePlan.artifact_id,
+      artifactsByType.SectionGraph.artifact_id,
+      artifactsByType.ThemeTokens.artifact_id,
+    ]);
+    expect(
+      artifactsByType.DesignSpec.payload.section_design_intents.map(
+        (intent) => intent.section_id,
+      ),
+    ).toEqual(artifactsByType.SectionGraph.payload.section_order);
+    expect(
+      artifactsByType.DesignSpec.payload.claim_and_proof_constraints.claim_policy,
+    ).toBe(artifactsByType.ProductBrief.payload.claim_policy);
+    expect(artifactsByType.DesignSpec.payload.token_directives).toMatchObject({
+      radii: expect.any(Object),
+      shadows: expect.any(Object),
+    });
+    expect(artifactsByType.DesignSpec.payload.anti_patterns).toMatchObject({
+      visual: expect.arrayContaining([expect.any(String)]),
+      copy: expect.arrayContaining([expect.any(String)]),
+      proof: expect.arrayContaining([expect.any(String)]),
     });
   });
 });
