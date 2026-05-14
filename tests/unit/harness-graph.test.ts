@@ -244,7 +244,28 @@ describe("harness topology graph", () => {
       expect.objectContaining({
         source: "attempt:start:attempt_start_1",
         target: "artifact-type:ProductBrief",
-        relation: "adapter_produced_candidate"
+        relation: "adapter_produced_candidate",
+        metadata: expect.objectContaining({
+          target_kind: "artifact_type"
+        })
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "stage:start",
+        target: "artifact:product-brief_01",
+        relation: "adapter_persisted_artifact"
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "attempt:start:attempt_start_1",
+        target: "artifact:product-brief_01",
+        relation: "adapter_produced_candidate",
+        metadata: expect.objectContaining({
+          target_kind: "artifact_instance",
+          artifact_type: "ProductBrief"
+        })
       })
     );
     expect(graph.links).toContainEqual(

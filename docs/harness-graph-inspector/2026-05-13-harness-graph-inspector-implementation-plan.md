@@ -83,6 +83,7 @@ These are runtime diagnostics, not canonical source.
 - `produces_artifact`
 - `stage_allows_output`
 - `adapter_produced_candidate`
+- `adapter_persisted_artifact`
 - `runner_persisted_artifact`
 - `attempt_has_status`
 - `next_stage`
@@ -215,6 +216,7 @@ Tasks:
 - Link attempts to adapter result status using `attempt_has_status` edges and adapter-produced candidate types using `adapter_produced_candidate` edges.
 - Split adapter candidates from runner-owned persisted artifacts:
   - `adapter_produced_candidate` edges represent candidate objects returned by the adapter.
+  - `adapter_persisted_artifact` edges represent adapter-owned candidate artifacts after runner validation/persistence.
   - `runner_persisted_artifact` edges represent `PageSpec`, `QAReport`, `PublishVersion`, and any other runner-owned artifacts persisted by runner logic.
 - Resolve `input_refs` by kind, not by artifact id alone. The resolver must index:
   - validated and rejected `artifacts/**/*.json` by `artifact_id`

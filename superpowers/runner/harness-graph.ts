@@ -36,6 +36,7 @@ export type HarnessGraphRelation =
   | "produces_artifact"
   | "stage_allows_output"
   | "adapter_produced_candidate"
+  | "adapter_persisted_artifact"
   | "runner_persisted_artifact"
   | "attempt_has_status"
   | "next_stage"
@@ -399,11 +400,13 @@ export async function buildRunEvidenceGraph(options: RunGraphBuildOptions): Prom
 
     const producerStage = stringOrUndefined(record.artifact.producer_stage);
 
-    if (producerStage && RUNNER_OWNED_ARTIFACT_TYPES.has(artifactType)) {
+    if (producerStage) {
       builder.addLink({
         source: stageId(producerStage),
         target: artifactNodeId,
-        relation: "runner_persisted_artifact",
+        relation: RUNNER_OWNED_ARTIFACT_TYPES.has(artifactType)
+          ? "runner_persisted_artifact"
+          : "adapter_persisted_artifact",
         confidence: "EXTRACTED",
         source_ref: record.source_ref,
         metadata: {
@@ -558,16 +561,36 @@ export async function buildRunEvidenceGraph(options: RunGraphBuildOptions): Prom
       });
     }
 
-    for (const artifactType of candidateArtifactTypes(attempt.result)) {
-      builder.addNode(artifactTypeNode(artifactType, attempt.source_ref));
+    for (const candidate of candidateArtifacts(attempt.result)) {
+      builder.addNode(artifactTypeNode(candidate.artifact_type, attempt.source_ref));
       builder.addLink({
         source: attemptNode.id,
-        target: artifactTypeId(artifactType),
+        target: artifactTypeId(candidate.artifact_type),
         relation: "adapter_produced_candidate",
         confidence: "EXTRACTED",
         source_ref: attempt.source_ref,
-        metadata: {}
+        metadata: {
+          target_kind: "artifact_type"
+        }
       });
+
+      if (candidate.artifact_id) {
+        const persistedArtifact = artifactIndex.by_id.get(candidate.artifact_id);
+
+        if (persistedArtifact) {
+          builder.addLink({
+            source: attemptNode.id,
+            target: artifactInstanceId(candidate.artifact_id),
+            relation: "adapter_produced_candidate",
+            confidence: "EXTRACTED",
+            source_ref: attempt.source_ref,
+            metadata: {
+              target_kind: "artifact_instance",
+              artifact_type: stringOrUndefined(persistedArtifact.artifact.artifact_type) ?? candidate.artifact_type
+            }
+          });
+        }
+      }
     }
   }
 
@@ -1723,18 +1746,33 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-function candidateArtifactTypes(result: Record<string, unknown>): string[] {
+function candidateArtifacts(result: Record<string, unknown>): Array<{ artifact_type: string; artifact_id?: string }> {
   if (!Array.isArray(result.produced_artifact_candidates)) {
     return [];
   }
 
-  return uniqueStrings(
-    result.produced_artifact_candidates
-      .map((candidate) =>
-        isRecord(candidate) ? stringOrUndefined(candidate.artifact_type) : undefined
-      )
-      .filter((artifactType): artifactType is string => Boolean(artifactType))
-  );
+  const candidates = new Map<string, { artifact_type: string; artifact_id?: string }>();
+
+  for (const candidate of result.produced_artifact_candidates) {
+    if (!isRecord(candidate)) {
+      continue;
+    }
+
+    const artifactType = stringOrUndefined(candidate.artifact_type);
+
+    if (!artifactType) {
+      continue;
+    }
+
+    const artifactId = stringOrUndefined(candidate.artifact_id);
+    const key = `${artifactType}:${artifactId ?? ""}`;
+    candidates.set(key, {
+      artifact_type: artifactType,
+      artifact_id: artifactId
+    });
+  }
+
+  return [...candidates.values()];
 }
 
 function evidenceRefs(artifact: Record<string, unknown>): string[] {
