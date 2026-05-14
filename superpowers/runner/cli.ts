@@ -11,7 +11,7 @@ import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "
 import { verifyLiveCodexQuality } from "./verify-live-codex-quality.ts";
 import { verifyLivePreviewPublish } from "./verify-live-preview-publish.ts";
 import { verifyP0Harness } from "./verify-p0-harness.ts";
-import { writeHarnessTopologyGraph } from "./harness-graph.ts";
+import { buildHarnessTopologyGraph, writeHarnessTopologyGraph } from "./harness-graph.ts";
 
 type CliResult = Record<string, unknown>;
 type DoctorCheck = {
@@ -336,6 +336,7 @@ async function doctorCommand(args: string[]): Promise<CliResult> {
     await checkReadable("artifact-schemas", path.join(sourceRoot, "superpowers/contracts/artifacts")),
     await checkReadable("pack-registry", path.join(sourceRoot, "superpowers/packs/registry.yaml")),
     await checkReadable("stage-profiles", path.join(sourceRoot, "superpowers/packs/stage-profiles.yaml")),
+    await checkHarnessTopologyGraph(sourceRoot),
     await checkWritableRuntime(sourceRoot)
   ];
 
@@ -524,6 +525,38 @@ async function checkWritableRuntime(sourceRoot: string): Promise<DoctorCheck> {
       name: "runtime-directory",
       ok: false,
       details: { path: runtimeDir },
+      error: (error as Error).message
+    };
+  }
+}
+
+async function checkHarnessTopologyGraph(sourceRoot: string): Promise<DoctorCheck> {
+  try {
+    const graph = await buildHarnessTopologyGraph({ rootDir: sourceRoot });
+    const criticalDiagnostics = graph.diagnostics.filter((diagnostic) => diagnostic.severity === "critical");
+
+    return {
+      name: "harness-topology-graph",
+      ok: criticalDiagnostics.length === 0,
+      details: {
+        schema_version: graph.schema_version,
+        nodes: graph.nodes.length,
+        links: graph.links.length,
+        diagnostics: graph.diagnostics.length,
+        critical_diagnostics: criticalDiagnostics.map((diagnostic) => ({
+          code: diagnostic.code,
+          message: diagnostic.message
+        }))
+      },
+      error:
+        criticalDiagnostics.length === 0
+          ? undefined
+          : `Harness topology graph has ${criticalDiagnostics.length} critical diagnostic(s).`
+    };
+  } catch (error) {
+    return {
+      name: "harness-topology-graph",
+      ok: false,
       error: (error as Error).message
     };
   }

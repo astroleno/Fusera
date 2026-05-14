@@ -161,6 +161,42 @@ describe("harness topology graph", () => {
       }
     }
   });
+
+  it("exposes topology diagnostics through doctor checks", async () => {
+    const rootDir = await createFixture({
+      registryYaml: validRegistryYaml(),
+      stageProfilesYaml: validStageProfilesYaml(),
+      packPaths: [
+        "superpowers/packs/base/context/SKILL.md",
+        "superpowers/packs/tasks/start/SKILL.md",
+        "superpowers/packs/tasks/done/SKILL.md",
+        "superpowers/packs/verifiers/done/SKILL.md"
+      ]
+    });
+    const priorSourceRoot = process.env.FUSERA_SOURCE_ROOT;
+
+    process.env.FUSERA_SOURCE_ROOT = rootDir;
+
+    try {
+      const result = await runCli(["doctor", "--deep"]);
+      const checks = result.checks as Array<{ name: string; ok: boolean; details?: Record<string, unknown> }>;
+      const graphCheck = checks.find((check) => check.name === "harness-topology-graph");
+
+      expect(graphCheck).toMatchObject({
+        ok: true,
+        details: {
+          schema_version: "1.0.0",
+          diagnostics: 0
+        }
+      });
+    } finally {
+      if (priorSourceRoot === undefined) {
+        delete process.env.FUSERA_SOURCE_ROOT;
+      } else {
+        process.env.FUSERA_SOURCE_ROOT = priorSourceRoot;
+      }
+    }
+  });
 });
 
 async function createFixture(options: {
@@ -171,6 +207,7 @@ async function createFixture(options: {
   const rootDir = await mkdtemp(path.join(os.tmpdir(), "fusera-harness-graph-"));
 
   await mkdir(path.join(rootDir, "superpowers/packs"), { recursive: true });
+  await mkdir(path.join(rootDir, "superpowers/contracts/artifacts"), { recursive: true });
   await writeFile(path.join(rootDir, "superpowers/packs/registry.yaml"), options.registryYaml, "utf8");
   await writeFile(path.join(rootDir, "superpowers/packs/stage-profiles.yaml"), options.stageProfilesYaml, "utf8");
 
