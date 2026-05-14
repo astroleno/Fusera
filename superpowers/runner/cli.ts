@@ -11,6 +11,7 @@ import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "
 import { verifyLiveCodexQuality } from "./verify-live-codex-quality.ts";
 import { verifyLivePreviewPublish } from "./verify-live-preview-publish.ts";
 import { verifyP0Harness } from "./verify-p0-harness.ts";
+import { writeHarnessTopologyGraph } from "./harness-graph.ts";
 
 type CliResult = Record<string, unknown>;
 type DoctorCheck = {
@@ -64,6 +65,10 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (command === "doctor") {
     return doctorCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
+  }
+
+  if (command === "graph") {
+    return graphCommand(subcommand, rest);
   }
 
   if (command === "skills") {
@@ -382,6 +387,30 @@ async function skillsCommand(subcommand: string | undefined, args: string[]): Pr
   return JSON.parse(result.stdout) as CliResult;
 }
 
+async function graphCommand(subcommand: string | undefined, _args: string[]): Promise<CliResult> {
+  const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+
+  if (subcommand === "harness") {
+    const result = await writeHarnessTopologyGraph({
+      rootDir: sourceRoot
+    });
+
+    return {
+      ok: true,
+      command: "graph harness",
+      graph_path: result.graph_path,
+      report_path: result.report_path,
+      summary: {
+        nodes: result.graph.nodes.length,
+        links: result.graph.links.length,
+        diagnostics: result.graph.diagnostics.length
+      }
+    };
+  }
+
+  throw new Error(`Unknown graph target: ${subcommand ?? "(missing)"}\n\n${usage()}`);
+}
+
 function usage(): string {
   return [
     "Usage:",
@@ -400,6 +429,7 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts ci live [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live [case-ids] [target-stage]",
     "  node --experimental-strip-types superpowers/runner/cli.ts live-stability [--runs <n>] [input.json] [--mock]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts graph harness",
     "  node --experimental-strip-types superpowers/runner/cli.ts skills install --scope <codex-global|repo-local> [--workspace-root <path>] [--dry-run]"
   ].join("\n");
 }
