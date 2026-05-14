@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { readRunGraphSummary, type HarnessGraphSummary } from "./harness-graph.ts";
 
 type RunInspection = {
   run_id: string;
@@ -26,6 +27,7 @@ type RunInspection = {
     publish_version_ref?: string;
     preview_url?: string;
   };
+  graph?: HarnessGraphSummary | null;
   recent_events: Array<Record<string, unknown>>;
 };
 
@@ -75,6 +77,7 @@ export async function inspectRun(options: {
   rootDir?: string;
   runDir: string;
   recentEventCount?: number;
+  includeGraph?: boolean;
 }): Promise<RunInspection> {
   const rootDir = options.rootDir ?? process.cwd();
   const runDir = path.resolve(rootDir, options.runDir);
@@ -119,6 +122,7 @@ export async function inspectRun(options: {
       publish_version_ref: stringOrUndefined(handoff?.publish_version_ref),
       preview_url: stringOrUndefined(handoff?.preview_url)
     },
+    graph: options.includeGraph ? await readRunGraphSummary({ rootDir, runDir }) : undefined,
     recent_events: events.slice(Math.max(0, events.length - recentEventCount))
   };
 }
@@ -189,6 +193,19 @@ export function formatInspectionText(inspection: RunInspection): string {
 
   if (inspection.failed_stage || inspection.failure_message) {
     lines.push("", `failure: ${inspection.failed_stage ?? "unknown"} ${inspection.failure_message ?? ""}`.trim());
+  }
+
+  if (inspection.graph !== undefined) {
+    lines.push("", "graph:");
+
+    if (inspection.graph === null) {
+      lines.push("- none");
+    } else {
+      lines.push(
+        `- ${inspection.graph.graph_type}: nodes=${inspection.graph.nodes}; links=${inspection.graph.links}; diagnostics=${inspection.graph.diagnostics}; critical=${inspection.graph.critical_diagnostics}`
+      );
+      lines.push(`  graph_path: ${inspection.graph.graph_path ?? "unknown"}`);
+    }
   }
 
   return `${lines.join("\n")}\n`;

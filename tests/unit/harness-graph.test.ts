@@ -2,7 +2,7 @@ import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildHarnessTopologyGraph } from "../../superpowers/runner/harness-graph.ts";
+import { buildHarnessTopologyGraph, buildRunEvidenceGraph } from "../../superpowers/runner/harness-graph.ts";
 import { runCli } from "../../superpowers/runner/cli.ts";
 
 const GENERATED_AT = "2026-05-13T00:00:00.000Z";
@@ -197,6 +197,166 @@ describe("harness topology graph", () => {
       }
     }
   });
+
+  it("builds run evidence graph from events, attempts, artifacts, and runner-owned outputs", async () => {
+    const rootDir = await createFixture({
+      registryYaml: validRegistryYaml(),
+      stageProfilesYaml: validStageProfilesYaml(),
+      packPaths: [
+        "superpowers/packs/base/context/SKILL.md",
+        "superpowers/packs/tasks/start/SKILL.md",
+        "superpowers/packs/tasks/done/SKILL.md",
+        "superpowers/packs/verifiers/done/SKILL.md"
+      ]
+    });
+    const runDir = await createRunFixture(rootDir);
+
+    const graph = await buildRunEvidenceGraph({
+      rootDir,
+      runDir,
+      generatedAt: GENERATED_AT
+    });
+
+    expect(graph).toMatchObject({
+      schema_version: "1.0.0",
+      graph_type: "run-evidence",
+      generated_at: GENERATED_AT
+    });
+    expect(graph.source_refs).toContain("events.ndjson");
+    expect(graph.nodes).toContainEqual(
+      expect.objectContaining({
+        id: "attempt:start:attempt_start_1",
+        type: "adapter_attempt",
+        metadata: expect.objectContaining({
+          status: "ok",
+          usage_mode: "mock"
+        })
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "attempt:start:attempt_start_1",
+        target: "status:adapter:ok",
+        relation: "attempt_has_status"
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "attempt:start:attempt_start_1",
+        target: "artifact-type:ProductBrief",
+        relation: "adapter_produced_candidate"
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "stage:page-compile",
+        target: "artifact:page-spec_01",
+        relation: "runner_persisted_artifact"
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "artifact:qa-report_01",
+        target: "compiled:preview-build:preview-build_01",
+        relation: "resolves_input_ref"
+      })
+    );
+    expect(graph.links).toContainEqual(
+      expect.objectContaining({
+        source: "artifact:qa-report_01",
+        target: "compiled:preview-build:preview-build_01",
+        relation: "references_run_file"
+      })
+    );
+    expect(graph.diagnostics).toEqual([]);
+  });
+
+  it("emits hard run evidence diagnostics for binding mismatches", async () => {
+    const rootDir = await createFixture({
+      registryYaml: validRegistryYaml(),
+      stageProfilesYaml: validStageProfilesYaml(),
+      packPaths: [
+        "superpowers/packs/base/context/SKILL.md",
+        "superpowers/packs/tasks/start/SKILL.md",
+        "superpowers/packs/tasks/done/SKILL.md",
+        "superpowers/packs/verifiers/done/SKILL.md"
+      ]
+    });
+    const runDir = await createRunFixture(rootDir, {
+      qaPreviewBuildRef: "preview-build_wrong"
+    });
+
+    const graph = await buildRunEvidenceGraph({
+      rootDir,
+      runDir,
+      generatedAt: GENERATED_AT
+    });
+    const diagnostic = graph.diagnostics.find(
+      (item) => item.code === "qa_report_preview_build_ref_mismatch"
+    );
+
+    expect(diagnostic).toMatchObject({
+      severity: "critical",
+      check_kind: "hard",
+      confidence: "EXTRACTED",
+      metadata: {
+        observed: "preview-build_wrong",
+        expected: "preview-build_01"
+      }
+    });
+  });
+
+  it("writes run graph through CLI and summarizes existing graph from inspect", async () => {
+    const rootDir = await createFixture({
+      registryYaml: validRegistryYaml(),
+      stageProfilesYaml: validStageProfilesYaml(),
+      packPaths: [
+        "superpowers/packs/base/context/SKILL.md",
+        "superpowers/packs/tasks/start/SKILL.md",
+        "superpowers/packs/tasks/done/SKILL.md",
+        "superpowers/packs/verifiers/done/SKILL.md"
+      ]
+    });
+    const runDir = await createRunFixture(rootDir);
+    const priorSourceRoot = process.env.FUSERA_SOURCE_ROOT;
+
+    process.env.FUSERA_SOURCE_ROOT = rootDir;
+
+    try {
+      const graphResult = await runCli(["graph", "run", runDir]);
+
+      expect(graphResult).toMatchObject({
+        ok: true,
+        command: "graph run",
+        summary: {
+          diagnostics: 0
+        }
+      });
+
+      const graphPath = path.join(runDir, "analysis/run-graph.json");
+      const reportPath = path.join(runDir, "analysis/run-graph-report.md");
+      const graph = JSON.parse(await readFile(graphPath, "utf8"));
+      const report = await readFile(reportPath, "utf8");
+
+      expect(graph.graph_type).toBe("run-evidence");
+      expect(report).toContain("# Harness Graph Report");
+
+      const inspectResult = await runCli(["inspect", runDir, "--graph", "--json"]);
+      const inspection = inspectResult.inspection as { graph?: Record<string, unknown> };
+
+      expect(inspection.graph).toMatchObject({
+        graph_type: "run-evidence",
+        diagnostics: 0,
+        graph_path: graphPath
+      });
+    } finally {
+      if (priorSourceRoot === undefined) {
+        delete process.env.FUSERA_SOURCE_ROOT;
+      } else {
+        process.env.FUSERA_SOURCE_ROOT = priorSourceRoot;
+      }
+    }
+  });
 });
 
 async function createFixture(options: {
@@ -218,6 +378,167 @@ async function createFixture(options: {
   }
 
   return rootDir;
+}
+
+async function createRunFixture(rootDir: string, options: {
+  qaPreviewBuildRef?: string;
+} = {}): Promise<string> {
+  const runDir = path.join(rootDir, ".fusera/runs/run_graph_01");
+
+  await mkdir(path.join(runDir, "stages/start/attempts/attempt_start_1"), { recursive: true });
+  await mkdir(path.join(runDir, "stages/page-compile"), { recursive: true });
+  await mkdir(path.join(runDir, "stages/verify-publishable-page"), { recursive: true });
+  await mkdir(path.join(runDir, "stages/publish-preview"), { recursive: true });
+  await mkdir(path.join(runDir, "artifacts"), { recursive: true });
+  await mkdir(path.join(runDir, "compiled"), { recursive: true });
+  await mkdir(path.join(runDir, "previews"), { recursive: true });
+
+  const run = {
+    run_id: "run_graph_01",
+    state: "published",
+    adapter_mode: "mock",
+    preview_build_ref: "preview-build_01"
+  };
+  const adapterResult = {
+    status: "ok",
+    usage: {
+      attempt_id: "attempt_start_1",
+      attempt_dir: "stages/start/attempts/attempt_start_1",
+      mode: "mock",
+      duration_ms: 12,
+      timeout_ms: 1000
+    },
+    produced_artifact_candidates: [
+      {
+        artifact_type: "ProductBrief",
+        artifact_id: "product-brief_01"
+      }
+    ]
+  };
+  const productBrief = artifact({
+    artifact_type: "ProductBrief",
+    artifact_id: "product-brief_01",
+    producer_stage: "start",
+    input_refs: [],
+    payload: {}
+  });
+  const pageSpec = artifact({
+    artifact_type: "PageSpec",
+    artifact_id: "page-spec_01",
+    producer_stage: "page-compile",
+    input_refs: ["product-brief_01"],
+    payload: {}
+  });
+  const qaReport = artifact({
+    artifact_type: "QAReport",
+    artifact_id: "qa-report_01",
+    producer_stage: "verify-publishable-page",
+    input_refs: ["page-spec_01", "preview-build_01"],
+    payload: {
+      page_spec_ref: "page-spec_01",
+      preview_build_ref: options.qaPreviewBuildRef ?? "preview-build_01",
+      evidence_refs: ["compiled/preview-build.json"],
+      gate_results: [
+        {
+          gate_id: "artifact-binding",
+          evidence_refs: ["compiled/preview-build.json"]
+        }
+      ]
+    }
+  });
+  const publishVersion = artifact({
+    artifact_type: "PublishVersion",
+    artifact_id: "publish-version_01",
+    producer_stage: "publish-preview",
+    input_refs: ["page-spec_01", "qa-report_01", "preview-build_01"],
+    payload: {
+      page_spec_ref: "page-spec_01",
+      qa_report_ref: "qa-report_01"
+    }
+  });
+
+  await writeJson(path.join(runDir, "run.json"), run);
+  await writeFile(
+    path.join(runDir, "events.ndjson"),
+    [
+      event("evt_1", "stage_started", "start"),
+      event("evt_2", "stage_completed", "start", { attempt_id: "attempt_start_1" }),
+      event("evt_3", "stage_completed", "page-compile", { attempt_id: "attempt_page_compile_1" }),
+      event("evt_4", "stage_completed", "verify-publishable-page", { attempt_id: "attempt_qa_1" }),
+      {
+        event_id: "evt_5",
+        type: "publish_succeeded",
+        stage: "publish-preview",
+        to_state: "published",
+        data: {
+          publish_version_ref: "publish-version_01",
+          attempt_id: "attempt_publish_1"
+        }
+      }
+    ].map((item) => JSON.stringify(item)).join("\n") + "\n",
+    "utf8"
+  );
+  await writeJson(path.join(runDir, "stages/start/adapter-result.json"), adapterResult);
+  await writeJson(path.join(runDir, "stages/start/attempts/attempt_start_1/adapter-result.json"), adapterResult);
+  await writeJson(path.join(runDir, "artifacts/product-brief.json"), productBrief);
+  await writeJson(path.join(runDir, "artifacts/page-spec.json"), pageSpec);
+  await writeJson(path.join(runDir, "artifacts/qa-report.json"), qaReport);
+  await writeJson(path.join(runDir, "artifacts/publish-version.json"), publishVersion);
+  await writeJson(path.join(runDir, "compiled/preview-build.json"), {
+    preview_build_ref: "preview-build_01",
+    run_id: "run_graph_01",
+    page_spec_ref: "page-spec_01",
+    route_id: "landing-preview"
+  });
+  await writeJson(path.join(runDir, "previews/publish-handoff.json"), {
+    publish_version_ref: "publish-version_01",
+    preview_build_ref: "preview-build_01",
+    preview_url: "preview://run_graph_01/preview-build_01"
+  });
+
+  return runDir;
+}
+
+async function writeJson(filePath: string, value: unknown): Promise<void> {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function artifact(options: {
+  artifact_type: string;
+  artifact_id: string;
+  producer_stage: string;
+  input_refs: string[];
+  payload: Record<string, unknown>;
+}): Record<string, unknown> {
+  return {
+    artifact_type: options.artifact_type,
+    schema_version: "1.0.0",
+    artifact_id: options.artifact_id,
+    run_id: "run_graph_01",
+    status: "validated",
+    producer_stage: options.producer_stage,
+    input_refs: options.input_refs,
+    validation: {
+      valid: true,
+      errors: []
+    },
+    payload: options.payload
+  };
+}
+
+function event(
+  eventId: string,
+  type: string,
+  stage: string,
+  data: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    event_id: eventId,
+    type,
+    stage,
+    data
+  };
 }
 
 function validRegistryYaml(): string {

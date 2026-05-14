@@ -11,7 +11,7 @@ import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "
 import { verifyLiveCodexQuality } from "./verify-live-codex-quality.ts";
 import { verifyLivePreviewPublish } from "./verify-live-preview-publish.ts";
 import { verifyP0Harness } from "./verify-p0-harness.ts";
-import { buildHarnessTopologyGraph, writeHarnessTopologyGraph } from "./harness-graph.ts";
+import { buildHarnessTopologyGraph, writeHarnessTopologyGraph, writeRunEvidenceGraph } from "./harness-graph.ts";
 
 type CliResult = Record<string, unknown>;
 type DoctorCheck = {
@@ -197,7 +197,8 @@ async function inspectCommand(runDir: string | undefined, args: string[]): Promi
   const recentEventCount = recentEventIndex === -1 ? undefined : Number(args[recentEventIndex + 1]);
   const inspection = await inspectRun({
     runDir,
-    recentEventCount: Number.isFinite(recentEventCount) ? recentEventCount : undefined
+    recentEventCount: Number.isFinite(recentEventCount) ? recentEventCount : undefined,
+    includeGraph: args.includes("--graph")
   });
 
   if (args.includes("--json")) {
@@ -409,6 +410,31 @@ async function graphCommand(subcommand: string | undefined, _args: string[]): Pr
     };
   }
 
+  if (subcommand === "run") {
+    const runDir = positional(_args, 0);
+
+    if (!runDir) {
+      throw new Error(`graph run requires a run directory\n\n${usage()}`);
+    }
+
+    const result = await writeRunEvidenceGraph({
+      rootDir: sourceRoot,
+      runDir
+    });
+
+    return {
+      ok: true,
+      command: "graph run",
+      graph_path: result.graph_path,
+      report_path: result.report_path,
+      summary: {
+        nodes: result.graph.nodes.length,
+        links: result.graph.links.length,
+        diagnostics: result.graph.diagnostics.length
+      }
+    };
+  }
+
   throw new Error(`Unknown graph target: ${subcommand ?? "(missing)"}\n\n${usage()}`);
 }
 
@@ -421,7 +447,7 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts proof <target-stage> [input.json] [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts continue <run-dir> <target-stage> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts resume <run-dir> [--live|--mock]",
-    "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>] [--graph]",
     "  node --experimental-strip-types superpowers/runner/cli.ts doctor [--deep] [--live] [--auth-probe]",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify p0",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-preview <run-dir>",
@@ -431,6 +457,7 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live [case-ids] [target-stage]",
     "  node --experimental-strip-types superpowers/runner/cli.ts live-stability [--runs <n>] [input.json] [--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts graph harness",
+    "  node --experimental-strip-types superpowers/runner/cli.ts graph run <run-dir>",
     "  node --experimental-strip-types superpowers/runner/cli.ts skills install --scope <codex-global|repo-local> [--workspace-root <path>] [--dry-run]"
   ].join("\n");
 }
