@@ -2,7 +2,11 @@ import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildHarnessTopologyGraph, buildRunEvidenceGraph } from "../../superpowers/runner/harness-graph.ts";
+import {
+  buildHarnessTopologyGraph,
+  buildRunEvidenceGraph,
+  HARNESS_GRAPH_RELATIONS
+} from "../../superpowers/runner/harness-graph.ts";
 import { runCli } from "../../superpowers/runner/cli.ts";
 
 const GENERATED_AT = "2026-05-13T00:00:00.000Z";
@@ -118,6 +122,24 @@ describe("harness topology graph", () => {
     });
     expect(graph.diagnostics.some((diagnostic) => diagnostic.message.includes("next_stage end"))).toBe(false);
     expect(graph.nodes.filter((node) => node.type === "diagnostic")).toHaveLength(graph.diagnostics.length);
+
+    const priorSourceRoot = process.env.FUSERA_SOURCE_ROOT;
+    process.env.FUSERA_SOURCE_ROOT = rootDir;
+
+    try {
+      const result = await runCli(["ci", "topology"]);
+
+      expect(result).toMatchObject({
+        ok: false,
+        command: "ci topology"
+      });
+    } finally {
+      if (priorSourceRoot === undefined) {
+        delete process.env.FUSERA_SOURCE_ROOT;
+      } else {
+        process.env.FUSERA_SOURCE_ROOT = priorSourceRoot;
+      }
+    }
   });
 
   it("writes harness graph diagnostics through the canonical CLI entry", async () => {
@@ -153,6 +175,8 @@ describe("harness topology graph", () => {
 
       expect(graph.schema_version).toBe("1.0.0");
       expect(report).toContain("# Harness Graph Report");
+      expect(report).toContain("## Source Confidence");
+      expect(report).toContain("## Surprising Connections");
     } finally {
       if (priorSourceRoot === undefined) {
         delete process.env.FUSERA_SOURCE_ROOT;
@@ -186,6 +210,16 @@ describe("harness topology graph", () => {
         ok: true,
         details: {
           schema_version: "1.0.0",
+          diagnostics: 0
+        }
+      });
+
+      const ciResult = await runCli(["ci", "topology"]);
+
+      expect(ciResult).toMatchObject({
+        ok: true,
+        command: "ci topology",
+        report: {
           diagnostics: 0
         }
       });
@@ -361,6 +395,10 @@ describe("harness topology graph", () => {
 
       expect(graph.graph_type).toBe("run-evidence");
       expect(report).toContain("# Harness Graph Report");
+      expect(report).toContain("## Source Confidence");
+      expect(report).toContain("## Surprising Connections");
+      expect(report).toContain("## Key Artifact Chain");
+      expect(report).toContain("[EXTRACTED]");
 
       const inspectResult = await runCli(["inspect", runDir, "--graph", "--json"]);
       const inspection = inspectResult.inspection as { graph?: Record<string, unknown> };
@@ -377,6 +415,19 @@ describe("harness topology graph", () => {
         process.env.FUSERA_SOURCE_ROOT = priorSourceRoot;
       }
     }
+  });
+
+  it("keeps relation constants aligned with the documented graph contract", async () => {
+    const plan = await readFile(
+      path.join(
+        process.cwd(),
+        "docs/harness-graph-inspector/2026-05-13-harness-graph-inspector-implementation-plan.md"
+      ),
+      "utf8"
+    );
+    const documentedRelations = extractDocumentedRelations(plan);
+
+    expect([...HARNESS_GRAPH_RELATIONS].sort()).toEqual(documentedRelations.sort());
   });
 });
 
@@ -560,6 +611,15 @@ function event(
     stage,
     data
   };
+}
+
+function extractDocumentedRelations(plan: string): string[] {
+  const edgeTypesSection = plan.split("### Edge Types\n")[1]?.split("\n### Confidence Labels")[0] ?? "";
+
+  return edgeTypesSection
+    .split("\n")
+    .map((line) => line.trim().match(/^- `([^`]+)`$/)?.[1])
+    .filter((relation): relation is string => Boolean(relation));
 }
 
 function validRegistryYaml(): string {

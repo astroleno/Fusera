@@ -14,6 +14,30 @@ import {
 } from "./resolve-packs.ts";
 
 export const HARNESS_GRAPH_SCHEMA_VERSION = "1.0.0";
+export const HARNESS_GRAPH_RELATIONS = [
+  "primary_task",
+  "allows_auxiliary_task",
+  "uses_context_pack",
+  "uses_verifier_pack",
+  "requires_artifact",
+  "produces_artifact",
+  "stage_allows_output",
+  "adapter_produced_candidate",
+  "adapter_persisted_artifact",
+  "runner_persisted_artifact",
+  "attempt_has_status",
+  "next_stage",
+  "validated_as",
+  "rejected_as",
+  "consumes",
+  "resolves_input_ref",
+  "references_run_file",
+  "emits_event",
+  "attempted_by",
+  "compiled_from",
+  "published_from",
+  "diagnostic_relates_to"
+] as const;
 
 export type HarnessGraphType = "harness-topology" | "run-evidence";
 export type HarnessGraphNodeType =
@@ -27,29 +51,7 @@ export type HarnessGraphNodeType =
   | "status"
   | "terminal"
   | "diagnostic";
-export type HarnessGraphRelation =
-  | "primary_task"
-  | "allows_auxiliary_task"
-  | "uses_context_pack"
-  | "uses_verifier_pack"
-  | "requires_artifact"
-  | "produces_artifact"
-  | "stage_allows_output"
-  | "adapter_produced_candidate"
-  | "adapter_persisted_artifact"
-  | "runner_persisted_artifact"
-  | "attempt_has_status"
-  | "next_stage"
-  | "validated_as"
-  | "rejected_as"
-  | "consumes"
-  | "resolves_input_ref"
-  | "references_run_file"
-  | "emits_event"
-  | "attempted_by"
-  | "compiled_from"
-  | "published_from"
-  | "diagnostic_relates_to";
+export type HarnessGraphRelation = (typeof HARNESS_GRAPH_RELATIONS)[number];
 export type HarnessGraphConfidence = "EXTRACTED" | "INFERRED" | "AMBIGUOUS";
 export type HarnessDiagnosticSeverity = "critical" | "warning" | "info";
 export type HarnessDiagnosticCheckKind = "hard" | "soft" | "info";
@@ -690,6 +692,10 @@ export function renderHarnessGraphReport(graph: HarnessGraph): string {
   const counts = countNodesByType(graph.nodes);
   const godNodes = graphDegree(graph).slice(0, 8);
   const diagnostics = graph.diagnostics;
+  const confidenceCounts = countLinksByConfidence(graph.links);
+  const diagnosticCounts = countDiagnostics(graph.diagnostics);
+  const keyArtifactLinks = keyArtifactChainLinks(graph);
+  const surprising = surprisingConnections(graph);
   const lines = [
     "# Harness Graph Report",
     "",
@@ -708,6 +714,14 @@ export function renderHarnessGraphReport(graph: HarnessGraph): string {
     `- Links: ${graph.links.length}`,
     `- Diagnostics: ${diagnostics.length}`,
     "",
+    "## Source Confidence",
+    `- EXTRACTED links: ${confidenceCounts.EXTRACTED ?? 0}`,
+    `- INFERRED links: ${confidenceCounts.INFERRED ?? 0}`,
+    `- AMBIGUOUS links: ${confidenceCounts.AMBIGUOUS ?? 0}`,
+    `- Critical hard diagnostics: ${diagnosticCounts.critical_hard}`,
+    "",
+    "Authoritative facts are labeled EXTRACTED and come directly from repository configuration or run evidence. INFERRED observations are explanatory joins. AMBIGUOUS observations need human review before action.",
+    "",
     "## God Nodes"
   ];
 
@@ -717,6 +731,19 @@ export function renderHarnessGraphReport(graph: HarnessGraph): string {
     for (const [index, node] of godNodes.entries()) {
       lines.push(`${index + 1}. \`${node.id}\` - ${node.degree} edges`);
     }
+  }
+
+  lines.push("", "## Surprising Connections");
+
+  if (surprising.length === 0) {
+    lines.push("- None.");
+  } else {
+    lines.push(...surprising.map((item) => `- ${item}`));
+  }
+
+  if (keyArtifactLinks.length > 0) {
+    lines.push("", "## Key Artifact Chain");
+    lines.push(...keyArtifactLinks.map((item) => `- ${item}`));
   }
 
   lines.push("", "## Diagnostics");
@@ -732,9 +759,15 @@ export function renderHarnessGraphReport(graph: HarnessGraph): string {
   }
 
   lines.push("", "## Suggested Questions");
-  lines.push("- Are stage allowed outputs still aligned with actual producer packs?");
-  lines.push("- Do next-stage transitions form the expected workflow chain?");
-  lines.push("- Are any critical diagnostics candidates for future CI promotion?");
+  if (graph.graph_type === "harness-topology") {
+    lines.push("- Are stage allowed outputs still aligned with actual producer packs?");
+    lines.push("- Do next-stage transitions form the expected workflow chain?");
+    lines.push("- Are critical topology diagnostics candidates for CI promotion?");
+  } else {
+    lines.push("- Do adapter attempts resolve to the persisted artifacts they claimed to produce?");
+    lines.push("- Do runner-owned artifacts bind to the preview build and publish handoff expected by downstream stages?");
+    lines.push("- Are hard diagnostics supported by direct evidence and actionable without inference?");
+  }
   lines.push("");
 
   return lines.join("\n");
@@ -744,6 +777,77 @@ type RunEventRecord = {
   ordinal: number;
   record: Record<string, unknown>;
 };
+
+function countLinksByConfidence(links: HarnessGraphLink[]): Partial<Record<HarnessGraphConfidence, number>> {
+  const counts: Partial<Record<HarnessGraphConfidence, number>> = {};
+
+  for (const link of links) {
+    counts[link.confidence] = (counts[link.confidence] ?? 0) + 1;
+  }
+
+  return counts;
+}
+
+function countDiagnostics(diagnostics: HarnessGraphDiagnostic[]): {
+  critical_hard: number;
+} {
+  return {
+    critical_hard: diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "critical" && diagnostic.check_kind === "hard"
+    ).length
+  };
+}
+
+function surprisingConnections(graph: HarnessGraph): string[] {
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const findings: string[] = [];
+
+  for (const diagnostic of graph.diagnostics.filter((item) => item.severity === "critical").slice(0, 5)) {
+    findings.push(`[${diagnostic.confidence}] ${diagnostic.message}`);
+  }
+
+  if (graph.graph_type === "run-evidence") {
+    const crossStageRefs = graph.links
+      .filter((link) => link.relation === "resolves_input_ref" && link.target.startsWith("artifact:"))
+      .filter((link) => {
+        const sourceStage = stringOrUndefined(nodeById.get(link.source)?.metadata.producer_stage);
+        const targetStage = stringOrUndefined(nodeById.get(link.target)?.metadata.producer_stage);
+        return sourceStage && targetStage && sourceStage !== targetStage;
+      })
+      .slice(0, 5);
+
+    for (const link of crossStageRefs) {
+      const sourceStage = stringOrUndefined(nodeById.get(link.source)?.metadata.producer_stage) ?? "unknown";
+      const targetStage = stringOrUndefined(nodeById.get(link.target)?.metadata.producer_stage) ?? "unknown";
+      findings.push(
+        `[${link.confidence}] ${link.source} consumes ${link.target} across ${targetStage} -> ${sourceStage}`
+      );
+    }
+  }
+
+  if (graph.graph_type === "harness-topology") {
+    const contextLinks = graph.links
+      .filter((link) => link.relation === "uses_context_pack" || link.relation === "uses_verifier_pack")
+      .slice(0, 5);
+
+    for (const link of contextLinks) {
+      findings.push(`[${link.confidence}] ${link.source} ${link.relation} ${link.target}`);
+    }
+  }
+
+  return findings;
+}
+
+function keyArtifactChainLinks(graph: HarnessGraph): string[] {
+  if (graph.graph_type !== "run-evidence") {
+    return [];
+  }
+
+  return graph.links
+    .filter((link) => link.relation === "adapter_persisted_artifact" || link.relation === "runner_persisted_artifact")
+    .slice(0, 12)
+    .map((link) => `[${link.confidence}] ${link.source} ${link.relation} ${link.target}`);
+}
 
 type RunEvents = {
   source_ref: string;

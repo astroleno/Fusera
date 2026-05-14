@@ -267,6 +267,29 @@ async function verifyCommand(target: string | undefined, args: string[]): Promis
 }
 
 async function ciCommand(target: string | undefined, args: string[]): Promise<CliResult> {
+  if (target === "topology") {
+    const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+    const graph = await buildHarnessTopologyGraph({ rootDir: sourceRoot });
+    const criticalDiagnostics = graph.diagnostics.filter((diagnostic) => diagnostic.severity === "critical");
+
+    return {
+      ok: criticalDiagnostics.length === 0,
+      command: "ci topology",
+      report: {
+        graph_type: graph.graph_type,
+        schema_version: graph.schema_version,
+        nodes: graph.nodes.length,
+        links: graph.links.length,
+        diagnostics: graph.diagnostics.length,
+        critical_diagnostics: criticalDiagnostics.map((diagnostic) => ({
+          code: diagnostic.code,
+          message: diagnostic.message,
+          source_ref: diagnostic.source_ref
+        }))
+      }
+    };
+  }
+
   if (target === "mock") {
     const report = await runCiMock();
 
@@ -452,6 +475,7 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts verify p0",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-preview <run-dir>",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-quality <run-dir> [target-stage]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts ci topology",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci mock",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci live [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live [case-ids] [target-stage]",
