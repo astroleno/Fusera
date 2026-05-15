@@ -59,7 +59,11 @@ describe("POST /api/projects/[projectId]/generate", () => {
     expect(mocks.from).toHaveBeenCalledWith("projects");
     expect(mocks.trigger).toHaveBeenCalledWith({
       projectId: "project_01",
-      intake: validIntake,
+      intake: {
+        ...validIntake,
+        productDetails: [],
+        proofSources: [],
+      },
     });
   });
 

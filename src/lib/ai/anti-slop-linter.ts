@@ -12,6 +12,7 @@ export type AntiSlopFinding = {
     | "claims"
     | "contrast"
     | "conversion"
+    | "proof-binding"
     | "visual-style";
   blocking: boolean;
   location_ref: string;

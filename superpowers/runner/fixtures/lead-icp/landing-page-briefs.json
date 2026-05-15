@@ -11,12 +11,22 @@
         "Lightweight texture for morning routines",
         "Fragrance-free formula"
       ],
+      "productDetails": [
+        { "label": "Formula", "value": "Fragrance-free serum" },
+        { "label": "Use case", "value": "Morning barrier-care routine" }
+      ],
       "targetAudience": "US skincare shoppers with sensitive skin",
       "brandKeywords": ["calm", "premium", "clinical"],
       "cta": "Shop the serum",
       "visualDirectionId": "premium-editorial",
       "imageUrls": ["https://example.com/images/luma-barrier-serum.jpg"],
       "trustSignals": ["Dermatologist tested formula supplied by brand"],
+      "proofSources": [
+        {
+          "claim": "Dermatologist tested formula supplied by brand",
+          "source": "Brand formula documentation"
+        }
+      ],
       "tone": "Calm, precise, premium",
       "referenceUrls": []
     }
@@ -33,12 +43,22 @@
         "One-tap phone alert from the companion app",
         "Replaceable battery design"
       ],
+      "productDetails": [
+        { "label": "Battery", "value": "Replaceable design" },
+        { "label": "Fit", "value": "Slim wallet and pouch profile" }
+      ],
       "targetAudience": "Frequent travelers and urban commuters",
       "brandKeywords": ["precise", "compact", "reliable"],
       "cta": "Find your essentials",
       "visualDirectionId": "marketplace-clean",
       "imageUrls": ["https://example.com/images/navitag-slim-tracker.jpg"],
       "trustSignals": ["Works with the brand companion app"],
+      "proofSources": [
+        {
+          "claim": "Works with the brand companion app",
+          "source": "Companion app product documentation"
+        }
+      ],
       "tone": "Clear, useful, confident",
       "referenceUrls": []
     }
@@ -55,12 +75,22 @@
         "Compact footprint for equipment rooms",
         "Serviceable housing for maintenance teams"
       ],
+      "productDetails": [
+        { "label": "Application", "value": "Workshop water transfer" },
+        { "label": "Maintenance", "value": "Serviceable housing" }
+      ],
       "targetAudience": "Import distributors and light industrial buyers",
       "brandKeywords": ["durable", "practical", "industrial"],
       "cta": "Request distributor pricing",
       "visualDirectionId": "marketplace-clean",
       "imageUrls": ["https://example.com/images/aquaforge-transfer-pump.jpg"],
       "trustSignals": ["Factory spec sheet available on request"],
+      "proofSources": [
+        {
+          "claim": "Factory spec sheet available on request",
+          "source": "Factory spec sheet reference"
+        }
+      ],
       "tone": "Direct, technical, trustworthy",
       "referenceUrls": []
     }
@@ -77,12 +107,17 @@
         "Fold-flat pieces for seasonal storage",
         "Soft fabric handles"
       ],
+      "productDetails": [
+        { "label": "Storage mode", "value": "Fold-flat pieces" },
+        { "label": "Use areas", "value": "Closets and entryways" }
+      ],
       "targetAudience": "Apartment renters and small-space families",
       "brandKeywords": ["warm", "organized", "simple"],
       "cta": "Organize your space",
       "visualDirectionId": "social-commerce",
       "imageUrls": ["https://example.com/images/nestfold-storage-kit.jpg"],
       "trustSignals": [],
+      "proofSources": [],
       "tone": "Friendly, practical, lifestyle-led",
       "referenceUrls": []
     }
@@ -99,12 +134,22 @@
         "Breathable knit for long wear",
         "Reinforced heel and toe"
       ],
+      "productDetails": [
+        { "label": "Support", "value": "Targeted arch support" },
+        { "label": "Construction", "value": "Reinforced heel and toe" }
+      ],
       "targetAudience": "Runners, gym members, and active commuters",
       "brandKeywords": ["energetic", "technical", "bold"],
       "cta": "Upgrade your run",
       "visualDirectionId": "performance-ad",
       "imageUrls": ["https://example.com/images/paceflow-compression-socks.jpg"],
       "trustSignals": ["Designed with input from local running coaches"],
+      "proofSources": [
+        {
+          "claim": "Designed with input from local running coaches",
+          "source": "Brand product development note"
+        }
+      ],
       "tone": "Bold, direct, performance-focused",
       "referenceUrls": []
     }
@@ -121,12 +166,22 @@
         "Shelf-stable bottle for daily routines",
         "Mixed berry flavor"
       ],
+      "productDetails": [
+        { "label": "Gummy base", "value": "Plant-based pectin" },
+        { "label": "Format", "value": "Shelf-stable bottle" }
+      ],
       "targetAudience": "Wellness shoppers who prefer simple daily supplements",
       "brandKeywords": ["natural", "friendly", "clean"],
       "cta": "Start your routine",
       "visualDirectionId": "premium-editorial",
       "imageUrls": ["https://example.com/images/dailykind-probiotic-gummies.jpg"],
       "trustSignals": ["Ingredient list supplied by brand"],
+      "proofSources": [
+        {
+          "claim": "Ingredient list supplied by brand",
+          "source": "Brand ingredient list"
+        }
+      ],
       "tone": "Warm, careful, compliant",
       "referenceUrls": []
     }

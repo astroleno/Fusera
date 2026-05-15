@@ -121,6 +121,14 @@ function produceMockArtifactCandidates(bundle: CodexInvocationBundle): unknown[]
 
 function makeProductBrief(bundle: CodexInvocationBundle): Record<string, unknown> {
   const input = getInput(bundle);
+  const proofInputs = stringArrayFrom(input.proof_inputs, []);
+  const proofSources = proofSourcesFrom(input.proof_sources, proofInputs);
+  const inputClaimPolicy = stringFrom(input.claim_policy, "");
+  const claimPolicy = ["proof-required", "low-proof", "no-claims"].includes(inputClaimPolicy)
+    ? inputClaimPolicy
+    : proofInputs.length > 0 || proofSources.length > 0
+      ? "proof-required"
+      : "low-proof";
 
   return makeArtifact(bundle, "ProductBrief", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {
     product_name: stringFrom(input.product_name, "Fusera"),
@@ -128,8 +136,15 @@ function makeProductBrief(bundle: CodexInvocationBundle): Record<string, unknown
     core_problem: stringFrom(input.core_problem, "Teams need a deterministic landing-page path."),
     value_props: stringArrayFrom(input.value_props, ["Artifact-first generation"]),
     cta_goal: stringFrom(input.cta_goal, "Start a preview run"),
-    proof_inputs: stringArrayFrom(input.proof_inputs, []),
-    claim_policy: "proof-required"
+    product_details: productDetailsFrom(input.product_details),
+    proof_inputs: proofInputs,
+    proof_sources: proofSources,
+    claim_refs: proofInputs.map((proofInput, index) => ({
+      claim_ref: `claim:${index + 1}`,
+      claim: proofInput,
+      proof_refs: [proofSources[index]?.proof_ref].filter(Boolean)
+    })),
+    claim_policy: claimPolicy
   });
 }
 
@@ -445,4 +460,56 @@ function stringFrom(value: unknown, fallback: string): string {
 
 function stringArrayFrom(value: unknown, fallback: string[]): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : fallback;
+}
+
+function productDetailsFrom(value: unknown): Array<Record<string, string>> {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (typeof item !== "object" || item === null) {
+      return [];
+    }
+
+    const record = item as Record<string, unknown>;
+    const label = stringFrom(record.label, "");
+    const detailValue = stringFrom(record.value, "");
+
+    return label && detailValue ? [{ label, value: detailValue }] : [];
+  });
+}
+
+function proofSourcesFrom(
+  value: unknown,
+  proofInputs: string[]
+): Array<Record<string, string | null>> {
+  if (Array.isArray(value)) {
+    const parsed = value.flatMap((item) => {
+      if (typeof item !== "object" || item === null) {
+        return [];
+      }
+
+      const record = item as Record<string, unknown>;
+      const proofRef = stringFrom(record.proof_ref, "");
+      const claim = stringFrom(record.claim, "");
+      const source = stringFrom(record.source, "");
+      const url = typeof record.url === "string" && record.url ? record.url : null;
+
+      return proofRef && claim && source
+        ? [{ proof_ref: proofRef, claim, source, url }]
+        : [];
+    });
+
+    if (parsed.length > 0) {
+      return parsed;
+    }
+  }
+
+  return proofInputs.map((proofInput, index) => ({
+    proof_ref: `proof:${index + 1}`,
+    claim: proofInput,
+    source: "normalized-input.proof_inputs",
+    url: null
+  }));
 }

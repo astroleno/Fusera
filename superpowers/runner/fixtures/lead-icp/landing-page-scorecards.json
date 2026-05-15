@@ -1,87 +1,81 @@
 {
   "scoringDate": "2026-05-15",
-  "scoringVersion": "landing-quality-pass-1",
+  "scoringVersion": "proof-source-details-pass-2",
   "runtimeScope": ["landing-page"],
   "phase2RuntimeFrozen": true,
-  "method": "Manual review of seeded lead ICP briefs after the buyer-fit PageSpec section was added.",
+  "method": "Manual review of seeded lead ICP briefs after proof-source capture and structured product details were added.",
   "cards": [
     {
       "fixtureId": "beauty-serum-us",
       "firstDraftUsable": true,
       "draftToRealExportPublish": false,
-      "manualAdjustmentCount": 2,
+      "manualAdjustmentCount": 1,
       "remainingAdjustments": [
-        "Review product image crop before external handoff.",
-        "Keep dermatologist proof wording tied to supplied brand signal."
+        "Review product image crop before external handoff."
       ],
-      "qualityNotes": "Premium framing and buyer context are usable; still needs proof review before real publish/export."
+      "qualityNotes": "Dermatologist proof wording is now source-bound; remaining work is visual handoff review."
     },
     {
       "fixtureId": "consumer-electronics-tracker",
       "firstDraftUsable": true,
       "draftToRealExportPublish": false,
-      "manualAdjustmentCount": 2,
+      "manualAdjustmentCount": 1,
       "remainingAdjustments": [
-        "Add device compatibility detail.",
-        "Attach proof source for companion app claim."
+        "Confirm exact companion app compatibility/version before external publish."
       ],
-      "qualityNotes": "Buyer-fit section clarifies traveler/commuter context; remaining work is product-specific proof detail."
+      "qualityNotes": "Product details and companion-app proof source remove the previous publish blocker for first-draft review."
     },
     {
       "fixtureId": "industrial-pump-b2b",
       "firstDraftUsable": true,
       "draftToRealExportPublish": false,
-      "manualAdjustmentCount": 2,
+      "manualAdjustmentCount": 1,
       "remainingAdjustments": [
-        "Attach source spec sheet.",
-        "Add distributor-ready technical table."
+        "Replace high-level spec reference with the actual distributor spec table."
       ],
-      "qualityNotes": "B2B buyer context is clearer; export still waits on sourced technical specs."
+      "qualityNotes": "Spec-sheet proof is captured, but distributor-ready export still needs the real technical table."
     },
     {
       "fixtureId": "home-storage-kit",
       "firstDraftUsable": true,
       "draftToRealExportPublish": false,
-      "manualAdjustmentCount": 3,
+      "manualAdjustmentCount": 2,
       "remainingAdjustments": [
-        "Add product dimensions.",
-        "Add stronger room-by-room lifestyle examples.",
+        "Add exact product dimensions.",
         "Review product photography crop."
       ],
-      "qualityNotes": "Buyer-fit section lifts the draft into usable review territory, but dimensions and lifestyle examples remain needed."
+      "qualityNotes": "Structured use details reduce copy edits; exact dimensions are still needed before commerce handoff."
     },
     {
       "fixtureId": "fitness-compression-socks",
       "firstDraftUsable": true,
       "draftToRealExportPublish": false,
-      "manualAdjustmentCount": 2,
+      "manualAdjustmentCount": 1,
       "remainingAdjustments": [
-        "Review performance wording for claim safety.",
-        "Attach proof source for coach input."
+        "Review performance wording for claim safety."
       ],
-      "qualityNotes": "Performance direction and CTA are usable; proof attachment remains the publish blocker."
+      "qualityNotes": "Coach-input proof is now source-bound; remaining work is claim tone review."
     },
     {
       "fixtureId": "wellness-gummies",
-      "firstDraftUsable": false,
+      "firstDraftUsable": true,
       "draftToRealExportPublish": false,
-      "manualAdjustmentCount": 3,
+      "manualAdjustmentCount": 2,
       "remainingAdjustments": [
-        "Add ClaimRef/ProofRef before any wellness benefit copy.",
         "Review supplement compliance wording.",
-        "Attach ingredient or lab documentation."
+        "Attach stronger substantiation if claims move beyond supplied ingredient facts."
       ],
-      "qualityNotes": "Buyer context improved, but wellness claims still need stricter proof handling before this can be called usable."
+      "qualityNotes": "Ingredient-list proof is captured and unsupported claim expansion is blocked; compliance review is still required."
     }
   ],
   "summary": {
-    "firstDraftUsableCount": 5,
+    "firstDraftUsableCount": 6,
     "totalBriefs": 6,
-    "firstDraftUsableRate": 0.8333,
+    "firstDraftUsableRate": 1,
     "draftToRealExportPublishCount": 0,
     "draftToRealExportPublishRate": 0,
-    "manualAdjustmentTotal": 14,
-    "manualAdjustmentAverage": 2.3333,
+    "manualAdjustmentTotal": 8,
+    "manualAdjustmentAverage": 1.3333,
     "commercialProofLoopComplete": false
   }
 }

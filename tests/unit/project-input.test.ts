@@ -27,8 +27,39 @@ describe("projectInputSchema", () => {
     });
 
     expect(result.trustSignals).toEqual([]);
+    expect(result.productDetails).toEqual([]);
+    expect(result.proofSources).toEqual([]);
     expect(result.referenceUrls).toEqual([]);
     expect(result.visualDirectionId).toBe("premium-editorial");
+  });
+
+  it("accepts structured product details and proof sources", () => {
+    const result = projectInputSchema.parse({
+      productName: "Atlas Bottle",
+      sellingPoints: ["Leak-proof"],
+      productDetails: [{ label: "Capacity", value: "24 oz" }],
+      targetAudience: "Urban commuters",
+      brandKeywords: ["sleek"],
+      cta: "Shop now",
+      imageUrls: ["https://example.com/product.jpg"],
+      trustSignals: ["500+ reviews"],
+      proofSources: [
+        {
+          claim: "500+ reviews",
+          source: "Review export supplied by brand",
+          url: "https://example.com/reviews",
+        },
+      ],
+    });
+
+    expect(result.productDetails).toEqual([{ label: "Capacity", value: "24 oz" }]);
+    expect(result.proofSources).toEqual([
+      {
+        claim: "500+ reviews",
+        source: "Review export supplied by brand",
+        url: "https://example.com/reviews",
+      },
+    ]);
   });
 
   it("accepts the curated commercial visual directions", () => {
