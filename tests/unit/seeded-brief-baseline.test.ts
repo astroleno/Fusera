@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildPageArtifacts } from "@/lib/ai/page-strategy";
 import { projectInputSchema } from "@/lib/domain/project-input";
+import baseline from "../../superpowers/runner/fixtures/lead-icp/landing-page-baseline.json";
 import briefs from "../../superpowers/runner/fixtures/lead-icp/landing-page-briefs.json";
 import scorecards from "../../superpowers/runner/fixtures/lead-icp/landing-page-scorecards.json";
 
@@ -46,5 +47,30 @@ describe("seeded lead ICP landing-page briefs", () => {
     expect(scorecards.summary.manualAdjustmentAverage).toBeLessThanOrEqual(3);
     expect(scorecards.summary.draftToRealExportPublishRate).toBe(0);
     expect(scorecards.summary.commercialProofLoopComplete).toBe(false);
+  });
+
+  it("pins pass 2 as the active landing-only scorecard baseline", () => {
+    expect(baseline.baselineVersion).toBe(scorecards.scoringVersion);
+    expect(baseline.baselineSource).toBe(
+      "superpowers/runner/fixtures/lead-icp/landing-page-scorecards.json",
+    );
+    expect(baseline.fixtureSource).toBe(
+      "superpowers/runner/fixtures/lead-icp/landing-page-briefs.json",
+    );
+    expect(baseline.runtimeScope).toEqual(scorecards.runtimeScope);
+    expect(baseline.phase2RuntimeFrozen).toBe(true);
+    expect(baseline.qualityBaseline).toMatchObject({
+      firstDraftUsableRate: scorecards.summary.firstDraftUsableRate,
+      manualAdjustmentAverage: scorecards.summary.manualAdjustmentAverage,
+      draftToRealExportPublishRate:
+        scorecards.summary.draftToRealExportPublishRate,
+      commercialProofLoopComplete: scorecards.summary.commercialProofLoopComplete,
+    });
+    expect(baseline.blockedRuntimeUntilRealPublishLoop).toEqual(
+      expect.arrayContaining(["image-poster-runtime"]),
+    );
+    expect(
+      baseline.promotionCriteria.requiresRealExportPublishLoop,
+    ).toBe(true);
   });
 });
