@@ -1,4 +1,4 @@
-import { chmod, cp, mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -865,12 +865,24 @@ async function checkDesignContextPacks(runDir: string): Promise<CheckResult> {
       );
     })
   );
+  const hasDeclaredReferenceSources = expectedContextPackIds.every((packId) =>
+    compiledPacks.some((pack: Record<string, unknown>) => {
+      const referenceSources = Array.isArray(pack.reference_sources) ? pack.reference_sources : [];
+
+      return pack.pack_id === packId && referenceSources.length > 0;
+    })
+  );
+  const missingReferenceSourceCount = compiledPacks
+    .flatMap((pack: Record<string, unknown>) =>
+      Array.isArray(pack.reference_sources) ? pack.reference_sources : []
+    )
+    .filter((reference: Record<string, unknown>) => reference.kind === "missing").length;
   const ok =
     expectedContextPackIds.every((packId) => selectedPackIds.includes(packId)) &&
     expectedContextPackIds.every((packId) => compiledPackIds.includes(packId)) &&
     expectedContextPackIds.every((packId) => sourcePackIds.includes(packId)) &&
     hasContextPackSkillSource &&
-    hasMaterializedReferenceSources;
+    hasDeclaredReferenceSources;
 
   return {
     name: "design-context-packs",
@@ -881,47 +893,94 @@ async function checkDesignContextPacks(runDir: string): Promise<CheckResult> {
       compiled_pack_ids: compiledPackIds,
       source_pack_ids: sourcePackIds,
       has_context_pack_skill_source: hasContextPackSkillSource,
-      has_materialized_reference_sources: hasMaterializedReferenceSources
+      has_declared_reference_sources: hasDeclaredReferenceSources,
+      has_materialized_reference_sources: hasMaterializedReferenceSources,
+      missing_reference_source_count: missingReferenceSourceCount
     }
   };
 }
 
 async function checkReferenceBudgetPolicy(): Promise<CheckResult> {
-  const pack = await withEnv(
-    {
-      FUSERA_PACK_REFERENCE_BUDGET_BYTES: "5000"
-    },
-    () => compilePack({ rootDir: ROOT_DIR, packId: "base/web-design-engineer", backend: "codex" })
-  );
-  const firstReference = pack.reference_sources[0];
-  const skippedCount = pack.reference_sources.filter((source) => source.kind === "skipped").length;
-  const ok =
-    pack.reference_budget.policy === "manifest-order" &&
-    pack.reference_budget.max_bytes === 5000 &&
-    pack.reference_budget.used_bytes <= 5000 &&
-    firstReference?.kind === "file" &&
-    firstReference.truncated === true &&
-    firstReference.inline_byte_length === 5000 &&
-    skippedCount > 0 &&
-    pack.reference_budget.skipped_count === skippedCount;
+  const rootDir = await createReferenceBudgetFixtureRoot();
 
-  return {
-    name: "reference-budget-policy",
-    ok,
-    details: {
-      policy: pack.reference_budget.policy,
-      max_bytes: pack.reference_budget.max_bytes,
-      used_bytes: pack.reference_budget.used_bytes,
-      first_reference: {
-        path: firstReference?.path,
-        kind: firstReference?.kind,
-        truncated: firstReference?.truncated,
-        inline_byte_length: firstReference?.inline_byte_length
+  try {
+    const pack = await withEnv(
+      {
+        FUSERA_PACK_REFERENCE_BUDGET_BYTES: "5000"
       },
-      skipped_count: skippedCount,
-      budget_skipped_count: pack.reference_budget.skipped_count
-    }
-  };
+      () => compilePack({ rootDir, packId: "base/web-design-engineer", backend: "codex" })
+    );
+    const firstReference = pack.reference_sources[0];
+    const skippedCount = pack.reference_sources.filter((source) => source.kind === "skipped").length;
+    const ok =
+      pack.reference_budget.policy === "manifest-order" &&
+      pack.reference_budget.max_bytes === 5000 &&
+      pack.reference_budget.used_bytes <= 5000 &&
+      firstReference?.kind === "file" &&
+      firstReference.truncated === true &&
+      firstReference.inline_byte_length === 5000 &&
+      skippedCount > 0 &&
+      pack.reference_budget.skipped_count === skippedCount;
+
+    return {
+      name: "reference-budget-policy",
+      ok,
+      details: {
+        policy: pack.reference_budget.policy,
+        max_bytes: pack.reference_budget.max_bytes,
+        used_bytes: pack.reference_budget.used_bytes,
+        first_reference: {
+          path: firstReference?.path,
+          kind: firstReference?.kind,
+          truncated: firstReference?.truncated,
+          inline_byte_length: firstReference?.inline_byte_length
+        },
+        skipped_count: skippedCount,
+        budget_skipped_count: pack.reference_budget.skipped_count
+      }
+    };
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+}
+
+async function createReferenceBudgetFixtureRoot(): Promise<string> {
+  const rootDir = await mkdtemp(path.join(os.tmpdir(), "fusera-reference-budget-"));
+  const packDir = path.join(rootDir, "superpowers/packs/base/web-design-engineer");
+  const registryDir = path.join(rootDir, "superpowers/packs");
+  const referenceDir = path.join(rootDir, "reference/design/web-design-skill");
+
+  await mkdir(packDir, { recursive: true });
+  await mkdir(referenceDir, { recursive: true });
+  await writeFile(path.join(packDir, "SKILL.md"), "# Web Design Engineer\n", "utf8");
+  await writeFile(path.join(referenceDir, "README.md"), `${"A".repeat(6000)}\n`, "utf8");
+  await writeFile(path.join(referenceDir, "SKILL.md"), "secondary reference\n", "utf8");
+  await writeFile(
+    path.join(registryDir, "registry.yaml"),
+    `packs:
+  - id: base/web-design-engineer
+    path: superpowers/packs/base/web-design-engineer/SKILL.md
+    kind: base
+    stage: design-system-pass
+    output_modes: []
+    backend_support:
+      adapters:
+        - codex
+      preferred_adapters:
+        - codex
+    capabilities_required: []
+    required_artifacts: []
+    produces_artifacts: []
+    stage_outputs: []
+    task_role: context
+    references:
+      - reference/design/web-design-skill/README.md
+      - reference/design/web-design-skill/SKILL.md
+`,
+    "utf8"
+  );
+
+  return rootDir;
 }
 
 async function checkQaFailureRun(runDir: string): Promise<CheckResult> {
