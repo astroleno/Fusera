@@ -23,7 +23,9 @@ describe("ProjectIntakeForm", () => {
     render(<ProjectIntakeForm />);
 
     expect(screen.getByLabelText("Product name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Product details")).toBeInTheDocument();
     expect(screen.getByLabelText("Primary CTA")).toBeInTheDocument();
+    expect(screen.getByLabelText("Proof sources")).toBeInTheDocument();
     expect(screen.getByLabelText("Visual direction")).toBeInTheDocument();
   });
 
@@ -51,6 +53,9 @@ describe("ProjectIntakeForm", () => {
     fireEvent.change(screen.getByLabelText("Selling points"), {
       target: { value: "Leak-proof\nInsulated" },
     });
+    fireEvent.change(screen.getByLabelText("Product details"), {
+      target: { value: "Capacity: 24 oz" },
+    });
     fireEvent.change(screen.getByLabelText("Brand keywords"), {
       target: { value: "sleek\nconfident" },
     });
@@ -59,6 +64,15 @@ describe("ProjectIntakeForm", () => {
     });
     fireEvent.change(screen.getByLabelText("Primary CTA"), {
       target: { value: "Shop now" },
+    });
+    fireEvent.change(screen.getByLabelText("Trust signals"), {
+      target: { value: "500+ reviews" },
+    });
+    fireEvent.change(screen.getByLabelText("Proof sources"), {
+      target: {
+        value:
+          "500+ reviews | Review export supplied by brand | https://example.com/reviews",
+      },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create project" }));
 
@@ -74,6 +88,19 @@ describe("ProjectIntakeForm", () => {
         expect.objectContaining({ method: "POST" }),
       );
       expect(router.push).toHaveBeenCalledWith("/projects/project_01");
+    });
+
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+      productName: "Atlas Bottle",
+      productDetails: [{ label: "Capacity", value: "24 oz" }],
+      trustSignals: ["500+ reviews"],
+      proofSources: [
+        {
+          claim: "500+ reviews",
+          source: "Review export supplied by brand",
+          url: "https://example.com/reviews",
+        },
+      ],
     });
   });
 });

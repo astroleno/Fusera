@@ -9,7 +9,7 @@ export const sectionRegistry = {
     requiredProps: ["items"],
   },
   proof: {
-    requiredProps: ["trust_signals", "claim_policy"],
+    requiredProps: ["trust_signals", "proof_sources", "claim_policy"],
   },
   cta: {
     requiredProps: ["cta_label"],

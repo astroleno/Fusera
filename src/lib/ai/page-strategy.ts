@@ -13,7 +13,10 @@ import {
 } from "@/lib/domain/page-artifacts";
 import type { ProjectInput } from "@/lib/domain/project-input";
 import { resolveVisualDirectionPreset } from "@/lib/domain/visual-directions";
-import { lintLandingPageAntiSlop } from "./anti-slop-linter";
+import {
+  lintLandingPageAntiSlop,
+  type AntiSlopFinding,
+} from "./anti-slop-linter";
 import { buildBrandProfile, buildProductBrief } from "./product-brief";
 import { scorePageQuality } from "./quality-score";
 
@@ -64,6 +67,25 @@ export async function buildPageArtifacts({
 }: BuildPageArtifactsParams): Promise<GeneratedPageArtifacts> {
   const visualDirection = resolveVisualDirectionPreset(input.visualDirectionId);
   const productBriefPayload = buildProductBrief(input);
+  const productDetailItems = productBriefPayload.product_details.map(
+    (detail) => `${detail.label}: ${detail.value}`,
+  );
+  const proofSourceLabels = productBriefPayload.proof_sources.map((proof) =>
+    proof.url
+      ? `${proof.claim} - ${proof.source} (${proof.url})`
+      : `${proof.claim} - ${proof.source}`,
+  );
+  const unresolvedClaimRefs = productBriefPayload.claim_refs.filter(
+    (claimRef) => claimRef.proof_refs.length === 0,
+  );
+  const sectionOrder = [
+    "hero",
+    "buyer-fit",
+    "features",
+    ...(productDetailItems.length > 0 ? ["details"] : []),
+    "proof",
+    "cta",
+  ];
   const productBrief = createArtifactEnvelope({
     artifactType: "ProductBrief",
     runId,
@@ -90,18 +112,29 @@ export async function buildPageArtifacts({
         intent: `Introduce ${input.productName} and the primary action.`,
       },
       {
-        section_id: "features",
-        intent: "Translate selling points into concrete product benefits.",
-      },
-      {
         section_id: "buyer-fit",
         intent: "Show the target buyer and use context before listing features.",
       },
       {
+        section_id: "features",
+        intent: "Translate selling points into concrete product benefits.",
+      },
+      ...(productDetailItems.length > 0
+        ? [
+            {
+              section_id: "details",
+              intent:
+                "Expose supplied product details before proof so buyers can evaluate fit.",
+            },
+          ]
+        : []),
+      {
         section_id: "proof",
         intent:
-          input.trustSignals.length > 0
-            ? "Bind trust signals to proof claims."
+          productBriefPayload.proof_sources.length > 0
+            ? "Bind trust signals to supplied proof sources."
+            : input.trustSignals.length > 0
+              ? "Require proof sources before trust claims can be publish-ready."
             : "Keep proof restrained when no trust signals are provided.",
       },
       {
@@ -111,8 +144,10 @@ export async function buildPageArtifacts({
     ],
     cta_strategy: input.cta,
     proof_strategy:
-      input.trustSignals.length > 0
-        ? "Use only supplied trust signals as proof."
+      productBriefPayload.proof_sources.length > 0
+        ? "Use supplied proof sources and bind trust claims to ProofRefs."
+        : input.trustSignals.length > 0
+          ? "Require proof sources before trust claims can be publish-ready."
         : "Avoid quantified proof claims until evidence is supplied.",
   };
   const pagePlan = createArtifactEnvelope({
@@ -123,73 +158,101 @@ export async function buildPageArtifacts({
     payload: pagePlanPayload,
   });
 
+  const sectionNodes: SectionGraphPayload["nodes"] = [
+    {
+      section_id: "hero",
+      section_type: "hero",
+      title: input.productName,
+      props: {
+        eyebrow: input.brandKeywords.join(" / "),
+        headline: input.productName,
+        subhead: productBriefPayload.value_props[0],
+        cta_label: input.cta,
+        image_urls: input.imageUrls,
+      },
+    },
+    {
+      section_id: "buyer-fit",
+      section_type: "problem",
+      title: `Built for ${input.targetAudience}`,
+      props: {
+        headline: `Built for ${input.targetAudience}`,
+        body: `${input.productName} is framed around the practical jobs this audience needs solved, using only the supplied product facts.`,
+        supporting_points: input.sellingPoints,
+      },
+    },
+    {
+      section_id: "features",
+      section_type: "features",
+      title: "Core benefits",
+      props: {
+        items: input.sellingPoints,
+      },
+    },
+    ...(productDetailItems.length > 0
+      ? [
+          {
+            section_id: "details",
+            section_type: "faq" as const,
+            title: "Product details",
+            props: {
+              items: productDetailItems,
+            },
+          },
+        ]
+      : []),
+    {
+      section_id: "proof",
+      section_type: "proof",
+      title: "Proof points",
+      props: {
+        trust_signals: input.trustSignals,
+        proof_sources: productBriefPayload.proof_sources,
+        proof_source_labels: proofSourceLabels,
+        claim_refs: productBriefPayload.claim_refs,
+        claim_policy: productBriefPayload.claim_policy,
+      },
+    },
+    {
+      section_id: "cta",
+      section_type: "cta",
+      title: input.cta,
+      props: {
+        cta_label: input.cta,
+      },
+    },
+  ];
+
+  const relationshipByTarget: Record<string, string> = {
+    "buyer-fit": "frames",
+    features: "supports",
+    details: "clarifies",
+    proof: "substantiates",
+    cta: "converts",
+  };
   const sectionGraphPayload: SectionGraphPayload = {
-    nodes: [
-      {
-        section_id: "hero",
-        section_type: "hero",
-        title: input.productName,
-        props: {
-          eyebrow: input.brandKeywords.join(" / "),
-          headline: input.productName,
-          subhead: productBriefPayload.value_props[0],
-          cta_label: input.cta,
-          image_urls: input.imageUrls,
-        },
-      },
-      {
-        section_id: "features",
-        section_type: "features",
-        title: "Core benefits",
-        props: {
-          items: input.sellingPoints,
-        },
-      },
-      {
-        section_id: "buyer-fit",
-        section_type: "problem",
-        title: `Built for ${input.targetAudience}`,
-        props: {
-          headline: `Built for ${input.targetAudience}`,
-          body: `${input.productName} is framed around the practical jobs this audience needs solved, using only the supplied product facts.`,
-          supporting_points: input.sellingPoints,
-        },
-      },
-      {
-        section_id: "proof",
-        section_type: "proof",
-        title: "Proof points",
-        props: {
-          trust_signals: input.trustSignals,
-          claim_policy: productBriefPayload.claim_policy,
-        },
-      },
-      {
-        section_id: "cta",
-        section_type: "cta",
-        title: input.cta,
-        props: {
-          cta_label: input.cta,
-        },
-      },
-    ],
-    edges: [
-      { from: "hero", to: "buyer-fit", relationship: "frames" },
-      { from: "buyer-fit", to: "features", relationship: "supports" },
-      { from: "features", to: "proof", relationship: "substantiates" },
-      { from: "proof", to: "cta", relationship: "converts" },
-    ],
-    section_order: ["hero", "buyer-fit", "features", "proof", "cta"],
+    nodes: sectionNodes,
+    edges: sectionOrder.slice(0, -1).map((sectionId, index) => {
+      const targetSectionId = sectionOrder[index + 1];
+
+      return {
+        from: sectionId,
+        to: targetSectionId,
+        relationship: relationshipByTarget[targetSectionId] ?? "continues",
+      };
+    }),
+    section_order: sectionOrder,
     required_props: {
       hero: ["headline", "cta_label", "image_urls"],
       "buyer-fit": ["headline"],
       features: ["items"],
-      proof: ["trust_signals", "claim_policy"],
+      ...(productDetailItems.length > 0 ? { details: ["items"] } : {}),
+      proof: ["trust_signals", "proof_sources", "claim_policy"],
       cta: ["cta_label"],
     },
-    proof_bindings: input.trustSignals.map((proofRef) => ({
+    proof_bindings: productBriefPayload.proof_sources.map((proof) => ({
       section_id: "proof",
-      proof_ref: proofRef,
+      proof_ref: proof.proof_ref,
     })),
     claim_policy: productBriefPayload.claim_policy,
   };
@@ -270,7 +333,7 @@ export async function buildPageArtifacts({
       claim_policy: productBriefPayload.claim_policy,
       rules: [
         "Do not invent sales numbers, certifications, awards, discounts, reviews, or customer logos.",
-        "Trust signals remain advisory until ClaimRef and ProofRef are persisted.",
+        "Trust signals must bind to persisted ClaimRef and ProofRef before publish-ready.",
         "Copy may clarify supplied facts but must not amplify them.",
       ],
     },
@@ -345,8 +408,22 @@ export async function buildPageArtifacts({
     sectionGraph: sectionGraphPayload,
     themeTokens: themeTokensPayload,
     pageSpec: pageSpecPayload,
-    proofInputs: input.trustSignals,
+    proofInputs: productBriefPayload.proof_sources.flatMap((proof) => [
+      proof.claim,
+      proof.source,
+      ...(proof.url ? [proof.url] : []),
+    ]),
   });
+  const proofBindingFindings: AntiSlopFinding[] = unresolvedClaimRefs.map(
+    (claimRef, index) => ({
+      issue_id: `proof-binding-${index + 1}`,
+      severity: "critical",
+      category: "proof-binding",
+      blocking: true,
+      location_ref: "artifact:ProductBrief",
+      summary: `ClaimRef ${claimRef.claim_ref} (${claimRef.claim}) has no matching ProofRef.`,
+    }),
+  );
   const bindingIssues = [
     pageSpecPayload.token_refs.theme_tokens_ref === themeTokens.artifact_id
       ? null
@@ -367,6 +444,15 @@ export async function buildPageArtifacts({
       blocking: true,
       location_ref: "artifact:PageSpec",
       summary,
+    })),
+    ...proofBindingFindings.map((finding) => ({
+      issue_id: finding.issue_id,
+      severity: finding.severity,
+      category: finding.category,
+      repairability: "manual-only" as const,
+      blocking: finding.blocking,
+      location_ref: finding.location_ref,
+      summary: finding.summary,
     })),
     ...antiSlopFindings.map((finding) => ({
       issue_id: finding.issue_id,
@@ -407,15 +493,32 @@ export async function buildPageArtifacts({
         waivable: true,
         evidence_refs: [pageSpec.artifact_id, themeTokens.artifact_id],
       },
+      {
+        gate_id: "proof-source-binding",
+        result: proofBindingFindings.length > 0 ? "fail" : "pass",
+        blocking: true,
+        waivable: false,
+        evidence_refs: [
+          productBrief.artifact_id,
+          ...productBriefPayload.proof_sources.map((proof) => proof.proof_ref),
+        ],
+      },
     ],
     issues: blockingIssues,
-    repair_directives: antiSlopFindings.map((finding) => ({
-      issue_id: finding.issue_id,
-      action:
-        finding.category === "claims"
-          ? "Ask for proof or remove the unsupported proof-like claim."
-          : "Revise generated page artifacts and re-run QA.",
-    })),
+    repair_directives: [
+      ...proofBindingFindings.map((finding) => ({
+        issue_id: finding.issue_id,
+        action:
+          "Attach a proof source for the trust claim or remove the trust signal.",
+      })),
+      ...antiSlopFindings.map((finding) => ({
+        issue_id: finding.issue_id,
+        action:
+          finding.category === "claims"
+            ? "Ask for proof or remove the unsupported proof-like claim."
+            : "Revise generated page artifacts and re-run QA.",
+      })),
+    ],
     evidence_refs: [
       productBrief.artifact_id,
       brandProfile.artifact_id,
@@ -461,7 +564,7 @@ export async function buildPageArtifacts({
   const qualityScore = scorePageQuality({
     sectionTypes: sectionGraphPayload.nodes.map((node) => node.section_type),
     hasTrustSignals: input.trustSignals.length > 0,
-    advisoryFindings: antiSlopFindings,
+    advisoryFindings: [...proofBindingFindings, ...antiSlopFindings],
   });
   const artifacts: GeneratedPageArtifacts["artifacts"] = [
     productBrief,

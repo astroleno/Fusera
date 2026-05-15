@@ -52,6 +52,25 @@ describe("PagePreview", () => {
                 cta_label: "Shop now",
               },
             },
+            {
+              key: "faq:details",
+              sectionId: "details",
+              sectionType: "faq",
+              title: "Product details",
+              props: {
+                items: ["Capacity: 24 oz"],
+              },
+            },
+            {
+              key: "proof:proof",
+              sectionId: "proof",
+              sectionType: "proof",
+              title: "Proof points",
+              props: {
+                trust_signals: ["500+ reviews"],
+                proof_source_labels: ["500+ reviews - Review export"],
+              },
+            },
           ],
         }}
       />,
@@ -64,6 +83,8 @@ describe("PagePreview", () => {
       screen.getByRole("heading", { name: "Built for Urban commuters" }),
     ).toBeInTheDocument();
     expect(screen.getAllByText("Leak-proof").length).toBeGreaterThan(0);
+    expect(screen.getByText("Capacity: 24 oz")).toBeInTheDocument();
+    expect(screen.getByText("500+ reviews - Review export")).toBeInTheDocument();
     expect(
       screen.getAllByRole("button", { name: "Shop now" }).length,
     ).toBeGreaterThan(0);

@@ -46,8 +46,11 @@
         "audiences",
         "core_problem",
         "value_props",
+        "product_details",
         "cta_goal",
         "proof_inputs",
+        "proof_sources",
+        "claim_refs",
         "claim_policy"
       ],
       "properties": {
@@ -63,10 +66,57 @@
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 }
         },
+        "product_details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "value"],
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "value": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
         "cta_goal": { "type": "string", "minLength": 1 },
         "proof_inputs": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "proof_sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["proof_ref", "claim", "source", "url"],
+            "properties": {
+              "proof_ref": { "type": "string", "minLength": 1 },
+              "claim": { "type": "string", "minLength": 1 },
+              "source": { "type": "string", "minLength": 1 },
+              "url": {
+                "anyOf": [
+                  { "type": "string", "format": "uri" },
+                  { "type": "null" }
+                ]
+              }
+            }
+          }
+        },
+        "claim_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim_ref", "claim", "proof_refs"],
+            "properties": {
+              "claim_ref": { "type": "string", "minLength": 1 },
+              "claim": { "type": "string", "minLength": 1 },
+              "proof_refs": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
         },
         "claim_policy": { "enum": ["proof-required", "low-proof", "no-claims"] }
       }

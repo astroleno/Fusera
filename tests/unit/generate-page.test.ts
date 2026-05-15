@@ -43,12 +43,19 @@ describe("buildPageArtifacts", () => {
       runId: "run_test_01",
       productName: "Atlas Bottle",
       sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [{ label: "Capacity", value: "24 oz" }],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       visualDirectionId: "premium-editorial",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: ["500+ reviews"],
+      proofSources: [
+        {
+          claim: "500+ reviews",
+          source: "Review export supplied by brand",
+        },
+      ],
       referenceUrls: [],
     });
 
@@ -94,11 +101,46 @@ describe("buildPageArtifacts", () => {
     );
     expect(result.payloads.productBrief.product_name).toBe("Atlas Bottle");
     expect(result.payloads.productBrief.claim_policy).toBe("proof-required");
+    expect(result.payloads.productBrief.product_details).toEqual([
+      { label: "Capacity", value: "24 oz" },
+    ]);
+    expect(result.payloads.productBrief.proof_sources).toEqual([
+      expect.objectContaining({
+        proof_ref: "proof:1",
+        claim: "500+ reviews",
+        source: "Review export supplied by brand",
+      }),
+    ]);
+    expect(result.payloads.productBrief.claim_refs).toEqual([
+      {
+        claim_ref: "claim:1",
+        claim: "500+ reviews",
+        proof_refs: ["proof:1"],
+      },
+    ]);
     expect(result.payloads.sectionGraph.nodes[0]).toMatchObject({
       section_id: "hero",
       section_type: "hero",
     });
-    expect(result.payloads.sectionGraph.section_order).toContain("buyer-fit");
+    expect(
+      result.payloads.pagePlan.section_intents.map((intent) => intent.section_id),
+    ).toEqual(["hero", "buyer-fit", "features", "details", "proof", "cta"]);
+    expect(result.payloads.sectionGraph.nodes.map((node) => node.section_id)).toEqual([
+      "hero",
+      "buyer-fit",
+      "features",
+      "details",
+      "proof",
+      "cta",
+    ]);
+    expect(result.payloads.sectionGraph.section_order).toEqual([
+      "hero",
+      "buyer-fit",
+      "features",
+      "details",
+      "proof",
+      "cta",
+    ]);
     expect(result.payloads.pageSpec.sections).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -106,6 +148,13 @@ describe("buildPageArtifacts", () => {
           section_type: "problem",
           props: expect.objectContaining({
             headline: "Built for Urban commuters",
+          }),
+        }),
+        expect.objectContaining({
+          section_id: "details",
+          section_type: "faq",
+          props: expect.objectContaining({
+            items: ["Capacity: 24 oz"],
           }),
         }),
       ]),
@@ -124,16 +173,60 @@ describe("buildPageArtifacts", () => {
     expect(result.qualityScore.total).toBeGreaterThan(0);
   });
 
+  it("fails QA and skips PublishVersion when trust claims lack ProofRefs", async () => {
+    const result = await buildPageArtifacts({
+      runId: "run_missing_proof",
+      productName: "Atlas Bottle",
+      sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [],
+      targetAudience: "Urban commuters",
+      brandKeywords: ["sleek", "confident"],
+      cta: "Shop now",
+      visualDirectionId: "premium-editorial",
+      imageUrls: ["https://example.com/product.jpg"],
+      trustSignals: ["500+ reviews"],
+      proofSources: [],
+      referenceUrls: [],
+    });
+
+    expect(result.payloads.qaReport.verdict).toBe("fail");
+    expect(result.payloads.qaReport.gate_results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          gate_id: "proof-source-binding",
+          result: "fail",
+          blocking: true,
+          waivable: false,
+        }),
+      ]),
+    );
+    expect(result.payloads.qaReport.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: "proof-binding",
+          blocking: true,
+        }),
+      ]),
+    );
+    expect(result.artifacts.map((artifact) => artifact.artifact_type)).not.toContain(
+      "PublishVersion",
+    );
+    expect(result.latestRefs.publishVersionRef).toBeNull();
+    expect(result.payloads.publishVersion).toBeNull();
+  });
+
   it("changes ThemeTokens when the visual direction changes", async () => {
     const baseInput = {
       runId: "run_test_direction",
       productName: "Atlas Bottle",
       sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: [],
+      proofSources: [],
       referenceUrls: [],
     };
 
@@ -159,24 +252,28 @@ describe("buildPageArtifacts", () => {
       runId: "run_clean",
       productName: "Atlas Bottle",
       sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       visualDirectionId: "marketplace-clean",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: [],
+      proofSources: [],
       referenceUrls: [],
     });
     const flagged = await buildPageArtifacts({
       runId: "run_flagged",
       productName: "Atlas Bottle",
       sellingPoints: ["Trusted by 10,000 customers"],
+      productDetails: [],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       visualDirectionId: "marketplace-clean",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: [],
+      proofSources: [],
       referenceUrls: [],
     });
 
