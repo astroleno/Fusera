@@ -10,16 +10,29 @@ type ProjectPageProps = {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
-  const page = await loadProjectPreview(projectId);
+  const preview = await loadProjectPreview(projectId);
 
   return (
     <main className="project-page">
       <nav className="top-link" aria-label="Project navigation">
         <a href="/projects/new">New project</a>
       </nav>
-      {page ? (
+      {preview ? (
         <section className="project-preview-layout">
-          <PagePreview page={page} />
+          <div className="preview-stack">
+            <div className="preview-state-bar">
+              <span>
+                {preview.mode === "page-spec" ? "PageSpec preview" : "Legacy preview"}
+              </span>
+              <strong data-ready={preview.publishReady}>
+                {preview.publishReady ? "Publish-ready" : "Preview only"}
+              </strong>
+            </div>
+            {preview.legacyReason ? (
+              <p className="preview-note">{preview.legacyReason}</p>
+            ) : null}
+            <PagePreview page={preview.page} />
+          </div>
           <MicroAdjustmentsPanel projectId={projectId} />
         </section>
       ) : (

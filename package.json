@@ -19,6 +19,8 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
+    "test:node": "vitest run --config vitest.node.config.ts",
+    "test:react": "vitest run --config vitest.react.config.ts",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },

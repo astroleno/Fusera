@@ -8,6 +8,10 @@ type GeneratePagePayload = {
   intake: ProjectInput;
 };
 
+function isPublishableQaVerdict(verdict: string) {
+  return verdict === "pass";
+}
+
 function artifactRow(
   projectId: string,
   artifact: Awaited<ReturnType<typeof buildPageArtifacts>>["artifacts"][number],
@@ -62,15 +66,25 @@ export const generatePageTask = task({
         throw artifactsInsertError;
       }
 
+      const publishableQa = isPublishableQaVerdict(
+        result.payloads.qaReport.verdict,
+      );
       const { error: runUpdateError } = await db
         .from("generation_runs")
         .update({
           status: "completed",
+          review_state: publishableQa ? "review_ready" : "qa_failed",
+          export_state: publishableQa ? "export_ready" : "none",
           latest_product_brief_ref: result.latestRefs.productBriefRef,
           latest_brand_profile_ref: result.latestRefs.brandProfileRef,
           latest_page_plan_ref: result.latestRefs.pagePlanRef,
           latest_section_graph_ref: result.latestRefs.sectionGraphRef,
           latest_theme_tokens_ref: result.latestRefs.themeTokensRef,
+          latest_design_spec_ref: result.latestRefs.designSpecRef,
+          latest_page_spec_ref: result.latestRefs.pageSpecRef,
+          latest_qa_report_ref: result.latestRefs.qaReportRef,
+          latest_publish_version_ref: result.latestRefs.publishVersionRef,
+          quality_score: result.qualityScore.total,
         })
         .eq("id", run.id);
 

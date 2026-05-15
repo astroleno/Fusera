@@ -27,6 +27,7 @@ const validIntake = {
   targetAudience: "Urban commuters",
   brandKeywords: ["sleek", "confident"],
   cta: "Shop now",
+  visualDirectionId: "premium-editorial",
   imageUrls: ["https://example.com/product.jpg"],
   trustSignals: [],
   referenceUrls: [],

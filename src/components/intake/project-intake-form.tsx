@@ -1,5 +1,6 @@
 "use client";
 
+import { visualDirectionPresets } from "@/lib/domain/visual-directions";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
@@ -34,6 +35,9 @@ export default function ProjectIntakeForm() {
       sellingPoints: splitLines(formData.get("sellingPoints")),
       brandKeywords: splitLines(formData.get("brandKeywords")),
       cta: String(formData.get("cta") ?? "").trim(),
+      visualDirectionId: String(
+        formData.get("visualDirectionId") ?? "premium-editorial",
+      ),
       imageUrls: splitLines(formData.get("imageUrls")),
       price: String(formData.get("price") ?? "").trim() || undefined,
       tone: String(formData.get("tone") ?? "").trim() || undefined,
@@ -143,12 +147,23 @@ export default function ProjectIntakeForm() {
         </label>
 
         <label className="field">
-          <span>Price</span>
-          <input name="price" placeholder="$48" />
+          <span>Visual direction</span>
+          <select name="visualDirectionId" defaultValue="premium-editorial">
+            {Object.values(visualDirectionPresets).map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
       <div className="field-grid">
+        <label className="field">
+          <span>Price</span>
+          <input name="price" placeholder="$48" />
+        </label>
+
         <label className="field">
           <span>Tone</span>
           <input name="tone" placeholder="Precise, premium, calm" />

@@ -2,6 +2,7 @@ import type {
   CompiledPage,
   CompiledPageSection,
 } from "@/lib/page-spec/compile-page";
+import type { CSSProperties } from "react";
 
 function textProp(section: CompiledPageSection, key: string, fallback: string) {
   const value = section.props[key];
@@ -14,8 +15,15 @@ function listProp(section: CompiledPageSection, key: string) {
 }
 
 export default function PagePreview({ page }: { page: CompiledPage }) {
+  const themeStyle = {
+    "--preview-bg": page.theme.colors.background,
+    "--preview-surface": page.theme.colors.surface,
+    "--preview-text": page.theme.colors.text,
+    "--preview-accent": page.theme.colors.accent,
+  } as CSSProperties;
+
   return (
-    <div className="generated-preview">
+    <div className="generated-preview" style={themeStyle}>
       {page.sections.map((section) => {
         if (section.sectionType === "hero") {
           return (
