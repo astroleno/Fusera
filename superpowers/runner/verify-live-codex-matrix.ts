@@ -543,7 +543,7 @@ async function artifactScoreRegressionsFor(
   baseline: Record<string, any>
 ): Promise<LiveQualityTrend["artifact_score_regressions"]> {
   const currentScores = current.artifact_scores;
-  const baselineScores = baseline.artifact_scores;
+  const baselineScores = baseline.artifact_scores as LiveQualityReport["artifact_scores"] | undefined;
 
   if (!currentScores || !baselineScores) {
     return [];

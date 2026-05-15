@@ -342,7 +342,9 @@ export async function buildRunEvidenceGraph(options: RunGraphBuildOptions): Prom
   const stageNames = uniqueStrings([
     ...stageProfiles.stages.map((profile) => profile.stage),
     ...(await listRunStageNames(runDir)),
-    ...events.records.map((event) => stringOrUndefined(event.stage)).filter((stage): stage is string => Boolean(stage)),
+    ...events.records
+      .map((event) => stringOrUndefined(event.record.stage))
+      .filter((stage): stage is string => Boolean(stage)),
     ...artifacts.map((record) => stringOrUndefined(record.artifact.producer_stage)).filter((stage): stage is string => Boolean(stage))
   ]);
   const stageProfilesByName = new Map(stageProfiles.stages.map((profile) => [profile.stage, profile]));
@@ -1919,7 +1921,7 @@ function finalizeDiagnostics(diagnostics: PendingDiagnostic[]): HarnessGraphDiag
     const normalized = {
       ...diagnostic,
       target_ids: uniqueStrings(diagnostic.target_ids).sort(),
-      metadata: sortObject(diagnostic.metadata)
+      metadata: sortObject(diagnostic.metadata) as Record<string, unknown>
     };
     const id = `diagnostic:${stableHash(normalized)}`;
     seen.set(id, {

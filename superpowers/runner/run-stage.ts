@@ -1147,7 +1147,7 @@ function proofFinalStateFor(stage: string): string {
 }
 
 function proofCompleted(finalState: string, targetStage: string | null): boolean {
-  return Boolean(targetStage) && finalState === proofFinalStateFor(targetStage);
+  return targetStage !== null && finalState === proofFinalStateFor(targetStage);
 }
 
 function attemptIdFrom(result: CodexInvocationResult): string | undefined {
@@ -1350,7 +1350,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
               targetStage: secondArg
             })
         : await runFixture({
-            inputPath: command === "stage-proof-continue" ? thirdArg : firstArg,
+            inputPath: firstArg,
             mode: command === "qa-failure" ? "qa-failure" : "publish"
           });
 
