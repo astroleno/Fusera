@@ -1,0 +1,27 @@
+{
+  "baselineDate": "2026-05-16",
+  "baselineVersion": "proof-source-details-pass-2",
+  "baselineSource": "superpowers/runner/fixtures/lead-icp/landing-page-scorecards.json",
+  "fixtureSource": "superpowers/runner/fixtures/lead-icp/landing-page-briefs.json",
+  "runtimeScope": ["landing-page"],
+  "phase2RuntimeFrozen": true,
+  "qualityBaseline": {
+    "firstDraftUsableRate": 1,
+    "manualAdjustmentAverage": 1.3333,
+    "draftToRealExportPublishRate": 0,
+    "commercialProofLoopComplete": false
+  },
+  "blockedRuntimeUntilRealPublishLoop": [
+    "image-poster-runtime",
+    "canvas-runtime",
+    "partial-regeneration-runtime"
+  ],
+  "nextLandingOnlyWork": [
+    "ClaimRef/ProofRef contract skeleton",
+    "publish/export control-plane"
+  ],
+  "promotionCriteria": {
+    "requiresRealExportPublishLoop": true,
+    "minimumDraftToRealExportPublishRateBeforeImageRuntime": 0.4
+  }
+}
