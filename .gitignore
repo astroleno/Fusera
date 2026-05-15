@@ -34,6 +34,8 @@ venv/
 
 # Generated asset output
 hexagram-logo-system/output/
+graphify-out/.graphify_python
+graphify-out/cache/
 .agents/
 .opencode/
 

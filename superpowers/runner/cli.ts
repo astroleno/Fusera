@@ -11,6 +11,7 @@ import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "
 import { verifyLiveCodexQuality } from "./verify-live-codex-quality.ts";
 import { verifyLivePreviewPublish } from "./verify-live-preview-publish.ts";
 import { verifyP0Harness } from "./verify-p0-harness.ts";
+import { buildHarnessTopologyGraph, writeHarnessTopologyGraph, writeRunEvidenceGraph } from "./harness-graph.ts";
 
 type CliResult = Record<string, unknown>;
 type DoctorCheck = {
@@ -64,6 +65,10 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (command === "doctor") {
     return doctorCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
+  }
+
+  if (command === "graph") {
+    return graphCommand(subcommand, rest);
   }
 
   if (command === "skills") {
@@ -131,13 +136,13 @@ async function proofCommand(targetStage: string | undefined, args: string[]): Pr
     throw new Error(`proof requires a target stage\n\n${usage()}`);
   }
 
-  const live = args.includes("--live");
-  const inputPath = positional(args.filter((arg) => arg !== "--live"), 0);
-  const adapterMode = live ? "real" : "mock";
+  const explicitAdapterMode = adapterModeFlag(args);
+  const adapterMode = explicitAdapterMode ?? "mock";
+  const inputPath = positional(args.filter((arg) => arg !== "--live" && arg !== "--mock"), 0);
 
   return withEnv({ FUSERA_CODEX_ADAPTER: adapterMode }, async () => ({
     ok: true,
-    command: live ? "proof --live" : "proof",
+    command: adapterMode === "real" ? "proof --live" : explicitAdapterMode === "mock" ? "proof --mock" : "proof",
     target_stage: targetStage,
     result: await runStageProof({
       targetStage,
@@ -192,7 +197,8 @@ async function inspectCommand(runDir: string | undefined, args: string[]): Promi
   const recentEventCount = recentEventIndex === -1 ? undefined : Number(args[recentEventIndex + 1]);
   const inspection = await inspectRun({
     runDir,
-    recentEventCount: Number.isFinite(recentEventCount) ? recentEventCount : undefined
+    recentEventCount: Number.isFinite(recentEventCount) ? recentEventCount : undefined,
+    includeGraph: args.includes("--graph")
   });
 
   if (args.includes("--json")) {
@@ -261,6 +267,32 @@ async function verifyCommand(target: string | undefined, args: string[]): Promis
 }
 
 async function ciCommand(target: string | undefined, args: string[]): Promise<CliResult> {
+  if (target === "topology") {
+    const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+    const result = await writeHarnessTopologyGraph({ rootDir: sourceRoot });
+    const graph = result.graph;
+    const criticalDiagnostics = graph.diagnostics.filter((diagnostic) => diagnostic.severity === "critical");
+
+    return {
+      ok: criticalDiagnostics.length === 0,
+      command: "ci topology",
+      graph_path: result.graph_path,
+      report_path: result.report_path,
+      report: {
+        graph_type: graph.graph_type,
+        schema_version: graph.schema_version,
+        nodes: graph.nodes.length,
+        links: graph.links.length,
+        diagnostics: graph.diagnostics.length,
+        critical_diagnostics: criticalDiagnostics.map((diagnostic) => ({
+          code: diagnostic.code,
+          message: diagnostic.message,
+          source_ref: diagnostic.source_ref
+        }))
+      }
+    };
+  }
+
   if (target === "mock") {
     const report = await runCiMock();
 
@@ -331,6 +363,7 @@ async function doctorCommand(args: string[]): Promise<CliResult> {
     await checkReadable("artifact-schemas", path.join(sourceRoot, "superpowers/contracts/artifacts")),
     await checkReadable("pack-registry", path.join(sourceRoot, "superpowers/packs/registry.yaml")),
     await checkReadable("stage-profiles", path.join(sourceRoot, "superpowers/packs/stage-profiles.yaml")),
+    await checkHarnessTopologyGraph(sourceRoot),
     await checkWritableRuntime(sourceRoot)
   ];
 
@@ -382,24 +415,76 @@ async function skillsCommand(subcommand: string | undefined, args: string[]): Pr
   return JSON.parse(result.stdout) as CliResult;
 }
 
+async function graphCommand(subcommand: string | undefined, _args: string[]): Promise<CliResult> {
+  const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+
+  if (subcommand === "harness") {
+    const result = await writeHarnessTopologyGraph({
+      rootDir: sourceRoot
+    });
+
+    return {
+      ok: true,
+      command: "graph harness",
+      graph_path: result.graph_path,
+      report_path: result.report_path,
+      summary: {
+        nodes: result.graph.nodes.length,
+        links: result.graph.links.length,
+        diagnostics: result.graph.diagnostics.length
+      }
+    };
+  }
+
+  if (subcommand === "run") {
+    const runDir = positional(_args, 0);
+
+    if (!runDir) {
+      throw new Error(`graph run requires a run directory\n\n${usage()}`);
+    }
+
+    const result = await writeRunEvidenceGraph({
+      rootDir: sourceRoot,
+      runDir
+    });
+
+    return {
+      ok: true,
+      command: "graph run",
+      graph_path: result.graph_path,
+      report_path: result.report_path,
+      summary: {
+        nodes: result.graph.nodes.length,
+        links: result.graph.links.length,
+        diagnostics: result.graph.diagnostics.length
+      }
+    };
+  }
+
+  throw new Error(`Unknown graph target: ${subcommand ?? "(missing)"}\n\n${usage()}`);
+}
+
 function usage(): string {
   return [
     "Usage:",
     "  node --experimental-strip-types superpowers/runner/cli.ts run mock-publish [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts run live-publish [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts run qa-failure [input.json]",
-    "  node --experimental-strip-types superpowers/runner/cli.ts proof <target-stage> [input.json] [--live]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts proof <target-stage> [input.json] [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts continue <run-dir> <target-stage> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts resume <run-dir> [--live|--mock]",
-    "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>] [--graph]",
     "  node --experimental-strip-types superpowers/runner/cli.ts doctor [--deep] [--live] [--auth-probe]",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify p0",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-preview <run-dir>",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-quality <run-dir> [target-stage]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts ci topology",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci mock",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci live [input.json]",
     "  node --experimental-strip-types superpowers/runner/cli.ts ci isolated-live [case-ids] [target-stage]",
     "  node --experimental-strip-types superpowers/runner/cli.ts live-stability [--runs <n>] [input.json] [--mock]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts graph harness",
+    "  node --experimental-strip-types superpowers/runner/cli.ts graph run <run-dir>",
     "  node --experimental-strip-types superpowers/runner/cli.ts skills install --scope <codex-global|repo-local> [--workspace-root <path>] [--dry-run]"
   ].join("\n");
 }
@@ -494,6 +579,38 @@ async function checkWritableRuntime(sourceRoot: string): Promise<DoctorCheck> {
       name: "runtime-directory",
       ok: false,
       details: { path: runtimeDir },
+      error: (error as Error).message
+    };
+  }
+}
+
+async function checkHarnessTopologyGraph(sourceRoot: string): Promise<DoctorCheck> {
+  try {
+    const graph = await buildHarnessTopologyGraph({ rootDir: sourceRoot });
+    const criticalDiagnostics = graph.diagnostics.filter((diagnostic) => diagnostic.severity === "critical");
+
+    return {
+      name: "harness-topology-graph",
+      ok: criticalDiagnostics.length === 0,
+      details: {
+        schema_version: graph.schema_version,
+        nodes: graph.nodes.length,
+        links: graph.links.length,
+        diagnostics: graph.diagnostics.length,
+        critical_diagnostics: criticalDiagnostics.map((diagnostic) => ({
+          code: diagnostic.code,
+          message: diagnostic.message
+        }))
+      },
+      error:
+        criticalDiagnostics.length === 0
+          ? undefined
+          : `Harness topology graph has ${criticalDiagnostics.length} critical diagnostic(s).`
+    };
+  } catch (error) {
+    return {
+      name: "harness-topology-graph",
+      ok: false,
       error: (error as Error).message
     };
   }

@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { readRunGraphSummary, type HarnessGraphSummary } from "./harness-graph.ts";
 
 type RunInspection = {
   run_id: string;
@@ -26,6 +27,7 @@ type RunInspection = {
     publish_version_ref?: string;
     preview_url?: string;
   };
+  graph?: HarnessGraphSummary | null;
   recent_events: Array<Record<string, unknown>>;
 };
 
@@ -65,6 +67,8 @@ type ArtifactInspection = {
   status?: string;
   producer_stage?: string;
   validation_valid?: boolean;
+  rejected?: boolean;
+  validation_errors?: string[];
 };
 
 const DEFAULT_RECENT_EVENT_COUNT = 12;
@@ -73,6 +77,7 @@ export async function inspectRun(options: {
   rootDir?: string;
   runDir: string;
   recentEventCount?: number;
+  includeGraph?: boolean;
 }): Promise<RunInspection> {
   const rootDir = options.rootDir ?? process.cwd();
   const runDir = path.resolve(rootDir, options.runDir);
@@ -117,6 +122,7 @@ export async function inspectRun(options: {
       publish_version_ref: stringOrUndefined(handoff?.publish_version_ref),
       preview_url: stringOrUndefined(handoff?.preview_url)
     },
+    graph: options.includeGraph ? await readRunGraphSummary({ rootDir, runDir }) : undefined,
     recent_events: events.slice(Math.max(0, events.length - recentEventCount))
   };
 }
@@ -179,10 +185,27 @@ export function formatInspectionText(inspection: RunInspection): string {
     lines.push(
       `- ${artifact.file_name}: ${artifact.artifact_type ?? "unknown"} ${artifact.status ?? "unknown"} ${artifact.artifact_id ?? ""}`.trim()
     );
+
+    if (artifact.validation_errors && artifact.validation_errors.length > 0) {
+      lines.push(`  errors: ${artifact.validation_errors.join("; ")}`);
+    }
   }
 
   if (inspection.failed_stage || inspection.failure_message) {
     lines.push("", `failure: ${inspection.failed_stage ?? "unknown"} ${inspection.failure_message ?? ""}`.trim());
+  }
+
+  if (inspection.graph !== undefined) {
+    lines.push("", "graph:");
+
+    if (inspection.graph === null) {
+      lines.push("- none");
+    } else {
+      lines.push(
+        `- ${inspection.graph.graph_type}: nodes=${inspection.graph.nodes}; links=${inspection.graph.links}; diagnostics=${inspection.graph.diagnostics}; critical=${inspection.graph.critical_diagnostics}`
+      );
+      lines.push(`  graph_path: ${inspection.graph.graph_path ?? "unknown"}`);
+    }
   }
 
   return `${lines.join("\n")}\n`;
@@ -250,10 +273,16 @@ async function inspectArtifacts(runDir: string): Promise<ArtifactInspection[]> {
   const artifactsDir = path.join(runDir, "artifacts");
   const fileNames = await readDirIfPresent(artifactsDir);
   const artifactFiles = fileNames.filter((fileName) => fileName.endsWith(".json")).sort();
+  const rejectedDir = path.join(artifactsDir, "rejected");
+  const rejectedArtifactFiles = (await readDirIfPresent(rejectedDir))
+    .filter((fileName) => fileName.endsWith(".json"))
+    .sort()
+    .map((fileName) => `rejected/${fileName}`);
 
   return Promise.all(
-    artifactFiles.map(async (fileName) => {
+    [...artifactFiles, ...rejectedArtifactFiles].map(async (fileName) => {
       const artifact = await readJson(path.join(artifactsDir, fileName));
+      const validation = isRecord(artifact.validation) ? artifact.validation : {};
 
       return {
         file_name: fileName,
@@ -262,11 +291,11 @@ async function inspectArtifacts(runDir: string): Promise<ArtifactInspection[]> {
         status: stringOrUndefined(artifact.status),
         producer_stage: stringOrUndefined(artifact.producer_stage),
         validation_valid:
-          typeof artifact.validation === "object" &&
-          artifact.validation !== null &&
-          typeof (artifact.validation as Record<string, unknown>).valid === "boolean"
-            ? Boolean((artifact.validation as Record<string, unknown>).valid)
-            : undefined
+          typeof validation.valid === "boolean" ? Boolean(validation.valid) : undefined,
+        rejected: fileName.startsWith("rejected/"),
+        validation_errors: Array.isArray(validation.errors)
+          ? validation.errors.filter((error): error is string => typeof error === "string")
+          : undefined
       };
     })
   );
@@ -393,6 +422,7 @@ function stageOrder(stage: string): number {
     "page-strategy",
     "section-planning",
     "design-system-pass",
+    "design-spec-pass",
     "page-compile",
     "verify-publishable-page",
     "publish-preview"

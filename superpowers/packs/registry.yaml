@@ -290,6 +290,67 @@ packs:
       mode: fail
     parallelism_policy:
       mode: serial
+  - id: tasks/design-spec
+    path: superpowers/packs/tasks/design-spec/SKILL.md
+    kind: task
+    description: Produce the DesignSpec artifact from validated brief, section, and token artifacts.
+    priority: 90
+    selection_role: primary
+    stage: design-spec-pass
+    output_modes:
+      - landing-page
+    positive_triggers:
+      - design spec
+      - design contract
+    negative_triggers:
+      - app preview
+      - publish only
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+        - claude-code
+      preferred_adapters:
+        - codex
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.write
+    required_inputs:
+      - normalized_input_bundle
+    required_artifacts:
+      - artifact_type: ProductBrief
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: BrandProfile
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: PagePlan
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: SectionGraph
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: ThemeTokens
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+    produces_artifacts:
+      - DesignSpec
+    task_role: primary
+    allowed_auxiliary_tasks: []
+    stage_outputs:
+      - DesignSpec
+    output_contract: superpowers/contracts/artifacts/design-spec.schema.json
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
   - id: base/web-design-engineer
     path: superpowers/packs/base/web-design-engineer/SKILL.md
     kind: base

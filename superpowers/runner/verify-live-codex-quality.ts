@@ -91,7 +91,8 @@ const MODEL_OWNED_STAGES = [
   "product-and-brand-brief",
   "page-strategy",
   "section-planning",
-  "design-system-pass"
+  "design-system-pass",
+  "design-spec-pass"
 ];
 
 const ARTIFACT_FILES: Record<string, string> = {
@@ -99,14 +100,16 @@ const ARTIFACT_FILES: Record<string, string> = {
   BrandProfile: "brand-profile.json",
   PagePlan: "page-plan.json",
   SectionGraph: "section-graph.json",
-  ThemeTokens: "theme-tokens.json"
+  ThemeTokens: "theme-tokens.json",
+  DesignSpec: "design-spec.json"
 };
 
 const ARTIFACTS_BY_TARGET_STAGE: Record<string, string[]> = {
   "product-and-brand-brief": ["ProductBrief", "BrandProfile"],
   "page-strategy": ["ProductBrief", "BrandProfile", "PagePlan"],
   "section-planning": ["ProductBrief", "BrandProfile", "PagePlan", "SectionGraph"],
-  "design-system-pass": ["ProductBrief", "BrandProfile", "PagePlan", "SectionGraph", "ThemeTokens"]
+  "design-system-pass": ["ProductBrief", "BrandProfile", "PagePlan", "SectionGraph", "ThemeTokens"],
+  "design-spec-pass": ["ProductBrief", "BrandProfile", "PagePlan", "SectionGraph", "ThemeTokens", "DesignSpec"]
 };
 
 export async function verifyLiveCodexQuality(options: {
@@ -163,6 +166,15 @@ export async function verifyLiveCodexQuality(options: {
   }
   if (expectedArtifactTypes.includes("ThemeTokens")) {
     scoreThemeTokens(artifacts.ThemeTokens, input, artifacts.BrandProfile, artifactScores, findings);
+  }
+  if (expectedArtifactTypes.includes("DesignSpec")) {
+    scoreDesignSpec(
+      artifacts.DesignSpec,
+      artifacts.ProductBrief,
+      artifacts.SectionGraph,
+      artifactScores,
+      findings
+    );
   }
   scoreCrossArtifactConsistency(artifacts, expectedArtifactTypes, findings);
 
@@ -467,6 +479,91 @@ function scoreThemeTokens(
   scores.ThemeTokens = withMax(scores.ThemeTokens, score, maxScore);
 }
 
+function scoreDesignSpec(
+  artifact: Record<string, any> | null,
+  productBrief: Record<string, any> | null,
+  sectionGraph: Record<string, any> | null,
+  scores: LiveQualityReport["artifact_scores"],
+  findings: QualityFinding[]
+): void {
+  const payload = artifact?.payload ?? {};
+  let score = baseArtifactScore("DesignSpec", artifact, scores, findings);
+  const maxScore = 12;
+  const tokenDirectives = typeof payload.token_directives === "object" && payload.token_directives !== null
+    ? payload.token_directives
+    : {};
+  const sectionIntents = Array.isArray(payload.section_design_intents) ? payload.section_design_intents : [];
+  const expectedSections = stringArray(sectionGraph?.payload?.section_order);
+  const sectionIds = sectionIntents
+    .map((intent: Record<string, any>) => intent?.section_id)
+    .filter((sectionId: unknown): sectionId is string => typeof sectionId === "string" && sectionId.length > 0);
+  const uniqueSectionIds = new Set(sectionIds);
+  const claimPolicy = payload.claim_and_proof_constraints?.claim_policy;
+  const expectedClaimPolicy = productBrief?.payload?.claim_policy;
+  const antiPatterns = typeof payload.anti_patterns === "object" && payload.anti_patterns !== null
+    ? payload.anti_patterns
+    : {};
+
+  score += requireString("DesignSpec", "visual_thesis", payload.visual_thesis, findings);
+  score += requireObject("DesignSpec", "brand_alignment", payload.brand_alignment, findings);
+  score += requireObject("DesignSpec", "token_directives", tokenDirectives, findings);
+
+  if (["color", "typography", "spacing", "radii", "shadows"].every((key) => isNonEmptyObject(tokenDirectives[key]))) {
+    score += 1;
+  } else {
+    findings.push({
+      severity: "fail",
+      artifact_type: "DesignSpec",
+      criterion: "token-directive-completeness",
+      summary: "DesignSpec.token_directives must include non-empty color, typography, spacing, radii, and shadows directives."
+    });
+  }
+
+  score += requireObject("DesignSpec", "layout_directives", payload.layout_directives, findings);
+  score += requireObject("DesignSpec", "motion_directives", payload.motion_directives, findings);
+
+  if (
+    expectedSections.length > 0 &&
+    sectionIds.length === expectedSections.length &&
+    uniqueSectionIds.size === expectedSections.length &&
+    expectedSections.every((sectionId) => uniqueSectionIds.has(sectionId))
+  ) {
+    score += 1;
+  } else {
+    findings.push({
+      severity: "fail",
+      artifact_type: "DesignSpec",
+      criterion: "section-design-intent-coverage",
+      summary: "DesignSpec.section_design_intents must exactly cover SectionGraph.section_order.",
+      details: {
+        expected_sections: expectedSections,
+        actual_sections: sectionIds
+      }
+    });
+  }
+
+  if (
+    typeof expectedClaimPolicy === "string" &&
+    typeof claimPolicy === "string" &&
+    claimPolicy === expectedClaimPolicy
+  ) {
+    score += 1;
+  } else {
+    findings.push({
+      severity: "fail",
+      artifact_type: "DesignSpec",
+      criterion: "claim-policy-alignment",
+      summary: "DesignSpec.claim_and_proof_constraints.claim_policy must match ProductBrief.claim_policy."
+    });
+  }
+
+  score += requireArray("DesignSpec", "anti_patterns.visual", antiPatterns.visual, findings);
+  score += requireArray("DesignSpec", "anti_patterns.copy", antiPatterns.copy, findings);
+  score += requireArray("DesignSpec", "anti_patterns.proof", antiPatterns.proof, findings);
+
+  scores.DesignSpec = withMax(scores.DesignSpec, score, maxScore);
+}
+
 function scoreProofInputsByPolicy(
   payload: Record<string, any>,
   input: Record<string, any>,
@@ -725,6 +822,10 @@ function requireObject(
     summary: `${artifactType}.${field} must be a non-empty object.`
   });
   return 0;
+}
+
+function isNonEmptyObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value) && Object.keys(value).length > 0;
 }
 
 function withMax(

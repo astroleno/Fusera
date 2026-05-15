@@ -1,4 +1,4 @@
-import { chmod, cp, mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -39,7 +39,7 @@ export async function verifyP0Harness(): Promise<VerificationSummary> {
 
   checks.push(await checkPublishRun(publishRun.run_dir));
   checks.push(await checkRunnerOwnedStagesUseNoopBackend(publishRun.run_dir));
-  checks.push(await checkArtifactsValidate(publishRun.run_dir, 8));
+  checks.push(await checkArtifactsValidate(publishRun.run_dir, 9));
   checks.push(await checkCompiledPackBundle(publishRun.run_dir));
   checks.push(await checkAttemptScopedEvidence(publishRun.run_dir));
   checks.push(await checkDesignContextPacks(publishRun.run_dir));
@@ -47,6 +47,7 @@ export async function verifyP0Harness(): Promise<VerificationSummary> {
   checks.push(await checkQaFailureRun(qaFailureRun.run_dir));
   checks.push(await checkStageProofStop());
   checks.push(await checkStageProofContinue());
+  checks.push(await checkDesignSpecStageProofBoundary());
   checks.push(await checkLiveContinueKeepsAdapterMode());
   checks.push(await checkFailedRunResumeRetry());
   checks.push(await checkFailedProofResumeDoesNotPublish());
@@ -59,6 +60,8 @@ export async function verifyP0Harness(): Promise<VerificationSummary> {
   checks.push(await checkAdapterCandidateGuards());
   checks.push(await checkArtifactExtractor());
   checks.push(await checkRealAdapterArtifactPositivePath());
+  checks.push(await checkRealAdapterDesignSpecPositivePath());
+  checks.push(await checkRealAdapterDesignSpecInvalidPath());
   checks.push(await checkRealAdapterCatBoundary());
   checks.push(await checkRealAdapterNormalizeAttachmentBoundary());
   checks.push(await checkRealAdapterEarlyExitBoundary());
@@ -144,6 +147,46 @@ async function checkStageProofStop(): Promise<CheckResult> {
       has_proof_event: events.some(
         (event) => event.type === "proof_stage_reached" && event.stage === "product-and-brand-brief"
       )
+    }
+  };
+}
+
+async function checkDesignSpecStageProofBoundary(): Promise<CheckResult> {
+  const designSystemRun = await runStageProof({
+    rootDir: ROOT_DIR,
+    targetStage: "design-system-pass"
+  });
+  const designSystemFiles = await readdir(path.join(designSystemRun.run_dir, "artifacts"));
+  const continuedRun = await continueStageProof({
+    rootDir: ROOT_DIR,
+    runDir: designSystemRun.run_dir,
+    targetStage: "design-spec-pass"
+  });
+  const continuedFiles = await readdir(path.join(continuedRun.run_dir, "artifacts"));
+  const run = await readJson(path.join(continuedRun.run_dir, "run.json"));
+  const designSpec = await readJson(path.join(continuedRun.run_dir, "artifacts/design-spec.json"));
+  const ok =
+    designSystemRun.run_dir === continuedRun.run_dir &&
+    !designSystemFiles.includes("design-spec.json") &&
+    !designSystemFiles.includes("page-spec.json") &&
+    run.state === "stage_proved" &&
+    run.proof_target_stage === "design-spec-pass" &&
+    designSpec.status === "validated" &&
+    continuedFiles.includes("design-spec.json") &&
+    !continuedFiles.includes("page-spec.json");
+
+  return {
+    name: "design-spec-stage-proof-boundary",
+    ok,
+    details: {
+      run_dir: continuedRun.run_dir,
+      same_run: designSystemRun.run_dir === continuedRun.run_dir,
+      design_system_has_design_spec: designSystemFiles.includes("design-spec.json"),
+      design_system_has_page_spec: designSystemFiles.includes("page-spec.json"),
+      final_state: run.state,
+      proof_target_stage: run.proof_target_stage,
+      design_spec_status: designSpec.status,
+      continued_has_page_spec: continuedFiles.includes("page-spec.json")
     }
   };
 }
@@ -822,12 +865,24 @@ async function checkDesignContextPacks(runDir: string): Promise<CheckResult> {
       );
     })
   );
+  const hasDeclaredReferenceSources = expectedContextPackIds.every((packId) =>
+    compiledPacks.some((pack: Record<string, unknown>) => {
+      const referenceSources = Array.isArray(pack.reference_sources) ? pack.reference_sources : [];
+
+      return pack.pack_id === packId && referenceSources.length > 0;
+    })
+  );
+  const missingReferenceSourceCount = compiledPacks
+    .flatMap((pack: Record<string, unknown>) =>
+      Array.isArray(pack.reference_sources) ? pack.reference_sources : []
+    )
+    .filter((reference: Record<string, unknown>) => reference.kind === "missing").length;
   const ok =
     expectedContextPackIds.every((packId) => selectedPackIds.includes(packId)) &&
     expectedContextPackIds.every((packId) => compiledPackIds.includes(packId)) &&
     expectedContextPackIds.every((packId) => sourcePackIds.includes(packId)) &&
     hasContextPackSkillSource &&
-    hasMaterializedReferenceSources;
+    hasDeclaredReferenceSources;
 
   return {
     name: "design-context-packs",
@@ -838,47 +893,94 @@ async function checkDesignContextPacks(runDir: string): Promise<CheckResult> {
       compiled_pack_ids: compiledPackIds,
       source_pack_ids: sourcePackIds,
       has_context_pack_skill_source: hasContextPackSkillSource,
-      has_materialized_reference_sources: hasMaterializedReferenceSources
+      has_declared_reference_sources: hasDeclaredReferenceSources,
+      has_materialized_reference_sources: hasMaterializedReferenceSources,
+      missing_reference_source_count: missingReferenceSourceCount
     }
   };
 }
 
 async function checkReferenceBudgetPolicy(): Promise<CheckResult> {
-  const pack = await withEnv(
-    {
-      FUSERA_PACK_REFERENCE_BUDGET_BYTES: "5000"
-    },
-    () => compilePack({ rootDir: ROOT_DIR, packId: "base/web-design-engineer", backend: "codex" })
-  );
-  const firstReference = pack.reference_sources[0];
-  const skippedCount = pack.reference_sources.filter((source) => source.kind === "skipped").length;
-  const ok =
-    pack.reference_budget.policy === "manifest-order" &&
-    pack.reference_budget.max_bytes === 5000 &&
-    pack.reference_budget.used_bytes <= 5000 &&
-    firstReference?.kind === "file" &&
-    firstReference.truncated === true &&
-    firstReference.inline_byte_length === 5000 &&
-    skippedCount > 0 &&
-    pack.reference_budget.skipped_count === skippedCount;
+  const rootDir = await createReferenceBudgetFixtureRoot();
 
-  return {
-    name: "reference-budget-policy",
-    ok,
-    details: {
-      policy: pack.reference_budget.policy,
-      max_bytes: pack.reference_budget.max_bytes,
-      used_bytes: pack.reference_budget.used_bytes,
-      first_reference: {
-        path: firstReference?.path,
-        kind: firstReference?.kind,
-        truncated: firstReference?.truncated,
-        inline_byte_length: firstReference?.inline_byte_length
+  try {
+    const pack = await withEnv(
+      {
+        FUSERA_PACK_REFERENCE_BUDGET_BYTES: "5000"
       },
-      skipped_count: skippedCount,
-      budget_skipped_count: pack.reference_budget.skipped_count
-    }
-  };
+      () => compilePack({ rootDir, packId: "base/web-design-engineer", backend: "codex" })
+    );
+    const firstReference = pack.reference_sources[0];
+    const skippedCount = pack.reference_sources.filter((source) => source.kind === "skipped").length;
+    const ok =
+      pack.reference_budget.policy === "manifest-order" &&
+      pack.reference_budget.max_bytes === 5000 &&
+      pack.reference_budget.used_bytes <= 5000 &&
+      firstReference?.kind === "file" &&
+      firstReference.truncated === true &&
+      firstReference.inline_byte_length === 5000 &&
+      skippedCount > 0 &&
+      pack.reference_budget.skipped_count === skippedCount;
+
+    return {
+      name: "reference-budget-policy",
+      ok,
+      details: {
+        policy: pack.reference_budget.policy,
+        max_bytes: pack.reference_budget.max_bytes,
+        used_bytes: pack.reference_budget.used_bytes,
+        first_reference: {
+          path: firstReference?.path,
+          kind: firstReference?.kind,
+          truncated: firstReference?.truncated,
+          inline_byte_length: firstReference?.inline_byte_length
+        },
+        skipped_count: skippedCount,
+        budget_skipped_count: pack.reference_budget.skipped_count
+      }
+    };
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+}
+
+async function createReferenceBudgetFixtureRoot(): Promise<string> {
+  const rootDir = await mkdtemp(path.join(os.tmpdir(), "fusera-reference-budget-"));
+  const packDir = path.join(rootDir, "superpowers/packs/base/web-design-engineer");
+  const registryDir = path.join(rootDir, "superpowers/packs");
+  const referenceDir = path.join(rootDir, "reference/design/web-design-skill");
+
+  await mkdir(packDir, { recursive: true });
+  await mkdir(referenceDir, { recursive: true });
+  await writeFile(path.join(packDir, "SKILL.md"), "# Web Design Engineer\n", "utf8");
+  await writeFile(path.join(referenceDir, "README.md"), `${"A".repeat(6000)}\n`, "utf8");
+  await writeFile(path.join(referenceDir, "SKILL.md"), "secondary reference\n", "utf8");
+  await writeFile(
+    path.join(registryDir, "registry.yaml"),
+    `packs:
+  - id: base/web-design-engineer
+    path: superpowers/packs/base/web-design-engineer/SKILL.md
+    kind: base
+    stage: design-system-pass
+    output_modes: []
+    backend_support:
+      adapters:
+        - codex
+      preferred_adapters:
+        - codex
+    capabilities_required: []
+    required_artifacts: []
+    produces_artifacts: []
+    stage_outputs: []
+    task_role: context
+    references:
+      - reference/design/web-design-skill/README.md
+      - reference/design/web-design-skill/SKILL.md
+`,
+    "utf8"
+  );
+
+  return rootDir;
 }
 
 async function checkQaFailureRun(runDir: string): Promise<CheckResult> {
@@ -1112,11 +1214,13 @@ async function checkRealAdapterArtifactPositivePath(): Promise<CheckResult> {
   const runRecord = await readJson(path.join(run.run_dir, "run.json"));
   const productStageResult = await readJson(path.join(run.run_dir, "stages/product-and-brand-brief/adapter-result.json"));
   const designStageResult = await readJson(path.join(run.run_dir, "stages/design-system-pass/adapter-result.json"));
+  const designSpecStageResult = await readJson(path.join(run.run_dir, "stages/design-spec-pass/adapter-result.json"));
   const productBrief = await readJson(path.join(run.run_dir, "artifacts/product-brief.json"));
   const brandProfile = await readJson(path.join(run.run_dir, "artifacts/brand-profile.json"));
   const pagePlan = await readJson(path.join(run.run_dir, "artifacts/page-plan.json"));
   const sectionGraph = await readJson(path.join(run.run_dir, "artifacts/section-graph.json"));
   const themeTokens = await readJson(path.join(run.run_dir, "artifacts/theme-tokens.json"));
+  const designSpec = await readJson(path.join(run.run_dir, "artifacts/design-spec.json"));
   const publishVersion = await readJson(path.join(run.run_dir, "artifacts/publish-version.json"));
   const events = await readEvents(run.run_dir);
   const stageStatuses = [
@@ -1124,10 +1228,14 @@ async function checkRealAdapterArtifactPositivePath(): Promise<CheckResult> {
     brandProfile.status,
     pagePlan.status,
     sectionGraph.status,
-    themeTokens.status
+    themeTokens.status,
+    designSpec.status
   ];
   const realProducedTypes = Array.isArray(productStageResult.produced_artifact_candidates)
     ? productStageResult.produced_artifact_candidates.map((candidate: Record<string, unknown>) => candidate.artifact_type)
+    : [];
+  const designSpecProducedTypes = Array.isArray(designSpecStageResult.produced_artifact_candidates)
+    ? designSpecStageResult.produced_artifact_candidates.map((candidate: Record<string, unknown>) => candidate.artifact_type)
     : [];
   const ok =
     runRecord.state === "published" &&
@@ -1139,8 +1247,13 @@ async function checkRealAdapterArtifactPositivePath(): Promise<CheckResult> {
     designStageResult.usage?.mode === "real" &&
     designStageResult.usage?.workdir === workDir &&
     typeof designStageResult.usage?.tool_use_observed === "boolean" &&
+    designSpecStageResult.status === "ok" &&
+    designSpecStageResult.usage?.mode === "real" &&
+    designSpecStageResult.usage?.workdir === workDir &&
+    typeof designSpecStageResult.usage?.tool_use_observed === "boolean" &&
     realProducedTypes.includes("ProductBrief") &&
     realProducedTypes.includes("BrandProfile") &&
+    designSpecProducedTypes.includes("DesignSpec") &&
     stageStatuses.every((status) => status === "validated") &&
     publishVersion.payload?.publish_target === "preview" &&
     events.some((event) => event.type === "publish_succeeded");
@@ -1158,10 +1271,111 @@ async function checkRealAdapterArtifactPositivePath(): Promise<CheckResult> {
       design_stage_usage_mode: designStageResult.usage?.mode,
       design_stage_workdir: designStageResult.usage?.workdir,
       design_stage_tool_use_observed: designStageResult.usage?.tool_use_observed,
+      design_spec_stage_status: designSpecStageResult.status,
+      design_spec_stage_usage_mode: designSpecStageResult.usage?.mode,
+      design_spec_stage_workdir: designSpecStageResult.usage?.workdir,
+      design_spec_stage_tool_use_observed: designSpecStageResult.usage?.tool_use_observed,
       expected_workdir: workDir,
       real_produced_types: realProducedTypes,
+      design_spec_produced_types: designSpecProducedTypes,
       validated_stage_artifact_statuses: stageStatuses,
       publish_target: publishVersion.payload?.publish_target
+    }
+  };
+}
+
+async function checkRealAdapterDesignSpecPositivePath(): Promise<CheckResult> {
+  const scriptPath = await writePositiveRealAdapterScript();
+  const run = await withEnv(
+    {
+      FUSERA_CODEX_ADAPTER: "real",
+      FUSERA_CODEX_COMMAND: process.execPath,
+      FUSERA_CODEX_ARGS_JSON: JSON.stringify([scriptPath])
+    },
+    () =>
+      runStageProof({
+        rootDir: ROOT_DIR,
+        targetStage: "design-spec-pass",
+        adapterMode: "real"
+      })
+  );
+  const runRecord = await readJson(path.join(run.run_dir, "run.json"));
+  const designSpec = await readJson(path.join(run.run_dir, "artifacts/design-spec.json"));
+  const adapterResult = await readJson(path.join(run.run_dir, "stages/design-spec-pass/adapter-result.json"));
+  const artifactFiles = await readdir(path.join(run.run_dir, "artifacts"));
+  const producedTypes = Array.isArray(adapterResult.produced_artifact_candidates)
+    ? adapterResult.produced_artifact_candidates.map((candidate: Record<string, unknown>) => candidate.artifact_type)
+    : [];
+  const ok =
+    runRecord.state === "stage_proved" &&
+    runRecord.proof_target_stage === "design-spec-pass" &&
+    designSpec.status === "validated" &&
+    adapterResult.status === "ok" &&
+    adapterResult.usage?.mode === "real" &&
+    producedTypes.includes("DesignSpec") &&
+    !artifactFiles.includes("page-spec.json");
+
+  return {
+    name: "real-adapter-design-spec-positive-path",
+    ok,
+    details: {
+      run_dir: run.run_dir,
+      final_state: runRecord.state,
+      proof_target_stage: runRecord.proof_target_stage,
+      design_spec_status: designSpec.status,
+      adapter_status: adapterResult.status,
+      adapter_usage_mode: adapterResult.usage?.mode,
+      produced_types: producedTypes,
+      has_page_spec: artifactFiles.includes("page-spec.json")
+    }
+  };
+}
+
+async function checkRealAdapterDesignSpecInvalidPath(): Promise<CheckResult> {
+  const scriptPath = await writeDesignSpecInvalidAdapterScript();
+  const run = await withEnv(
+    {
+      FUSERA_CODEX_ADAPTER: "real",
+      FUSERA_CODEX_COMMAND: process.execPath,
+      FUSERA_CODEX_ARGS_JSON: JSON.stringify([scriptPath])
+    },
+    () =>
+      runStageProof({
+        rootDir: ROOT_DIR,
+        targetStage: "design-spec-pass",
+        adapterMode: "real"
+      })
+  );
+  const runRecord = await readJson(path.join(run.run_dir, "run.json"));
+  const rejectedDir = path.join(run.run_dir, "artifacts/rejected");
+  const rejectedFiles = await readdir(rejectedDir);
+  const rejectedDesignSpecFile = rejectedFiles.find((fileName) => fileName.startsWith("design-spec-"));
+  const rejectedDesignSpec = rejectedDesignSpecFile
+    ? await readJson(path.join(rejectedDir, rejectedDesignSpecFile))
+    : null;
+  const canonicalExists = await fileExists(path.join(run.run_dir, "artifacts/design-spec.json"));
+  const validationErrors = Array.isArray(rejectedDesignSpec?.validation?.errors)
+    ? rejectedDesignSpec.validation.errors
+    : [];
+  const ok =
+    runRecord.state === "failed" &&
+    runRecord.failed_stage === "design-spec-pass" &&
+    canonicalExists === false &&
+    rejectedDesignSpec?.status === "rejected" &&
+    validationErrors.some((error: string) => error.includes("unknown section_id")) &&
+    validationErrors.some((error: string) => error.includes("input_refs"));
+
+  return {
+    name: "real-adapter-design-spec-invalid-path",
+    ok,
+    details: {
+      run_dir: run.run_dir,
+      final_state: runRecord.state,
+      failed_stage: runRecord.failed_stage,
+      canonical_exists: canonicalExists,
+      rejected_path: rejectedDesignSpecFile ? path.join(rejectedDir, rejectedDesignSpecFile) : null,
+      rejected_status: rejectedDesignSpec?.status,
+      validation_errors: validationErrors
     }
   };
 }
@@ -1517,6 +1731,200 @@ if (bundle.stage === "normalize-input") {
   return scriptPath;
 }
 
+async function writeDesignSpecInvalidAdapterScript(): Promise<string> {
+  const scriptPath = path.join(
+    await mkdtemp(path.join(os.tmpdir(), "fusera-invalid-design-spec-adapter-")),
+    "adapter.mjs"
+  );
+  const script = String.raw`
+let input = "";
+process.stdin.setEncoding("utf8");
+for await (const chunk of process.stdin) {
+  input += chunk;
+}
+
+const marker = "Invocation bundle:";
+const markerIndex = input.indexOf(marker);
+
+if (markerIndex === -1) {
+  process.exit(2);
+}
+
+const bundle = JSON.parse(input.slice(markerIndex + marker.length).trim());
+const runId = String(bundle.run.run_id);
+
+function fence(name, value) {
+  console.log("\x60\x60\x60" + name);
+  console.log(JSON.stringify(value));
+  console.log("\x60\x60\x60");
+}
+
+function artifact(artifactType, producerStage, inputRefs, payload) {
+  return {
+    artifact_type: artifactType,
+    schema_version: "1.0.0",
+    artifact_id: artifactType.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase() + "_invalid_" + runId.slice(-8),
+    run_id: runId,
+    status: "draft",
+    producer_stage: producerStage,
+    input_refs: inputRefs,
+    validation: {
+      valid: false,
+      errors: []
+    },
+    payload
+  };
+}
+
+function materialized(artifactType) {
+  const value = bundle.materialized_artifacts[artifactType];
+
+  if (!value) {
+    throw new Error("Missing materialized artifact " + artifactType);
+  }
+
+  return value;
+}
+
+function artifactId(artifactType) {
+  return materialized(artifactType).artifact_id;
+}
+
+function payload(artifactType) {
+  return materialized(artifactType).payload ?? {};
+}
+
+if (bundle.stage === "normalize-input") {
+  fence("fusera-attachment-json", {
+    kind: "normalized_input_bundle",
+    file_name: "normalized-input.json",
+    body: {
+      bundle_type: "normalized_input_bundle",
+      normalized_at: "2026-04-26T00:00:00.000Z",
+      payload: {
+        product_name: "Invalid DesignSpec Probe",
+        audiences: ["operators"],
+        core_problem: "Need invalid DesignSpec rejection evidence.",
+        value_props: ["Rejected artifact persistence"],
+        cta_goal: "Preview",
+        proof_inputs: ["artifact ledger"],
+        brand_traits: ["precise"],
+        tone_keywords: ["direct"],
+        visual_directions: ["structured"],
+        positioning: "DesignSpec rejection probe",
+        do_not_use: []
+      }
+    }
+  });
+} else if (bundle.stage === "product-and-brand-brief") {
+  fence("fusera-artifact-json", artifact("ProductBrief", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {
+    product_name: "Invalid DesignSpec Probe",
+    audiences: ["operators"],
+    core_problem: "Need invalid DesignSpec rejection evidence.",
+    value_props: ["Rejected artifact persistence"],
+    cta_goal: "Preview",
+    proof_inputs: ["artifact ledger"],
+    claim_policy: "proof-required"
+  }));
+  fence("fusera-artifact-json", artifact("BrandProfile", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {
+    brand_traits: ["precise"],
+    tone_keywords: ["direct"],
+    visual_directions: ["structured"],
+    positioning: "DesignSpec rejection probe",
+    do_not_use: []
+  }));
+} else if (bundle.stage === "page-strategy") {
+  fence("fusera-artifact-json", artifact("PagePlan", "page-strategy", [artifactId("ProductBrief"), artifactId("BrandProfile")], {
+    page_goal: "Prove invalid DesignSpec candidates fail closed.",
+    narrative_arc: "State the probe, show evidence, then close with preview CTA.",
+    section_intents: [
+      { section_id: "hero", intent: "State the probe." },
+      { section_id: "proof", intent: "Show rejected artifact evidence." },
+      { section_id: "cta", intent: "Close with the preview CTA." }
+    ],
+    cta_strategy: "Preview",
+    proof_strategy: "Use artifact ledger evidence."
+  }));
+} else if (bundle.stage === "section-planning") {
+  fence("fusera-artifact-json", artifact("SectionGraph", "section-planning", [artifactId("PagePlan")], {
+    nodes: [
+      { section_id: "hero", section_type: "hero", title: "Invalid DesignSpec probe", props: { headline: "Rejected candidates persist.", cta_label: "Preview" } },
+      { section_id: "proof", section_type: "proof", title: "Rejected artifact evidence", props: { proof_ref: "artifact ledger" } },
+      { section_id: "cta", section_type: "cta", title: "Run the preview", props: { cta_label: "Preview" } }
+    ],
+    edges: [
+      { from: "hero", to: "proof", relationship: "substantiates" },
+      { from: "proof", to: "cta", relationship: "converts" }
+    ],
+    section_order: ["hero", "proof", "cta"],
+    required_props: {
+      hero: ["headline", "cta_label"],
+      proof: ["proof_ref"],
+      cta: ["cta_label"]
+    },
+    proof_bindings: [{ section_id: "proof", proof_ref: "artifact ledger" }],
+    claim_policy: "proof-required"
+  }));
+} else if (bundle.stage === "design-system-pass") {
+  fence("fusera-artifact-json", artifact("ThemeTokens", "design-system-pass", [artifactId("ProductBrief"), artifactId("BrandProfile"), artifactId("PagePlan")], {
+    colors: { background: "#f7f4ee", surface: "#ffffff", text: "#171717", accent: "#0f766e" },
+    typography: { heading_family: "Inter", body_family: "Inter", scale: "compact" },
+    spacing: { section_y: "72px", grid_gap: "24px" },
+    radii: { card: "8px", control: "6px" },
+    shadows: { soft: "0 12px 36px rgba(23, 23, 23, 0.10)" },
+    motion: { duration_ms: 160, easing: "ease-out" }
+  }));
+} else if (bundle.stage === "design-spec-pass") {
+  fence("fusera-artifact-json", artifact("DesignSpec", "design-spec-pass", [
+    artifactId("ProductBrief"),
+    artifactId("BrandProfile"),
+    artifactId("PagePlan"),
+    artifactId("SectionGraph")
+  ], {
+    visual_thesis: "This candidate is schema-shaped but invalid against upstream section and input-ref invariants.",
+    brand_alignment: {
+      traits: ["precise"],
+      audience: "operators",
+      positioning: "DesignSpec rejection probe"
+    },
+    token_directives: {
+      color: { rules: ["Use proof hierarchy before decorative color."] },
+      typography: { rules: ["Keep copy scannable."] },
+      spacing: { rules: ["Leave room for proof details."] },
+      radii: { rules: ["Controls stay at 8px or less."] },
+      shadows: { rules: ["Use depth only for hierarchy."] }
+    },
+    layout_directives: {
+      variance: 5,
+      rules: ["This intentionally introduces an unknown section id."]
+    },
+    motion_directives: {
+      intensity: 3,
+      rules: ["Use restrained motion."]
+    },
+    section_design_intents: [
+      { section_id: "hero", layout: "Hero layout.", media: "Honest media.", copy: "CTA copy.", proof: "Bind to ledger.", motion: "Subtle reveal." },
+      { section_id: "unknown-section", layout: "Invalid layout.", media: "Invalid media.", copy: "Invalid copy.", proof: "Invalid proof.", motion: "Invalid motion." }
+    ],
+    claim_and_proof_constraints: {
+      claim_policy: payload("ProductBrief").claim_policy,
+      rules: ["Bind proof claims to supplied evidence."]
+    },
+    anti_patterns: {
+      visual: ["purple-blue AI glow"],
+      copy: ["vague automation cliches"],
+      proof: ["fake metrics"]
+    }
+  }));
+}
+`;
+
+  await writeFile(scriptPath, `${script.trim()}\n`, "utf8");
+  await chmod(scriptPath, 0o755);
+
+  return scriptPath;
+}
+
 async function writePositiveRealAdapterScript(): Promise<string> {
   const scriptPath = path.join(
     await mkdtemp(path.join(os.tmpdir(), "fusera-positive-real-adapter-")),
@@ -1578,6 +1986,11 @@ function artifactId(artifactType) {
 
 function payload(artifactType) {
   return materialized(artifactType).payload ?? {};
+}
+
+function sectionOrder() {
+  const order = payload("SectionGraph").section_order;
+  return Array.isArray(order) ? order.filter((sectionId) => typeof sectionId === "string" && sectionId.length > 0) : ["hero"];
 }
 
 if (bundle.stage === "normalize-input") {
@@ -1713,6 +2126,70 @@ if (bundle.stage === "normalize-input") {
     motion: {
       duration_ms: 160,
       easing: "ease-out"
+    }
+  }));
+} else if (bundle.stage === "design-spec-pass") {
+  const productBrief = payload("ProductBrief");
+  const brandProfile = payload("BrandProfile");
+  const themeTokens = payload("ThemeTokens");
+  const claimPolicy = productBrief.claim_policy ?? "proof-required";
+
+  fence("fusera-artifact-json", artifact("DesignSpec", "design-spec-pass", [
+    artifactId("ProductBrief"),
+    artifactId("BrandProfile"),
+    artifactId("PagePlan"),
+    artifactId("SectionGraph"),
+    artifactId("ThemeTokens")
+  ], {
+    visual_thesis: "Artifact-led landing page with restrained editorial polish and visible utility in the first viewport.",
+    brand_alignment: {
+      traits: brandProfile.brand_traits ?? ["precise"],
+      audience: Array.isArray(productBrief.audiences) ? productBrief.audiences[0] : "founder-led teams",
+      positioning: brandProfile.positioning ?? "Artifact-first landing page generation harness"
+    },
+    token_directives: {
+      color: {
+        base: themeTokens.colors?.background ?? "warm neutral",
+        accent: themeTokens.colors?.accent ?? "deep teal",
+        rules: ["Use proof hierarchy before decorative color."]
+      },
+      typography: {
+        rules: ["Keep headings crisp and body copy scannable."]
+      },
+      spacing: {
+        rules: ["Leave clear room for artifact proof details."]
+      },
+      radii: {
+        rules: ["Controls stay at 8px or less."]
+      },
+      shadows: {
+        rules: ["Use depth only for hierarchy."]
+      }
+    },
+    layout_directives: {
+      variance: 6,
+      rules: ["Make the preview promise visible immediately.", "Avoid generic repeated feature cards."]
+    },
+    motion_directives: {
+      intensity: 3,
+      rules: ["Use restrained reveal motion.", "Respect reduced-motion fallback."]
+    },
+    section_design_intents: sectionOrder().map((sectionId) => ({
+      section_id: sectionId,
+      layout: sectionId === "hero" ? "Product promise first, proof trail hinted below." : "Give the section a distinct proof-led layout role.",
+      media: "Use inspectable interface or artifact evidence only.",
+      copy: "Tie section copy to the preview-run CTA and artifact spine.",
+      proof: claimPolicy === "proof-required" ? "Bind claims to artifact ledger or preview handoff proof." : "Keep proof language qualitative.",
+      motion: "Use subtle motion only to clarify hierarchy."
+    })),
+    claim_and_proof_constraints: {
+      claim_policy: claimPolicy,
+      rules: ["Do not introduce fake metrics.", "Bind proof claims to supplied evidence."]
+    },
+    anti_patterns: {
+      visual: ["purple-blue AI glow", "generic three-card feature row"],
+      copy: ["vague automation cliches", "unsupported launch promises"],
+      proof: ["fake metrics", "unsupported testimonials"]
     }
   }));
 }

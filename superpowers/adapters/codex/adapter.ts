@@ -112,6 +112,10 @@ function produceMockArtifactCandidates(bundle: CodexInvocationBundle): unknown[]
     return [makeThemeTokens(bundle)];
   }
 
+  if (bundle.stage === "design-spec-pass") {
+    return [makeDesignSpec(bundle)];
+  }
+
   return [];
 }
 
@@ -275,6 +279,85 @@ function makeThemeTokens(bundle: CodexInvocationBundle): Record<string, unknown>
       motion: {
         duration_ms: 160,
         easing: "ease-out"
+      }
+    }
+  );
+}
+
+function makeDesignSpec(bundle: CodexInvocationBundle): Record<string, unknown> {
+  const productBrief = artifact(bundle, "ProductBrief");
+  const brandProfile = artifact(bundle, "BrandProfile");
+  const pagePlan = artifact(bundle, "PagePlan");
+  const sectionGraph = artifact(bundle, "SectionGraph");
+  const themeTokens = artifact(bundle, "ThemeTokens");
+  const sectionOrder = stringArrayFrom(payload(sectionGraph).section_order, ["hero"]);
+  const brandTraits = stringArrayFrom(payload(brandProfile).brand_traits, ["precise"]);
+  const audiences = stringArrayFrom(payload(productBrief).audiences, ["operators"]);
+  const claimPolicy = stringFrom(payload(productBrief).claim_policy, "proof-required");
+
+  return makeArtifact(
+    bundle,
+    "DesignSpec",
+    "design-spec-pass",
+    [
+      artifactId(productBrief),
+      artifactId(brandProfile),
+      artifactId(pagePlan),
+      artifactId(sectionGraph),
+      artifactId(themeTokens)
+    ],
+    {
+      visual_thesis: `${stringFrom(payload(productBrief).product_name, "Fusera")} should feel artifact-led, credible, and visibly useful in the first viewport.`,
+      brand_alignment: {
+        traits: brandTraits,
+        audience: audiences[0] ?? "operators",
+        positioning: stringFrom(payload(brandProfile).positioning, "Artifact-first landing generation")
+      },
+      token_directives: {
+        color: {
+          base: stringFrom((payload(themeTokens).colors as Record<string, unknown> | undefined)?.background, "warm neutral"),
+          accent: stringFrom((payload(themeTokens).colors as Record<string, unknown> | undefined)?.accent, "deep teal"),
+          rules: ["Use product and proof hierarchy before decorative color."]
+        },
+        typography: {
+          rules: ["Keep heading and body families legible and distinct enough for dense landing copy."]
+        },
+        spacing: {
+          rules: ["Preserve scannable section rhythm and leave room for proof details."]
+        },
+        radii: {
+          rules: ["Keep controls at 8px or less unless imagery requires softer framing."]
+        },
+        shadows: {
+          rules: ["Use shadows only for hierarchy, not atmospheric glow."]
+        }
+      },
+      layout_directives: {
+        variance: 5,
+        rules: ["Make the product promise visible before feature detail.", "Avoid generic three-card repetition."]
+      },
+      motion_directives: {
+        intensity: 3,
+        rules: ["Use restrained entrance motion.", "Provide a reduced-motion-safe path."]
+      },
+      section_design_intents: sectionOrder.map((sectionId) => ({
+        section_id: sectionId,
+        layout: `Give ${sectionId} a clear role in the page narrative instead of repeating the prior section.`,
+        media: `Use inspectable, honest media or layout structure for ${sectionId}; do not fabricate proof assets.`,
+        copy: `Keep ${sectionId} copy aligned to the page goal and CTA strategy.`,
+        proof: claimPolicy === "proof-required"
+          ? `Bind ${sectionId} claims to provided proof inputs or keep claims qualitative.`
+          : `Avoid unsupported proof language in ${sectionId}.`,
+        motion: `Use subtle motion in ${sectionId} only when it clarifies hierarchy.`
+      })),
+      claim_and_proof_constraints: {
+        claim_policy: claimPolicy,
+        rules: ["Do not introduce fake metrics.", "Tie proof claims to validated upstream proof inputs."]
+      },
+      anti_patterns: {
+        visual: ["generic purple-blue AI glow", "generic three-card feature row"],
+        copy: ["unsupported automation cliches", "vague launch promises"],
+        proof: ["fake metrics", "unsupported testimonials"]
       }
     }
   );

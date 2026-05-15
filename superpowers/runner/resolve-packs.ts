@@ -56,6 +56,17 @@ export type StageResolution = {
   next_stage: string;
 };
 
+export type RegistryStageCompositionIssue = {
+  code: string;
+  message: string;
+  source_ref: string;
+  stage?: string;
+  pack_id?: string;
+  artifact_type?: string;
+  target_ids?: string[];
+  metadata?: Record<string, unknown>;
+};
+
 export class PackResolutionError extends Error {
   errors: string[];
 
@@ -84,97 +95,36 @@ export async function resolveStage(options: {
   const outputMode = options.outputMode ?? "landing-page";
   const registry = await loadRegistry(rootDir);
   const stageProfiles = await loadStageProfiles(rootDir);
-  const errors: string[] = [];
   const profile = stageProfiles.stages.find((item) => item.stage === options.stage);
 
   if (!profile) {
     throw new PackResolutionError([`Missing stage profile for ${options.stage}`]);
   }
 
-  validateUniqueArtifactProducerStages(stageProfiles.stages, errors);
-
   const packsById = new Map(registry.packs.map((pack) => [pack.id, pack]));
   const primaryTask = packsById.get(profile.primary_task);
-
-  if (!primaryTask) {
-    errors.push(`Stage ${profile.stage} primary_task ${profile.primary_task} is not registered`);
-  }
-
-  const auxiliaryTasks = profile.allowed_auxiliary_tasks.map((packId) => {
-    const pack = packsById.get(packId);
-
-    if (!pack) {
-      errors.push(`Stage ${profile.stage} auxiliary task ${packId} is not registered`);
-    }
-
-    return pack;
-  }).filter(Boolean) as PackManifest[];
-
-  const contextPacks = (profile.context_packs ?? []).map((packId) => {
-    const pack = packsById.get(packId);
-
-    if (!pack) {
-      errors.push(`Stage ${profile.stage} context pack ${packId} is not registered`);
-    }
-
-    return pack;
-  }).filter(Boolean) as PackManifest[];
+  const auxiliaryTasks = profile.allowed_auxiliary_tasks
+    .map((packId) => packsById.get(packId))
+    .filter(Boolean) as PackManifest[];
+  const contextPacks = (profile.context_packs ?? [])
+    .map((packId) => packsById.get(packId))
+    .filter(Boolean) as PackManifest[];
 
   const verifierPack =
     profile.default_verifier === "none" ? null : packsById.get(profile.default_verifier) ?? null;
-
-  if (profile.default_verifier !== "none" && !verifierPack) {
-    errors.push(`Stage ${profile.stage} verifier ${profile.default_verifier} is not registered`);
-  }
 
   const selectedPacks = uniquePacks(
     [primaryTask, ...auxiliaryTasks, ...contextPacks, verifierPack].filter(Boolean) as PackManifest[]
   );
   const backend = options.backend ?? profile.default_backend;
-
-  validateContextPackComposition(profile, contextPacks, errors);
-
-  for (const pack of selectedPacks) {
-    if (pack.stage !== profile.stage) {
-      errors.push(`Pack ${pack.id} is registered for stage ${pack.stage}, not ${profile.stage}`);
-    }
-
-    if (!pack.output_modes.includes(outputMode)) {
-      errors.push(`Pack ${pack.id} does not support output mode ${outputMode}`);
-    }
-
-    if (!pack.backend_support.adapters.includes(backend)) {
-      errors.push(`Pack ${pack.id} does not support backend ${backend}`);
-    }
-
-    const missingCapabilities = missingCapabilitiesForBackend(backend, pack.capabilities_required ?? []);
-
-    if (missingCapabilities.length > 0) {
-      errors.push(
-        `Pack ${pack.id} requires unsupported ${backend} capabilities: ${missingCapabilities.join(", ")}`
-      );
-    }
-
-    const disallowedOutputs = (pack.stage_outputs ?? []).filter(
-      (artifactType) => !profile.allowed_outputs.includes(artifactType)
-    );
-
-    if (disallowedOutputs.length > 0) {
-      errors.push(
-        `Pack ${pack.id} stage_outputs exceed ${profile.stage} allowed_outputs: ${disallowedOutputs.join(", ")}`
-      );
-    }
-
-    const disallowedProduced = (pack.produces_artifacts ?? []).filter(
-      (artifactType) => !profile.allowed_outputs.includes(artifactType)
-    );
-
-    if (disallowedProduced.length > 0) {
-      errors.push(
-        `Pack ${pack.id} produces artifacts outside ${profile.stage} allowed_outputs: ${disallowedProduced.join(", ")}`
-      );
-    }
-  }
+  const errors = validateRegistryStageComposition({
+    registry,
+    stageProfiles,
+    stage: profile.stage,
+    outputMode,
+    backend,
+    scope: "resolver"
+  }).map((issue) => issue.message);
 
   if (errors.length > 0 || !primaryTask) {
     throw new PackResolutionError(errors);
@@ -191,6 +141,67 @@ export async function resolveStage(options: {
     selected_packs: selectedPacks,
     next_stage: profile.next_stage
   };
+}
+
+export function validateRegistryStageComposition(options: {
+  registry: PackRegistry;
+  stageProfiles: StageProfiles;
+  stage?: string;
+  outputMode?: string;
+  backend?: string;
+  scope?: "resolver" | "topology";
+}): RegistryStageCompositionIssue[] {
+  const issues: RegistryStageCompositionIssue[] = [];
+  const scope = options.scope ?? "topology";
+  const packsById = new Map(options.registry.packs.map((pack) => [pack.id, pack]));
+  const profilesByStage = new Map(options.stageProfiles.stages.map((profile) => [profile.stage, profile]));
+  const profilesToValidate = options.stage
+    ? options.stageProfiles.stages.filter((profile) => profile.stage === options.stage)
+    : options.stageProfiles.stages;
+
+  validateUniqueArtifactProducerStages(options.stageProfiles.stages, issues);
+
+  for (const profile of profilesToValidate) {
+    const selectedPacks = selectedPacksForProfile(profile, packsById, issues);
+    const contextPacks = (profile.context_packs ?? [])
+      .map((packId) => packsById.get(packId))
+      .filter(Boolean) as PackManifest[];
+
+    validateContextPackComposition(profile, contextPacks, issues);
+
+    for (const pack of selectedPacks) {
+      validatePackAgainstStageProfile(pack, profile, options.outputMode, options.backend, issues, {
+        includeOutputChecks: scope === "resolver"
+      });
+    }
+
+    if (scope === "topology" && profile.next_stage !== "end" && !profilesByStage.has(profile.next_stage)) {
+      issues.push({
+        code: "unknown_next_stage",
+        message: `Stage ${profile.stage} next_stage ${profile.next_stage} is not registered`,
+        source_ref: "superpowers/packs/stage-profiles.yaml",
+        stage: profile.stage,
+        target_ids: [`stage:${profile.stage}`],
+        metadata: {
+          next_stage: profile.next_stage
+        }
+      });
+    }
+  }
+
+  if (scope === "topology") {
+    for (const pack of options.registry.packs) {
+      const profile = profilesByStage.get(pack.stage);
+
+      if (!profile) {
+        continue;
+      }
+
+      validatePackOutputsAgainstStage(pack, profile, issues);
+    }
+  }
+
+  return issues;
 }
 
 function missingCapabilitiesForBackend(backend: string, requiredCapabilities: string[]): string[] {
@@ -361,7 +372,10 @@ function isKeyValue(text: string): boolean {
   return separator > 0;
 }
 
-function validateUniqueArtifactProducerStages(stageProfiles: StageProfile[], errors: string[]): void {
+function validateUniqueArtifactProducerStages(
+  stageProfiles: StageProfile[],
+  issues: RegistryStageCompositionIssue[]
+): void {
   const producerStages = new Map<string, string>();
 
   for (const profile of stageProfiles) {
@@ -369,7 +383,17 @@ function validateUniqueArtifactProducerStages(stageProfiles: StageProfile[], err
       const priorStage = producerStages.get(artifactType);
 
       if (priorStage && priorStage !== profile.stage) {
-        errors.push(`Artifact ${artifactType} is produced by both ${priorStage} and ${profile.stage}`);
+        issues.push({
+          code: "duplicate_artifact_producer_stage",
+          message: `Artifact ${artifactType} is produced by both ${priorStage} and ${profile.stage}`,
+          source_ref: "superpowers/packs/stage-profiles.yaml",
+          stage: profile.stage,
+          artifact_type: artifactType,
+          target_ids: [`artifact-type:${artifactType}`, `stage:${priorStage}`, `stage:${profile.stage}`],
+          metadata: {
+            producer_stages: [priorStage, profile.stage]
+          }
+        });
       }
 
       producerStages.set(artifactType, profile.stage);
@@ -380,30 +404,255 @@ function validateUniqueArtifactProducerStages(stageProfiles: StageProfile[], err
 function validateContextPackComposition(
   profile: StageProfile,
   contextPacks: PackManifest[],
-  errors: string[]
+  issues: RegistryStageCompositionIssue[]
 ): void {
   const basePacks = contextPacks.filter((pack) => pack.kind === "base");
   const stylePacks = contextPacks.filter((pack) => pack.kind === "style");
   const invalidContextPacks = contextPacks.filter((pack) => pack.kind === "task" || pack.kind === "deploy");
 
   if (basePacks.length > 1) {
-    errors.push(
-      `Stage ${profile.stage} selects more than one base context pack: ${basePacks.map((pack) => pack.id).join(", ")}`
-    );
+    const packIds = basePacks.map((pack) => pack.id);
+    issues.push({
+      code: "multiple_base_context_packs",
+      message: `Stage ${profile.stage} selects more than one base context pack: ${packIds.join(", ")}`,
+      source_ref: "superpowers/packs/stage-profiles.yaml",
+      stage: profile.stage,
+      target_ids: [`stage:${profile.stage}`, ...packIds.map((packId) => `pack:${packId}`)],
+      metadata: {
+        pack_ids: packIds
+      }
+    });
   }
 
   if (stylePacks.length > 1) {
-    errors.push(
-      `Stage ${profile.stage} selects more than one style context pack: ${stylePacks.map((pack) => pack.id).join(", ")}`
-    );
+    const packIds = stylePacks.map((pack) => pack.id);
+    issues.push({
+      code: "multiple_style_context_packs",
+      message: `Stage ${profile.stage} selects more than one style context pack: ${packIds.join(", ")}`,
+      source_ref: "superpowers/packs/stage-profiles.yaml",
+      stage: profile.stage,
+      target_ids: [`stage:${profile.stage}`, ...packIds.map((packId) => `pack:${packId}`)],
+      metadata: {
+        pack_ids: packIds
+      }
+    });
   }
 
   if (invalidContextPacks.length > 0) {
-    errors.push(
-      `Stage ${profile.stage} context_packs cannot include task or deploy packs: ${invalidContextPacks
-        .map((pack) => pack.id)
-        .join(", ")}`
-    );
+    const packIds = invalidContextPacks.map((pack) => pack.id);
+    issues.push({
+      code: "invalid_context_pack_kind",
+      message: `Stage ${profile.stage} context_packs cannot include task or deploy packs: ${packIds.join(", ")}`,
+      source_ref: "superpowers/packs/stage-profiles.yaml",
+      stage: profile.stage,
+      target_ids: [`stage:${profile.stage}`, ...packIds.map((packId) => `pack:${packId}`)],
+      metadata: {
+        pack_ids: packIds
+      }
+    });
+  }
+}
+
+function selectedPacksForProfile(
+  profile: StageProfile,
+  packsById: Map<string, PackManifest>,
+  issues: RegistryStageCompositionIssue[]
+): PackManifest[] {
+  const primaryTask = packsById.get(profile.primary_task);
+
+  if (!primaryTask) {
+    issues.push({
+      code: "missing_primary_task",
+      message: `Stage ${profile.stage} primary_task ${profile.primary_task} is not registered`,
+      source_ref: "superpowers/packs/stage-profiles.yaml",
+      stage: profile.stage,
+      pack_id: profile.primary_task,
+      target_ids: [`stage:${profile.stage}`, `pack:${profile.primary_task}`]
+    });
+  }
+
+  const auxiliaryTasks = profile.allowed_auxiliary_tasks
+    .map((packId) => {
+      const pack = packsById.get(packId);
+
+      if (!pack) {
+        issues.push({
+          code: "missing_auxiliary_task",
+          message: `Stage ${profile.stage} auxiliary task ${packId} is not registered`,
+          source_ref: "superpowers/packs/stage-profiles.yaml",
+          stage: profile.stage,
+          pack_id: packId,
+          target_ids: [`stage:${profile.stage}`, `pack:${packId}`]
+        });
+      }
+
+      return pack;
+    })
+    .filter(Boolean) as PackManifest[];
+
+  const contextPacks = (profile.context_packs ?? [])
+    .map((packId) => {
+      const pack = packsById.get(packId);
+
+      if (!pack) {
+        issues.push({
+          code: "missing_context_pack",
+          message: `Stage ${profile.stage} context pack ${packId} is not registered`,
+          source_ref: "superpowers/packs/stage-profiles.yaml",
+          stage: profile.stage,
+          pack_id: packId,
+          target_ids: [`stage:${profile.stage}`, `pack:${packId}`]
+        });
+      }
+
+      return pack;
+    })
+    .filter(Boolean) as PackManifest[];
+
+  const verifierPack =
+    profile.default_verifier === "none" ? null : packsById.get(profile.default_verifier) ?? null;
+
+  if (profile.default_verifier !== "none" && !verifierPack) {
+    issues.push({
+      code: "missing_verifier_pack",
+      message: `Stage ${profile.stage} verifier ${profile.default_verifier} is not registered`,
+      source_ref: "superpowers/packs/stage-profiles.yaml",
+      stage: profile.stage,
+      pack_id: profile.default_verifier,
+      target_ids: [`stage:${profile.stage}`, `pack:${profile.default_verifier}`]
+    });
+  }
+
+  return uniquePacks(
+    [primaryTask, ...auxiliaryTasks, ...contextPacks, verifierPack].filter(Boolean) as PackManifest[]
+  );
+}
+
+function validatePackAgainstStageProfile(
+  pack: PackManifest,
+  profile: StageProfile,
+  outputMode: string | undefined,
+  backend: string | undefined,
+  issues: RegistryStageCompositionIssue[],
+  options: {
+    includeOutputChecks: boolean;
+  }
+): void {
+  if (pack.stage !== profile.stage) {
+    issues.push({
+      code: "pack_stage_mismatch",
+      message: `Pack ${pack.id} is registered for stage ${pack.stage}, not ${profile.stage}`,
+      source_ref: "superpowers/packs/registry.yaml",
+      stage: profile.stage,
+      pack_id: pack.id,
+      target_ids: [`stage:${profile.stage}`, `pack:${pack.id}`],
+      metadata: {
+        registered_stage: pack.stage
+      }
+    });
+  }
+
+  if (outputMode && !pack.output_modes.includes(outputMode)) {
+    issues.push({
+      code: "pack_output_mode_unsupported",
+      message: `Pack ${pack.id} does not support output mode ${outputMode}`,
+      source_ref: "superpowers/packs/registry.yaml",
+      stage: profile.stage,
+      pack_id: pack.id,
+      target_ids: [`stage:${profile.stage}`, `pack:${pack.id}`],
+      metadata: {
+        output_mode: outputMode
+      }
+    });
+  }
+
+  if (backend && !pack.backend_support.adapters.includes(backend)) {
+    issues.push({
+      code: "pack_backend_unsupported",
+      message: `Pack ${pack.id} does not support backend ${backend}`,
+      source_ref: "superpowers/packs/registry.yaml",
+      stage: profile.stage,
+      pack_id: pack.id,
+      target_ids: [`stage:${profile.stage}`, `pack:${pack.id}`],
+      metadata: {
+        backend
+      }
+    });
+  }
+
+  if (backend) {
+    const missingCapabilities = missingCapabilitiesForBackend(backend, pack.capabilities_required ?? []);
+
+    if (missingCapabilities.length > 0) {
+      issues.push({
+        code: "pack_backend_capability_unsupported",
+        message: `Pack ${pack.id} requires unsupported ${backend} capabilities: ${missingCapabilities.join(", ")}`,
+        source_ref: "superpowers/packs/registry.yaml",
+        stage: profile.stage,
+        pack_id: pack.id,
+        target_ids: [`stage:${profile.stage}`, `pack:${pack.id}`],
+        metadata: {
+          backend,
+          missing_capabilities: missingCapabilities
+        }
+      });
+    }
+  }
+
+  if (options.includeOutputChecks) {
+    validatePackOutputsAgainstStage(pack, profile, issues);
+  }
+}
+
+function validatePackOutputsAgainstStage(
+  pack: PackManifest,
+  profile: StageProfile,
+  issues: RegistryStageCompositionIssue[]
+): void {
+  const disallowedOutputs = (pack.stage_outputs ?? []).filter(
+    (artifactType) => !profile.allowed_outputs.includes(artifactType)
+  );
+
+  if (disallowedOutputs.length > 0) {
+    issues.push({
+      code: "pack_stage_output_not_allowed",
+      message: `Pack ${pack.id} stage_outputs exceed ${profile.stage} allowed_outputs: ${disallowedOutputs.join(", ")}`,
+      source_ref: "superpowers/packs/registry.yaml",
+      stage: profile.stage,
+      pack_id: pack.id,
+      artifact_type: disallowedOutputs[0],
+      target_ids: [
+        `stage:${profile.stage}`,
+        `pack:${pack.id}`,
+        ...disallowedOutputs.map((artifactType) => `artifact-type:${artifactType}`)
+      ],
+      metadata: {
+        artifact_types: disallowedOutputs
+      }
+    });
+  }
+
+  const disallowedProduced = (pack.produces_artifacts ?? []).filter(
+    (artifactType) => !profile.allowed_outputs.includes(artifactType)
+  );
+
+  if (disallowedProduced.length > 0) {
+    issues.push({
+      code: "pack_produced_artifact_not_allowed",
+      message: `Pack ${pack.id} produces artifacts outside ${profile.stage} allowed_outputs: ${disallowedProduced.join(", ")}`,
+      source_ref: "superpowers/packs/registry.yaml",
+      stage: profile.stage,
+      pack_id: pack.id,
+      artifact_type: disallowedProduced[0],
+      target_ids: [
+        `stage:${profile.stage}`,
+        `pack:${pack.id}`,
+        ...disallowedProduced.map((artifactType) => `artifact-type:${artifactType}`)
+      ],
+      metadata: {
+        artifact_types: disallowedProduced
+      }
+    });
   }
 }
 
