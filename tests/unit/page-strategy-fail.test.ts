@@ -21,12 +21,14 @@ describe("buildPageArtifacts QA failure publishing contract", () => {
       runId: "run_fail_01",
       productName: "Atlas Bottle",
       sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       visualDirectionId: "premium-editorial",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: ["500+ reviews"],
+      proofSources: [],
       referenceUrls: [],
     });
 

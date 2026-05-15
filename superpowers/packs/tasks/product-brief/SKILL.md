@@ -33,8 +33,11 @@ stage: product-and-brand-brief
     "audiences": [],
     "core_problem": "",
     "value_props": [],
+    "product_details": [],
     "cta_goal": "",
     "proof_inputs": [],
+    "proof_sources": [],
+    "claim_refs": [],
     "claim_policy": "proof-required"
   }
 }

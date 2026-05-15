@@ -17,6 +17,42 @@ function splitLines(value: FormDataEntryValue | null): string[] {
     .filter(Boolean);
 }
 
+function splitLabelValueLines(value: FormDataEntryValue | null) {
+  return splitLines(value)
+    .map((line) => {
+      const [label, ...rest] = line.split(":");
+      const parsedLabel = label.trim();
+      const parsedValue = rest.join(":").trim();
+
+      if (!parsedLabel || !parsedValue) {
+        return null;
+      }
+
+      return {
+        label: parsedLabel,
+        value: parsedValue,
+      };
+    })
+    .filter((item): item is { label: string; value: string } => Boolean(item));
+}
+
+function splitProofSourceLines(value: FormDataEntryValue | null) {
+  return splitLines(value)
+    .map((line) => {
+      const [claim, source, url] = line.split("|").map((part) => part.trim());
+
+      if (!claim || !source) {
+        return null;
+      }
+
+      return url ? { claim, source, url } : { claim, source };
+    })
+    .filter(
+      (item): item is { claim: string; source: string; url?: string } =>
+        Boolean(item),
+    );
+}
+
 export default function ProjectIntakeForm() {
   const router = useRouter();
   const [submitState, setSubmitState] = useState<SubmitState>({
@@ -33,6 +69,7 @@ export default function ProjectIntakeForm() {
       productName: String(formData.get("productName") ?? "").trim(),
       targetAudience: String(formData.get("targetAudience") ?? "").trim(),
       sellingPoints: splitLines(formData.get("sellingPoints")),
+      productDetails: splitLabelValueLines(formData.get("productDetails")),
       brandKeywords: splitLines(formData.get("brandKeywords")),
       cta: String(formData.get("cta") ?? "").trim(),
       visualDirectionId: String(
@@ -42,6 +79,7 @@ export default function ProjectIntakeForm() {
       price: String(formData.get("price") ?? "").trim() || undefined,
       tone: String(formData.get("tone") ?? "").trim() || undefined,
       trustSignals: splitLines(formData.get("trustSignals")),
+      proofSources: splitProofSourceLines(formData.get("proofSources")),
       referenceUrls: splitLines(formData.get("referenceUrls")),
     };
 
@@ -124,6 +162,14 @@ export default function ProjectIntakeForm() {
         />
       </label>
 
+      <label className="field">
+        <span>Product details</span>
+        <textarea
+          name="productDetails"
+          placeholder={"Battery: Replaceable coin-cell\nDimensions: 85mm x 54mm"}
+        />
+      </label>
+
       <div className="field-grid">
         <label className="field">
           <span>Brand keywords</span>
@@ -174,6 +220,16 @@ export default function ProjectIntakeForm() {
           <input name="trustSignals" placeholder="500+ reviews, lifetime warranty" />
         </label>
       </div>
+
+      <label className="field">
+        <span>Proof sources</span>
+        <textarea
+          name="proofSources"
+          placeholder={
+            "500+ reviews | Shopify reviews export | https://example.com/reviews"
+          }
+        />
+      </label>
 
       <label className="field">
         <span>Reference URLs</span>

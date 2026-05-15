@@ -39,8 +39,29 @@ export const productBriefPayloadSchema = z.object({
   audiences: z.array(nonEmptyString).min(1),
   core_problem: nonEmptyString,
   value_props: z.array(nonEmptyString).min(1),
+  product_details: z.array(
+    z.object({
+      label: nonEmptyString,
+      value: nonEmptyString,
+    }).strict(),
+  ),
   cta_goal: nonEmptyString,
   proof_inputs: z.array(z.string()),
+  proof_sources: z.array(
+    z.object({
+      proof_ref: nonEmptyString,
+      claim: nonEmptyString,
+      source: nonEmptyString,
+      url: z.string().url().nullable(),
+    }).strict(),
+  ),
+  claim_refs: z.array(
+    z.object({
+      claim_ref: nonEmptyString,
+      claim: nonEmptyString,
+      proof_refs: z.array(nonEmptyString),
+    }).strict(),
+  ),
   claim_policy: claimPolicySchema,
 }).strict();
 

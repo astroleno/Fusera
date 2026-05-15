@@ -85,13 +85,17 @@ export default function PagePreview({ page }: { page: CompiledPage }) {
 
         if (section.sectionType === "proof") {
           const trustSignals = listProp(section, "trust_signals");
+          const proofSources = listProp(section, "proof_source_labels");
           return (
             <section className="preview-section" key={section.key}>
               <h3>{section.title}</h3>
-              {trustSignals.length > 0 ? (
+              {trustSignals.length > 0 || proofSources.length > 0 ? (
                 <ul>
                   {trustSignals.map((signal) => (
                     <li key={signal}>{signal}</li>
+                  ))}
+                  {proofSources.map((source) => (
+                    <li key={source}>{source}</li>
                   ))}
                 </ul>
               ) : (
@@ -108,6 +112,20 @@ export default function PagePreview({ page }: { page: CompiledPage }) {
               <button type="button">
                 {textProp(section, "cta_label", "Continue")}
               </button>
+            </section>
+          );
+        }
+
+        if (section.sectionType === "faq") {
+          const items = listProp(section, "items");
+          return (
+            <section className="preview-section" key={section.key}>
+              <h3>{section.title}</h3>
+              <ul>
+                {items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
             </section>
           );
         }

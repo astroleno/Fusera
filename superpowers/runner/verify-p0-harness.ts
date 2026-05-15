@@ -1582,8 +1582,11 @@ function makeProbeProductBrief(
       audiences: ["operators"],
       core_problem: "Needs harness verification.",
       value_props: ["Deterministic validation"],
+      product_details: [],
       cta_goal: "Preview",
       proof_inputs: [],
+      proof_sources: [],
+      claim_refs: [],
       claim_policy: "low-proof"
     }
   };
@@ -1707,8 +1710,11 @@ if (bundle.stage === "normalize-input") {
     audiences: ["operators"],
     core_problem: "Need failed-run retry evidence.",
     value_props: ["Attempt retention", "Validated resume"],
+    product_details: [],
     cta_goal: "Retry preview",
     proof_inputs: ["attempt evidence"],
+    proof_sources: [{ proof_ref: "proof:1", claim: "attempt evidence", source: "retry adapter fixture", url: null }],
+    claim_refs: [{ claim_ref: "claim:1", claim: "attempt evidence", proof_refs: ["proof:1"] }],
     claim_policy: "proof-required"
   }));
   fence("fusera-artifact-json", artifact("BrandProfile", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {
@@ -1822,8 +1828,11 @@ if (bundle.stage === "normalize-input") {
     audiences: ["operators"],
     core_problem: "Need invalid DesignSpec rejection evidence.",
     value_props: ["Rejected artifact persistence"],
+    product_details: [],
     cta_goal: "Preview",
     proof_inputs: ["artifact ledger"],
+    proof_sources: [{ proof_ref: "proof:1", claim: "artifact ledger", source: "design-spec rejection fixture", url: null }],
+    claim_refs: [{ claim_ref: "claim:1", claim: "artifact ledger", proof_refs: ["proof:1"] }],
     claim_policy: "proof-required"
   }));
   fence("fusera-artifact-json", artifact("BrandProfile", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {
@@ -2029,8 +2038,17 @@ if (bundle.stage === "normalize-input") {
       "Keeps generation auditable through every stage",
       "Publishes preview handoffs only after QA binding checks"
     ],
+    product_details: [],
     cta_goal: "Start a preview run",
     proof_inputs: ["artifact ledger", "preview publish handoff"],
+    proof_sources: [
+      { proof_ref: "proof:1", claim: "artifact ledger", source: "harness artifact ledger", url: null },
+      { proof_ref: "proof:2", claim: "preview publish handoff", source: "harness preview handoff", url: null }
+    ],
+    claim_refs: [
+      { claim_ref: "claim:1", claim: "artifact ledger", proof_refs: ["proof:1"] },
+      { claim_ref: "claim:2", claim: "preview publish handoff", proof_refs: ["proof:2"] }
+    ],
     claim_policy: "proof-required"
   }));
   fence("fusera-artifact-json", artifact("BrandProfile", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {

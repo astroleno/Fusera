@@ -8,12 +8,19 @@ describe("compilePage", () => {
       runId: "run_test_01",
       productName: "Atlas Bottle",
       sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       visualDirectionId: "premium-editorial",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: ["500+ reviews"],
+      proofSources: [
+        {
+          claim: "500+ reviews",
+          source: "Review export supplied by brand",
+        },
+      ],
       referenceUrls: [],
     });
 
@@ -36,12 +43,14 @@ describe("compilePage", () => {
       runId: "run_test_02",
       productName: "Atlas Bottle",
       sellingPoints: ["Leak-proof", "Insulated"],
+      productDetails: [],
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
       visualDirectionId: "marketplace-clean",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: [],
+      proofSources: [],
       referenceUrls: [],
     });
 
