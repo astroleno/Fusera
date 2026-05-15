@@ -28,6 +28,21 @@ describe("projectInputSchema", () => {
 
     expect(result.trustSignals).toEqual([]);
     expect(result.referenceUrls).toEqual([]);
+    expect(result.visualDirectionId).toBe("premium-editorial");
+  });
+
+  it("accepts the curated commercial visual directions", () => {
+    const result = projectInputSchema.parse({
+      productName: "Atlas Bottle",
+      sellingPoints: ["Leak-proof"],
+      targetAudience: "Urban commuters",
+      brandKeywords: ["sleek"],
+      cta: "Shop now",
+      visualDirectionId: "marketplace-clean",
+      imageUrls: ["https://example.com/product.jpg"],
+    });
+
+    expect(result.visualDirectionId).toBe("marketplace-clean");
   });
 });
 

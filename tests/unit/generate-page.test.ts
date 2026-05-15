@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   artifactEnvelopeSchema,
   brandProfilePayloadSchema,
+  designSpecPayloadSchema,
+  pageSpecPayloadSchema,
   pagePlanPayloadSchema,
   productBriefPayloadSchema,
+  publishVersionPayloadSchema,
+  qaReportPayloadSchema,
   sectionGraphPayloadSchema,
   themeTokensPayloadSchema,
 } from "@/lib/domain/page-artifacts";
@@ -15,6 +19,10 @@ const payloadSchemas = {
   PagePlan: pagePlanPayloadSchema,
   SectionGraph: sectionGraphPayloadSchema,
   ThemeTokens: themeTokensPayloadSchema,
+  DesignSpec: designSpecPayloadSchema,
+  PageSpec: pageSpecPayloadSchema,
+  QAReport: qaReportPayloadSchema,
+  PublishVersion: publishVersionPayloadSchema,
 };
 
 const producerStages = {
@@ -23,6 +31,10 @@ const producerStages = {
   PagePlan: "page-strategy",
   SectionGraph: "section-planning",
   ThemeTokens: "design-system-pass",
+  DesignSpec: "design-spec-pass",
+  PageSpec: "page-compile",
+  QAReport: "verify-publishable-page",
+  PublishVersion: "publish-preview",
 };
 
 describe("buildPageArtifacts", () => {
@@ -34,6 +46,7 @@ describe("buildPageArtifacts", () => {
       targetAudience: "Urban commuters",
       brandKeywords: ["sleek", "confident"],
       cta: "Shop now",
+      visualDirectionId: "premium-editorial",
       imageUrls: ["https://example.com/product.jpg"],
       trustSignals: ["500+ reviews"],
       referenceUrls: [],
@@ -69,19 +82,101 @@ describe("buildPageArtifacts", () => {
     expect(result.latestRefs.themeTokensRef).toBe(
       artifactsByType.ThemeTokens.artifact_id,
     );
-    expect(artifactsByType.ProductBrief.payload.product_name).toBe("Atlas Bottle");
-    expect(artifactsByType.ProductBrief.payload.claim_policy).toBe(
-      "proof-required",
+    expect(result.latestRefs.designSpecRef).toBe(
+      artifactsByType.DesignSpec.artifact_id,
     );
-    expect(artifactsByType.SectionGraph.payload.nodes[0]).toMatchObject({
+    expect(result.latestRefs.pageSpecRef).toBe(artifactsByType.PageSpec.artifact_id);
+    expect(result.latestRefs.qaReportRef).toBe(
+      artifactsByType.QAReport.artifact_id,
+    );
+    expect(result.latestRefs.publishVersionRef).toBe(
+      artifactsByType.PublishVersion.artifact_id,
+    );
+    expect(result.payloads.productBrief.product_name).toBe("Atlas Bottle");
+    expect(result.payloads.productBrief.claim_policy).toBe("proof-required");
+    expect(result.payloads.sectionGraph.nodes[0]).toMatchObject({
       section_id: "hero",
       section_type: "hero",
     });
-    expect(artifactsByType.ThemeTokens.payload.colors).toMatchObject({
+    expect(result.payloads.themeTokens.colors).toMatchObject({
       background: expect.any(String),
       surface: expect.any(String),
       text: expect.any(String),
       accent: expect.any(String),
     });
+    expect(result.payloads.pageSpec.token_refs).toMatchObject({
+      theme_tokens_ref: artifactsByType.ThemeTokens.artifact_id,
+      design_spec_ref: artifactsByType.DesignSpec.artifact_id,
+    });
+    expect(result.payloads.qaReport.verdict).toBe("pass");
+    expect(result.qualityScore.total).toBeGreaterThan(0);
+  });
+
+  it("changes ThemeTokens when the visual direction changes", async () => {
+    const baseInput = {
+      runId: "run_test_direction",
+      productName: "Atlas Bottle",
+      sellingPoints: ["Leak-proof", "Insulated"],
+      targetAudience: "Urban commuters",
+      brandKeywords: ["sleek", "confident"],
+      cta: "Shop now",
+      imageUrls: ["https://example.com/product.jpg"],
+      trustSignals: [],
+      referenceUrls: [],
+    };
+
+    const premium = await buildPageArtifacts({
+      ...baseInput,
+      visualDirectionId: "premium-editorial",
+    });
+    const performance = await buildPageArtifacts({
+      ...baseInput,
+      visualDirectionId: "performance-ad",
+    });
+
+    expect(premium.payloads.themeTokens.colors).not.toEqual(
+      performance.payloads.themeTokens.colors,
+    );
+    expect(premium.payloads.designSpec.visual_thesis).not.toBe(
+      performance.payloads.designSpec.visual_thesis,
+    );
+  });
+
+  it("feeds anti-slop findings into QAReport and quality score", async () => {
+    const clean = await buildPageArtifacts({
+      runId: "run_clean",
+      productName: "Atlas Bottle",
+      sellingPoints: ["Leak-proof", "Insulated"],
+      targetAudience: "Urban commuters",
+      brandKeywords: ["sleek", "confident"],
+      cta: "Shop now",
+      visualDirectionId: "marketplace-clean",
+      imageUrls: ["https://example.com/product.jpg"],
+      trustSignals: [],
+      referenceUrls: [],
+    });
+    const flagged = await buildPageArtifacts({
+      runId: "run_flagged",
+      productName: "Atlas Bottle",
+      sellingPoints: ["Trusted by 10,000 customers"],
+      targetAudience: "Urban commuters",
+      brandKeywords: ["sleek", "confident"],
+      cta: "Shop now",
+      visualDirectionId: "marketplace-clean",
+      imageUrls: ["https://example.com/product.jpg"],
+      trustSignals: [],
+      referenceUrls: [],
+    });
+
+    expect(flagged.payloads.qaReport.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: "claims",
+          blocking: false,
+        }),
+      ]),
+    );
+    expect(flagged.qualityScore.breakdown.advisoryFindings).toBeGreaterThan(0);
+    expect(flagged.qualityScore.total).toBeLessThan(clean.qualityScore.total);
   });
 });

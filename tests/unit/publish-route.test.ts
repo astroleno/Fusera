@@ -1,0 +1,492 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  createDbClient: vi.fn(),
+  from: vi.fn(),
+}));
+
+vi.mock("@/lib/db", () => ({
+  createDbClient: mocks.createDbClient,
+}));
+
+import { POST } from "@/app/api/projects/[projectId]/publish/route";
+
+function runQuery(data: unknown) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data, error: null }),
+  };
+}
+
+function artifactQuery(data: unknown) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data, error: null }),
+  };
+}
+
+const passingQaReportPayload = {
+  page_spec_ref: "page-spec_01",
+  preview_build_ref: "preview:run_01",
+  verdict: "pass",
+  gate_results: [
+    {
+      gate_id: "artifact-binding",
+      result: "pass",
+      blocking: true,
+      waivable: false,
+      evidence_refs: ["page-spec_01"],
+    },
+  ],
+  issues: [],
+  repair_directives: [],
+  evidence_refs: ["page-spec_01"],
+  waiver: null,
+};
+
+const pageSpecPayload = {
+  route_id: "landing-page:run_01",
+  sections: [
+    {
+      section_id: "hero",
+      section_type: "hero",
+      component: "landing.hero",
+      props: {
+        headline: "Atlas Bottle",
+        cta_label: "Shop now",
+      },
+    },
+  ],
+  token_refs: {
+    theme_tokens_ref: "theme-tokens_01",
+    design_spec_ref: "design-spec_01",
+  },
+  asset_refs: [],
+  compile_targets: ["preview"],
+};
+
+const failingQaReportPayload = {
+  ...passingQaReportPayload,
+  verdict: "fail",
+  issues: [
+    {
+      issue_id: "landing-cta-missing",
+      severity: "high",
+      category: "conversion",
+      repairability: "machine-repairable",
+      blocking: true,
+      location_ref: "section:hero",
+      summary: "Landing page has no clear hero or closing CTA.",
+    },
+  ],
+};
+
+const waivedQaReportPayload = {
+  ...passingQaReportPayload,
+  verdict: "waived",
+  gate_results: [
+    {
+      gate_id: "manual-approval",
+      result: "waived",
+      blocking: true,
+      waivable: true,
+      evidence_refs: ["page-spec_01"],
+    },
+  ],
+  waiver: {
+    actor: "release@example.com",
+    role: "release-approver",
+    reason: "Manual approval flow fixture.",
+    approved_at: "2026-05-15T00:00:00.000Z",
+  },
+};
+
+const passWithFailedNonWaivableGatePayload = {
+  ...passingQaReportPayload,
+  gate_results: [
+    {
+      gate_id: "artifact-binding",
+      result: "fail",
+      blocking: true,
+      waivable: false,
+      evidence_refs: ["page-spec_01"],
+    },
+  ],
+};
+
+describe("POST /api/projects/[projectId]/publish", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns 409 for legacy preview-only runs without full spine refs", async () => {
+    mocks.from.mockReturnValueOnce(
+      runQuery({
+        id: "run_legacy",
+        latest_page_spec_ref: null,
+        latest_qa_report_ref: null,
+        latest_publish_version_ref: null,
+      }),
+    );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_legacy" }),
+    });
+
+    expect(response.status).toBe(409);
+  });
+
+  it("returns 409 when the latest run has a PageSpec but no QAReport", async () => {
+    mocks.from.mockReturnValueOnce(
+      runQuery({
+        id: "run_missing_qa",
+        latest_page_spec_ref: "page-spec_01",
+        latest_qa_report_ref: null,
+        latest_publish_version_ref: null,
+      }),
+    );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_missing_qa" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("QAReport");
+  });
+
+  it("returns publish_ready but does not mark a project as published", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: "publish-version_01",
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "page-spec_01",
+          artifact_type: "PageSpec",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: pageSpecPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("publish_ready");
+    expect(body.publishingImplemented).toBe(false);
+  });
+
+  it("returns 409 for rejected QAReport artifacts even when payload passes", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "rejected",
+          validation: { valid: false, errors: ["QAReport payload rejected"] },
+          payload: passingQaReportPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("not validated");
+  });
+
+  it("returns 409 for waived QAReports until waiver publishing is implemented", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: waivedQaReportPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("not publishable");
+  });
+
+  it("returns 409 when the latest QAReport verdict fails", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: failingQaReportPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("not publishable");
+  });
+
+  it("returns 409 when a passing QAReport has failed non-waivable gates", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passWithFailedNonWaivableGatePayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("failed non-waivable");
+  });
+
+  it("returns 409 when the latest QAReport binds an old PageSpec", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_02",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("latest PageSpec");
+  });
+
+  it("returns 409 for QAReports bound to a stale preview build", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_02",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("preview build");
+  });
+
+  it("returns 409 when the latest PageSpec artifact is missing", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      )
+      .mockReturnValueOnce(artifactQuery(null));
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("PageSpec artifact is missing");
+  });
+
+  it("returns 409 when the latest PageSpec artifact is rejected", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "page-spec_01",
+          artifact_type: "PageSpec",
+          status: "rejected",
+          validation: { valid: false, errors: ["PageSpec payload rejected"] },
+          payload: pageSpecPayload,
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("PageSpec artifact is not validated");
+  });
+
+  it("returns 409 when the latest PageSpec payload is invalid", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "page-spec_01",
+          artifact_type: "PageSpec",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: { route_id: "landing-page:run_01" },
+        }),
+      );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await POST(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toContain("PageSpec artifact payload is invalid");
+  });
+});

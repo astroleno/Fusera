@@ -24,6 +24,7 @@ describe("ProjectIntakeForm", () => {
 
     expect(screen.getByLabelText("Product name")).toBeInTheDocument();
     expect(screen.getByLabelText("Primary CTA")).toBeInTheDocument();
+    expect(screen.getByLabelText("Visual direction")).toBeInTheDocument();
   });
 
   it("creates a project, starts generation, and redirects to preview", async () => {

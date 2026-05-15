@@ -3,6 +3,7 @@ import type {
   ProductBriefPayload,
 } from "@/lib/domain/page-artifacts";
 import type { ProjectInput } from "@/lib/domain/project-input";
+import { resolveVisualDirectionPreset } from "@/lib/domain/visual-directions";
 
 export function buildProductBrief(input: ProjectInput): ProductBriefPayload {
   return {
@@ -20,13 +21,15 @@ export function buildBrandProfile(input: ProjectInput): BrandProfilePayload {
   const toneKeywords = input.tone
     ? [input.tone, ...input.brandKeywords]
     : input.brandKeywords;
+  const visualDirection = resolveVisualDirectionPreset(input.visualDirectionId);
 
   return {
     brand_traits: input.brandKeywords,
     tone_keywords: toneKeywords,
     visual_directions: [
+      visualDirection.name,
       `${input.brandKeywords.join(", ")} product presentation`,
-      "Editorial landing page with product-first hierarchy",
+      visualDirection.designDirectives.visualThesis,
     ],
     positioning: `${input.productName} for ${input.targetAudience}`,
     do_not_use: ["unverified claims", "generic AI copy"],

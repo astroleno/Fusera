@@ -1,0 +1,134 @@
+[
+  {
+    "id": "beauty-serum-us",
+    "category": "skincare",
+    "targetChannel": "shopify-landing-page",
+    "targetMarket": "US / English",
+    "intake": {
+      "productName": "Luma Barrier Serum",
+      "sellingPoints": [
+        "Supports a smoother-looking skin barrier",
+        "Lightweight texture for morning routines",
+        "Fragrance-free formula"
+      ],
+      "targetAudience": "US skincare shoppers with sensitive skin",
+      "brandKeywords": ["calm", "premium", "clinical"],
+      "cta": "Shop the serum",
+      "visualDirectionId": "premium-editorial",
+      "imageUrls": ["https://example.com/images/luma-barrier-serum.jpg"],
+      "trustSignals": ["Dermatologist tested formula supplied by brand"],
+      "tone": "Calm, precise, premium",
+      "referenceUrls": []
+    }
+  },
+  {
+    "id": "consumer-electronics-tracker",
+    "category": "consumer electronics",
+    "targetChannel": "shopify-landing-page",
+    "targetMarket": "US / English",
+    "intake": {
+      "productName": "NaviTag Slim Tracker",
+      "sellingPoints": [
+        "Fits inside wallets and travel pouches",
+        "One-tap phone alert from the companion app",
+        "Replaceable battery design"
+      ],
+      "targetAudience": "Frequent travelers and urban commuters",
+      "brandKeywords": ["precise", "compact", "reliable"],
+      "cta": "Find your essentials",
+      "visualDirectionId": "marketplace-clean",
+      "imageUrls": ["https://example.com/images/navitag-slim-tracker.jpg"],
+      "trustSignals": ["Works with the brand companion app"],
+      "tone": "Clear, useful, confident",
+      "referenceUrls": []
+    }
+  },
+  {
+    "id": "industrial-pump-b2b",
+    "category": "industrial B2B",
+    "targetChannel": "b2b-landing-page",
+    "targetMarket": "Global / English",
+    "intake": {
+      "productName": "AquaForge Transfer Pump",
+      "sellingPoints": [
+        "Built for continuous workshop water transfer",
+        "Compact footprint for equipment rooms",
+        "Serviceable housing for maintenance teams"
+      ],
+      "targetAudience": "Import distributors and light industrial buyers",
+      "brandKeywords": ["durable", "practical", "industrial"],
+      "cta": "Request distributor pricing",
+      "visualDirectionId": "marketplace-clean",
+      "imageUrls": ["https://example.com/images/aquaforge-transfer-pump.jpg"],
+      "trustSignals": ["Factory spec sheet available on request"],
+      "tone": "Direct, technical, trustworthy",
+      "referenceUrls": []
+    }
+  },
+  {
+    "id": "home-storage-kit",
+    "category": "home lifestyle",
+    "targetChannel": "shopify-landing-page",
+    "targetMarket": "US / English",
+    "intake": {
+      "productName": "NestFold Storage Kit",
+      "sellingPoints": [
+        "Modular bins for closets and entryways",
+        "Fold-flat pieces for seasonal storage",
+        "Soft fabric handles"
+      ],
+      "targetAudience": "Apartment renters and small-space families",
+      "brandKeywords": ["warm", "organized", "simple"],
+      "cta": "Organize your space",
+      "visualDirectionId": "social-commerce",
+      "imageUrls": ["https://example.com/images/nestfold-storage-kit.jpg"],
+      "trustSignals": [],
+      "tone": "Friendly, practical, lifestyle-led",
+      "referenceUrls": []
+    }
+  },
+  {
+    "id": "fitness-compression-socks",
+    "category": "fitness apparel",
+    "targetChannel": "campaign-landing-page",
+    "targetMarket": "US / English",
+    "intake": {
+      "productName": "PaceFlow Compression Socks",
+      "sellingPoints": [
+        "Targeted arch support for training days",
+        "Breathable knit for long wear",
+        "Reinforced heel and toe"
+      ],
+      "targetAudience": "Runners, gym members, and active commuters",
+      "brandKeywords": ["energetic", "technical", "bold"],
+      "cta": "Upgrade your run",
+      "visualDirectionId": "performance-ad",
+      "imageUrls": ["https://example.com/images/paceflow-compression-socks.jpg"],
+      "trustSignals": ["Designed with input from local running coaches"],
+      "tone": "Bold, direct, performance-focused",
+      "referenceUrls": []
+    }
+  },
+  {
+    "id": "wellness-gummies",
+    "category": "food and wellness",
+    "targetChannel": "shopify-landing-page",
+    "targetMarket": "US / English",
+    "intake": {
+      "productName": "DailyKind Probiotic Gummies",
+      "sellingPoints": [
+        "Plant-based pectin gummy",
+        "Shelf-stable bottle for daily routines",
+        "Mixed berry flavor"
+      ],
+      "targetAudience": "Wellness shoppers who prefer simple daily supplements",
+      "brandKeywords": ["natural", "friendly", "clean"],
+      "cta": "Start your routine",
+      "visualDirectionId": "premium-editorial",
+      "imageUrls": ["https://example.com/images/dailykind-probiotic-gummies.jpg"],
+      "trustSignals": ["Ingredient list supplied by brand"],
+      "tone": "Warm, careful, compliant",
+      "referenceUrls": []
+    }
+  }
+]

@@ -290,6 +290,7 @@ h1 {
 }
 
 .field input,
+.field select,
 .field textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -316,6 +317,7 @@ h1 {
 }
 
 .field input:focus,
+.field select:focus,
 .field textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(215, 242, 100, 0.56);
@@ -381,24 +383,61 @@ h1 {
   align-items: start;
 }
 
+.preview-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.preview-state-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.preview-state-bar strong {
+  border-radius: 999px;
+  background: #efe5d6;
+  color: var(--muted);
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.preview-state-bar strong[data-ready="true"] {
+  background: var(--signal);
+  color: var(--ink);
+}
+
+.preview-note {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
 .generated-preview {
   display: grid;
   gap: 1px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--line);
+  background: var(--preview-bg, var(--line));
 }
 
 .preview-section {
-  background: var(--surface);
+  background: var(--preview-surface, var(--surface));
   padding: clamp(28px, 5vw, 64px);
 }
 
 .preview-section h2,
 .preview-section h3 {
   margin: 0;
-  color: var(--ink);
+  color: var(--preview-text, var(--ink));
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 520;
   letter-spacing: 0;
@@ -417,7 +456,7 @@ h1 {
 
 .preview-section p,
 .preview-section li {
-  color: var(--muted);
+  color: color-mix(in srgb, var(--preview-text, var(--ink)) 72%, transparent);
   font-size: 1rem;
   line-height: 1.65;
 }
@@ -426,8 +465,8 @@ h1 {
   min-height: 44px;
   border: 0;
   border-radius: 999px;
-  background: var(--accent-strong);
-  color: var(--surface);
+  background: var(--preview-accent, var(--accent-strong));
+  color: var(--preview-surface, var(--surface));
   cursor: pointer;
   font: inherit;
   font-weight: 800;

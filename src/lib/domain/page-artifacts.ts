@@ -125,11 +125,149 @@ export const themeTokensPayloadSchema = z.object({
   motion: z.record(z.unknown()),
 }).strict();
 
+export const designSpecPayloadSchema = z.object({
+  visual_thesis: nonEmptyString,
+  brand_alignment: z
+    .object({
+      traits: z.array(nonEmptyString).min(1),
+      audience: nonEmptyString,
+      positioning: nonEmptyString,
+    })
+    .strict(),
+  token_directives: z
+    .object({
+      color: z.record(z.unknown()),
+      typography: z.record(z.unknown()),
+      spacing: z.record(z.unknown()),
+      radii: z.record(z.unknown()),
+      shadows: z.record(z.unknown()),
+    })
+    .strict(),
+  layout_directives: z
+    .object({
+      variance: z.number().int(),
+      rules: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+  motion_directives: z
+    .object({
+      intensity: z.number().int(),
+      rules: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+  section_design_intents: z
+    .array(
+      z
+        .object({
+          section_id: nonEmptyString,
+          layout: nonEmptyString,
+          media: nonEmptyString,
+          copy: nonEmptyString,
+          proof: nonEmptyString,
+          motion: nonEmptyString,
+        })
+        .strict(),
+    )
+    .min(1),
+  claim_and_proof_constraints: z
+    .object({
+      claim_policy: claimPolicySchema,
+      rules: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+  anti_patterns: z
+    .object({
+      visual: z.array(nonEmptyString).min(1),
+      copy: z.array(nonEmptyString).min(1),
+      proof: z.array(nonEmptyString).min(1),
+    })
+    .strict(),
+}).strict();
+
+export const pageSpecPayloadSchema = z.object({
+  route_id: nonEmptyString,
+  sections: z
+    .array(
+      z
+        .object({
+          section_id: nonEmptyString,
+          section_type: nonEmptyString,
+          component: nonEmptyString,
+          props: z.record(z.unknown()),
+        })
+        .catchall(z.unknown()),
+    )
+    .min(1),
+  token_refs: z.record(z.unknown()),
+  asset_refs: z.array(z.string()),
+  compile_targets: z.array(z.enum(["preview"])).min(1),
+}).strict();
+
+const qaVerdictSchema = z.enum(["pass", "fail", "waived"]);
+
+export const qaReportPayloadSchema = z.object({
+  page_spec_ref: nonEmptyString,
+  preview_build_ref: nonEmptyString,
+  verdict: qaVerdictSchema,
+  gate_results: z
+    .array(
+      z
+        .object({
+          gate_id: nonEmptyString,
+          result: qaVerdictSchema,
+          blocking: z.boolean(),
+          waivable: z.boolean(),
+          evidence_refs: z.array(z.string()),
+        })
+        .strict(),
+    )
+    .min(1),
+  issues: z.array(
+    z
+      .object({
+        issue_id: nonEmptyString,
+        severity: z.enum(["low", "medium", "high", "critical"]),
+        category: nonEmptyString,
+        repairability: z.enum(["machine-repairable", "manual-only"]),
+        blocking: z.boolean(),
+        location_ref: z.string(),
+        summary: nonEmptyString,
+      })
+      .strict(),
+  ),
+  repair_directives: z.array(z.record(z.unknown())),
+  evidence_refs: z.array(z.string()),
+  waiver: z
+    .object({
+      actor: nonEmptyString,
+      role: z.enum(["release-approver", "admin"]),
+      reason: nonEmptyString,
+      approved_at: nonEmptyString,
+    })
+    .strict()
+    .nullable(),
+}).strict();
+
+export const publishVersionPayloadSchema = z.object({
+  publish_version_id: nonEmptyString,
+  page_spec_ref: nonEmptyString,
+  qa_report_ref: nonEmptyString,
+  preview_url: nonEmptyString,
+  published_at: nonEmptyString,
+  publish_target: z.literal("preview"),
+  previous_active_pointer: z.string().min(1).nullable(),
+  pointer_transaction_ref: nonEmptyString,
+}).strict();
+
 export type ProductBriefPayload = z.infer<typeof productBriefPayloadSchema>;
 export type BrandProfilePayload = z.infer<typeof brandProfilePayloadSchema>;
 export type PagePlanPayload = z.infer<typeof pagePlanPayloadSchema>;
 export type SectionGraphPayload = z.infer<typeof sectionGraphPayloadSchema>;
 export type ThemeTokensPayload = z.infer<typeof themeTokensPayloadSchema>;
+export type DesignSpecPayload = z.infer<typeof designSpecPayloadSchema>;
+export type PageSpecPayload = z.infer<typeof pageSpecPayloadSchema>;
+export type QAReportPayload = z.infer<typeof qaReportPayloadSchema>;
+export type PublishVersionPayload = z.infer<typeof publishVersionPayloadSchema>;
 
 export function createArtifactEnvelope<TPayload>(params: {
   artifactType: string;

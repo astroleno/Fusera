@@ -36,6 +36,8 @@
     "next.config.ts",
     "playwright.config.ts",
     "vitest.config.ts",
+    "vitest.node.config.ts",
+    "vitest.react.config.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "tests/unit/**/*.ts",
