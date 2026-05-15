@@ -94,6 +94,10 @@ export async function buildPageArtifacts({
         intent: "Translate selling points into concrete product benefits.",
       },
       {
+        section_id: "buyer-fit",
+        intent: "Show the target buyer and use context before listing features.",
+      },
+      {
         section_id: "proof",
         intent:
           input.trustSignals.length > 0
@@ -142,6 +146,16 @@ export async function buildPageArtifacts({
         },
       },
       {
+        section_id: "buyer-fit",
+        section_type: "problem",
+        title: `Built for ${input.targetAudience}`,
+        props: {
+          headline: `Built for ${input.targetAudience}`,
+          body: `${input.productName} is framed around the practical jobs this audience needs solved, using only the supplied product facts.`,
+          supporting_points: input.sellingPoints,
+        },
+      },
+      {
         section_id: "proof",
         section_type: "proof",
         title: "Proof points",
@@ -160,13 +174,15 @@ export async function buildPageArtifacts({
       },
     ],
     edges: [
-      { from: "hero", to: "features", relationship: "supports" },
+      { from: "hero", to: "buyer-fit", relationship: "frames" },
+      { from: "buyer-fit", to: "features", relationship: "supports" },
       { from: "features", to: "proof", relationship: "substantiates" },
       { from: "proof", to: "cta", relationship: "converts" },
     ],
-    section_order: ["hero", "features", "proof", "cta"],
+    section_order: ["hero", "buyer-fit", "features", "proof", "cta"],
     required_props: {
       hero: ["headline", "cta_label", "image_urls"],
+      "buyer-fit": ["headline"],
       features: ["items"],
       proof: ["trust_signals", "claim_policy"],
       cta: ["cta_label"],

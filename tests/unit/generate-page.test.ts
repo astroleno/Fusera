@@ -98,6 +98,18 @@ describe("buildPageArtifacts", () => {
       section_id: "hero",
       section_type: "hero",
     });
+    expect(result.payloads.sectionGraph.section_order).toContain("buyer-fit");
+    expect(result.payloads.pageSpec.sections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          section_id: "buyer-fit",
+          section_type: "problem",
+          props: expect.objectContaining({
+            headline: "Built for Urban commuters",
+          }),
+        }),
+      ]),
+    );
     expect(result.payloads.themeTokens.colors).toMatchObject({
       background: expect.any(String),
       surface: expect.any(String),

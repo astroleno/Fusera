@@ -33,6 +33,17 @@ describe("PagePreview", () => {
               },
             },
             {
+              key: "problem:buyer-fit",
+              sectionId: "buyer-fit",
+              sectionType: "problem",
+              title: "Built for Urban commuters",
+              props: {
+                headline: "Built for Urban commuters",
+                body: "Useful on train rides and at office desks.",
+                supporting_points: ["Leak-proof"],
+              },
+            },
+            {
               key: "cta:cta",
               sectionId: "cta",
               sectionType: "cta",
@@ -49,6 +60,10 @@ describe("PagePreview", () => {
     expect(
       screen.getByRole("heading", { name: "Atlas Bottle" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Built for Urban commuters" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Leak-proof").length).toBeGreaterThan(0);
     expect(
       screen.getAllByRole("button", { name: "Shop now" }).length,
     ).toBeGreaterThan(0);
