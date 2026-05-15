@@ -269,12 +269,15 @@ async function verifyCommand(target: string | undefined, args: string[]): Promis
 async function ciCommand(target: string | undefined, args: string[]): Promise<CliResult> {
   if (target === "topology") {
     const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
-    const graph = await buildHarnessTopologyGraph({ rootDir: sourceRoot });
+    const result = await writeHarnessTopologyGraph({ rootDir: sourceRoot });
+    const graph = result.graph;
     const criticalDiagnostics = graph.diagnostics.filter((diagnostic) => diagnostic.severity === "critical");
 
     return {
       ok: criticalDiagnostics.length === 0,
       command: "ci topology",
+      graph_path: result.graph_path,
+      report_path: result.report_path,
       report: {
         graph_type: graph.graph_type,
         schema_version: graph.schema_version,

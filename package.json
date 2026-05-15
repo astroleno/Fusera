@@ -10,6 +10,7 @@
   },
   "scripts": {
     "fusera": "node ./bin/fusera.mjs",
+    "harness:topology": "node ./bin/fusera.mjs ci topology",
     "harness:verify": "node ./bin/fusera.mjs verify p0",
     "harness:mock": "node ./bin/fusera.mjs run mock-publish",
     "harness:live": "node ./bin/fusera.mjs run live-publish",
