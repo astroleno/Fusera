@@ -1,0 +1,87 @@
+{
+  "scoringDate": "2026-05-15",
+  "scoringVersion": "landing-quality-pass-1",
+  "runtimeScope": ["landing-page"],
+  "phase2RuntimeFrozen": true,
+  "method": "Manual review of seeded lead ICP briefs after the buyer-fit PageSpec section was added.",
+  "cards": [
+    {
+      "fixtureId": "beauty-serum-us",
+      "firstDraftUsable": true,
+      "draftToRealExportPublish": false,
+      "manualAdjustmentCount": 2,
+      "remainingAdjustments": [
+        "Review product image crop before external handoff.",
+        "Keep dermatologist proof wording tied to supplied brand signal."
+      ],
+      "qualityNotes": "Premium framing and buyer context are usable; still needs proof review before real publish/export."
+    },
+    {
+      "fixtureId": "consumer-electronics-tracker",
+      "firstDraftUsable": true,
+      "draftToRealExportPublish": false,
+      "manualAdjustmentCount": 2,
+      "remainingAdjustments": [
+        "Add device compatibility detail.",
+        "Attach proof source for companion app claim."
+      ],
+      "qualityNotes": "Buyer-fit section clarifies traveler/commuter context; remaining work is product-specific proof detail."
+    },
+    {
+      "fixtureId": "industrial-pump-b2b",
+      "firstDraftUsable": true,
+      "draftToRealExportPublish": false,
+      "manualAdjustmentCount": 2,
+      "remainingAdjustments": [
+        "Attach source spec sheet.",
+        "Add distributor-ready technical table."
+      ],
+      "qualityNotes": "B2B buyer context is clearer; export still waits on sourced technical specs."
+    },
+    {
+      "fixtureId": "home-storage-kit",
+      "firstDraftUsable": true,
+      "draftToRealExportPublish": false,
+      "manualAdjustmentCount": 3,
+      "remainingAdjustments": [
+        "Add product dimensions.",
+        "Add stronger room-by-room lifestyle examples.",
+        "Review product photography crop."
+      ],
+      "qualityNotes": "Buyer-fit section lifts the draft into usable review territory, but dimensions and lifestyle examples remain needed."
+    },
+    {
+      "fixtureId": "fitness-compression-socks",
+      "firstDraftUsable": true,
+      "draftToRealExportPublish": false,
+      "manualAdjustmentCount": 2,
+      "remainingAdjustments": [
+        "Review performance wording for claim safety.",
+        "Attach proof source for coach input."
+      ],
+      "qualityNotes": "Performance direction and CTA are usable; proof attachment remains the publish blocker."
+    },
+    {
+      "fixtureId": "wellness-gummies",
+      "firstDraftUsable": false,
+      "draftToRealExportPublish": false,
+      "manualAdjustmentCount": 3,
+      "remainingAdjustments": [
+        "Add ClaimRef/ProofRef before any wellness benefit copy.",
+        "Review supplement compliance wording.",
+        "Attach ingredient or lab documentation."
+      ],
+      "qualityNotes": "Buyer context improved, but wellness claims still need stricter proof handling before this can be called usable."
+    }
+  ],
+  "summary": {
+    "firstDraftUsableCount": 5,
+    "totalBriefs": 6,
+    "firstDraftUsableRate": 0.8333,
+    "draftToRealExportPublishCount": 0,
+    "draftToRealExportPublishRate": 0,
+    "manualAdjustmentTotal": 14,
+    "manualAdjustmentAverage": 2.3333,
+    "commercialProofLoopComplete": false
+  }
+}

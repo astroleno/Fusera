@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildPageArtifacts } from "@/lib/ai/page-strategy";
 import { projectInputSchema } from "@/lib/domain/project-input";
 import briefs from "../../superpowers/runner/fixtures/lead-icp/landing-page-briefs.json";
+import scorecards from "../../superpowers/runner/fixtures/lead-icp/landing-page-scorecards.json";
 
 describe("seeded lead ICP landing-page briefs", () => {
   it("produce the full landing-page spine without starting other output modes", async () => {
@@ -30,5 +31,20 @@ describe("seeded lead ICP landing-page briefs", () => {
       expect(result.payloads.qaReport.verdict).toBe("pass");
       expect(result.payloads.publishVersion?.publish_target).toBe("preview");
     }
+  });
+
+  it("record landing-only scorecards without unfreezing phase 2 runtime", () => {
+    const fixtureIds = briefs.map((brief) => brief.id).sort();
+    const scoredFixtureIds = scorecards.cards
+      .map((card) => card.fixtureId)
+      .sort();
+
+    expect(scorecards.runtimeScope).toEqual(["landing-page"]);
+    expect(scorecards.phase2RuntimeFrozen).toBe(true);
+    expect(scoredFixtureIds).toEqual(fixtureIds);
+    expect(scorecards.summary.firstDraftUsableCount).toBeGreaterThanOrEqual(5);
+    expect(scorecards.summary.manualAdjustmentAverage).toBeLessThanOrEqual(3);
+    expect(scorecards.summary.draftToRealExportPublishRate).toBe(0);
+    expect(scorecards.summary.commercialProofLoopComplete).toBe(false);
   });
 });

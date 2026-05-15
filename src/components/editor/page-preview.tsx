@@ -60,6 +60,29 @@ export default function PagePreview({ page }: { page: CompiledPage }) {
           );
         }
 
+        if (section.sectionType === "problem") {
+          const supportingPoints = listProp(section, "supporting_points");
+          return (
+            <section className="preview-section" key={section.key}>
+              <h3>{textProp(section, "headline", section.title)}</h3>
+              <p>
+                {textProp(
+                  section,
+                  "body",
+                  "Buyer context is ready for review.",
+                )}
+              </p>
+              {supportingPoints.length > 0 ? (
+                <ul>
+                  {supportingPoints.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          );
+        }
+
         if (section.sectionType === "proof") {
           const trustSignals = listProp(section, "trust_signals");
           return (
