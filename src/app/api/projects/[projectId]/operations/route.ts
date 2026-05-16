@@ -20,15 +20,26 @@ export async function GET(
     );
   }
 
-  const operation = await loadLatestPublishExportOperation({
+  const result = await loadLatestPublishExportOperation({
     projectId,
     runId,
     operationType: operationType?.data,
   });
 
-  if (!operation) {
+  if (!result.ok) {
+    return Response.json(
+      {
+        error: "Failed to load publish/export operation",
+        code: result.error.code,
+        message: result.error.message,
+      },
+      { status: 500 },
+    );
+  }
+
+  if (!result.operation) {
     return Response.json({ operation: null }, { status: 200 });
   }
 
-  return Response.json({ operation });
+  return Response.json({ operation: result.operation });
 }
