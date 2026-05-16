@@ -1,0 +1,37 @@
+[
+  {
+    "id": "real-merchant-01",
+    "merchantContext": {
+      "merchantName": "",
+      "category": "",
+      "targetChannel": "",
+      "targetMarket": "",
+      "source": "real merchant brief"
+    },
+    "intake": {
+      "productName": "",
+      "sellingPoints": [],
+      "productDetails": [],
+      "targetAudience": "",
+      "brandKeywords": [],
+      "cta": "",
+      "visualDirectionId": "marketplace-clean",
+      "imageUrls": [],
+      "trustSignals": [],
+      "proofSources": [],
+      "tone": "",
+      "referenceUrls": []
+    },
+    "measurement": {
+      "qaPass": null,
+      "proofSourceFail": null,
+      "firstDraftUsable": null,
+      "reviewApproved": null,
+      "revisionRequested": null,
+      "exportClicked": null,
+      "publishConfirmed": null,
+      "manualAdjustmentCount": null,
+      "primaryFailureReason": ""
+    }
+  }
+]
