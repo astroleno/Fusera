@@ -1,0 +1,119 @@
+{
+  "baselineDate": "2026-05-16",
+  "baselineVersion": "commercial-proof-baseline-0",
+  "runtimeScope": ["landing-page"],
+  "phase2RuntimeFrozen": true,
+  "decision": "no-go-phase-2",
+  "goNoGoRule": "Do not unfreeze image/poster runtime until real merchant draft-to-export/publish intent rate is at least 40%.",
+  "seededBriefs": [
+    {
+      "fixtureId": "beauty-serum-us",
+      "qaPass": true,
+      "proofSourceFail": false,
+      "firstDraftUsable": true,
+      "reviewApproved": false,
+      "revisionRequested": true,
+      "exportClicked": false,
+      "publishConfirmed": false,
+      "manualAdjustmentCount": 1,
+      "primaryFailureReason": "Review product image crop before external handoff."
+    },
+    {
+      "fixtureId": "consumer-electronics-tracker",
+      "qaPass": true,
+      "proofSourceFail": false,
+      "firstDraftUsable": true,
+      "reviewApproved": false,
+      "revisionRequested": true,
+      "exportClicked": false,
+      "publishConfirmed": false,
+      "manualAdjustmentCount": 1,
+      "primaryFailureReason": "Confirm exact companion app compatibility/version before external publish."
+    },
+    {
+      "fixtureId": "industrial-pump-b2b",
+      "qaPass": true,
+      "proofSourceFail": false,
+      "firstDraftUsable": true,
+      "reviewApproved": false,
+      "revisionRequested": true,
+      "exportClicked": false,
+      "publishConfirmed": false,
+      "manualAdjustmentCount": 1,
+      "primaryFailureReason": "Replace high-level spec reference with the actual distributor spec table."
+    },
+    {
+      "fixtureId": "home-storage-kit",
+      "qaPass": true,
+      "proofSourceFail": false,
+      "firstDraftUsable": true,
+      "reviewApproved": false,
+      "revisionRequested": true,
+      "exportClicked": false,
+      "publishConfirmed": false,
+      "manualAdjustmentCount": 2,
+      "primaryFailureReason": "Add exact product dimensions."
+    },
+    {
+      "fixtureId": "fitness-compression-socks",
+      "qaPass": true,
+      "proofSourceFail": false,
+      "firstDraftUsable": true,
+      "reviewApproved": false,
+      "revisionRequested": true,
+      "exportClicked": false,
+      "publishConfirmed": false,
+      "manualAdjustmentCount": 1,
+      "primaryFailureReason": "Review performance wording for claim safety."
+    },
+    {
+      "fixtureId": "wellness-gummies",
+      "qaPass": true,
+      "proofSourceFail": false,
+      "firstDraftUsable": true,
+      "reviewApproved": false,
+      "revisionRequested": true,
+      "exportClicked": false,
+      "publishConfirmed": false,
+      "manualAdjustmentCount": 2,
+      "primaryFailureReason": "Review supplement compliance wording."
+    }
+  ],
+  "realMerchantBriefs": [
+    {
+      "fixtureId": "real-merchant-01",
+      "status": "pending-real-brief"
+    },
+    {
+      "fixtureId": "real-merchant-02",
+      "status": "pending-real-brief"
+    },
+    {
+      "fixtureId": "real-merchant-03",
+      "status": "pending-real-brief"
+    },
+    {
+      "fixtureId": "real-merchant-04",
+      "status": "pending-real-brief"
+    },
+    {
+      "fixtureId": "real-merchant-05",
+      "status": "pending-real-brief"
+    }
+  ],
+  "summary": {
+    "seededFirstDraftUsableRate": 1,
+    "seededQaPassRate": 1,
+    "seededProofFailRate": 0,
+    "seededDraftToExportPublishIntentRate": 0,
+    "seededManualAdjustmentAverage": 1.3333,
+    "realMerchantBriefCount": 0,
+    "realMerchantDraftToExportPublishIntentRate": null,
+    "commercialProofLoopComplete": false,
+    "primaryFailureReasons": [
+      "No real merchant brief data captured yet.",
+      "No real export_clicked or publish_confirmed events captured yet.",
+      "Seeded briefs still require manual review before external handoff."
+    ]
+  }
+}

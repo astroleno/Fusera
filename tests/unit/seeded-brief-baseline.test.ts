@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildPageArtifacts } from "@/lib/ai/page-strategy";
 import { projectInputSchema } from "@/lib/domain/project-input";
+import commercialProofBaseline from "../../superpowers/runner/fixtures/lead-icp/commercial-proof-baseline.json";
 import baseline from "../../superpowers/runner/fixtures/lead-icp/landing-page-baseline.json";
 import briefs from "../../superpowers/runner/fixtures/lead-icp/landing-page-briefs.json";
 import scorecards from "../../superpowers/runner/fixtures/lead-icp/landing-page-scorecards.json";
@@ -71,6 +72,33 @@ describe("seeded lead ICP landing-page briefs", () => {
     );
     expect(
       baseline.promotionCriteria.requiresRealExportPublishLoop,
+    ).toBe(true);
+  });
+
+  it("keeps the commercial proof baseline in no-go until real merchant intent exists", () => {
+    const fixtureIds = briefs.map((brief) => brief.id).sort();
+    const baselineFixtureIds = commercialProofBaseline.seededBriefs
+      .map((brief) => brief.fixtureId)
+      .sort();
+
+    expect(commercialProofBaseline.runtimeScope).toEqual(["landing-page"]);
+    expect(commercialProofBaseline.phase2RuntimeFrozen).toBe(true);
+    expect(commercialProofBaseline.decision).toBe("no-go-phase-2");
+    expect(baselineFixtureIds).toEqual(fixtureIds);
+    expect(
+      commercialProofBaseline.summary.seededDraftToExportPublishIntentRate,
+    ).toBe(0);
+    expect(commercialProofBaseline.summary.realMerchantBriefCount).toBe(0);
+    expect(
+      commercialProofBaseline.summary.realMerchantDraftToExportPublishIntentRate,
+    ).toBeNull();
+    expect(
+      commercialProofBaseline.summary.commercialProofLoopComplete,
+    ).toBe(false);
+    expect(
+      commercialProofBaseline.realMerchantBriefs.every(
+        (brief) => brief.status === "pending-real-brief",
+      ),
     ).toBe(true);
   });
 });
