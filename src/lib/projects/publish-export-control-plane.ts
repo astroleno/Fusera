@@ -4,13 +4,20 @@ import {
   qaReportPayloadSchema,
 } from "@/lib/domain/page-artifacts";
 import {
+  createBlockedPublishExportOperation,
   createReadyPublishExportOperation,
+  evaluateProofHardGate,
+  proofGateDiagnostic,
   publishExportRequestSchema,
+  type PublishExportOperationDiagnostic,
+  type PublishExportOperationInsert,
   type PublishExportOperationType,
 } from "@/lib/domain/publish-control-plane";
 
 type LatestPublishRunRecord = {
   id: string;
+  latest_product_brief_ref: string | null;
+  latest_section_graph_ref: string | null;
   latest_qa_report_ref: string | null;
   latest_page_spec_ref: string | null;
   latest_publish_version_ref: string | null;
@@ -33,6 +40,7 @@ type PublishExportOperationRecord = {
   id: string;
   operation_type: PublishExportOperationType;
   status: string;
+  diagnostics?: unknown;
 };
 
 function isValidatedArtifact(artifact: LatestArtifactRecord) {
@@ -137,6 +145,8 @@ export async function handlePublishExportControlPlaneRequest(options: {
     .select(
       [
         "id",
+        "latest_product_brief_ref",
+        "latest_section_graph_ref",
         "latest_qa_report_ref",
         "latest_page_spec_ref",
         "latest_publish_version_ref",
@@ -259,6 +269,51 @@ export async function handlePublishExportControlPlaneRequest(options: {
     );
   }
 
+  const proofGateDiagnostics = await readProofGateDiagnostics({
+    db,
+    latestRun,
+  });
+
+  if (proofGateDiagnostics.length > 0) {
+    const blockedOperation = createBlockedPublishExportOperation({
+      projectId: options.projectId,
+      runId: latestRun.id,
+      operationType: parsedRequest.operationType,
+      pageSpecRef: latestRun.latest_page_spec_ref,
+      qaReportRef: latestRun.latest_qa_report_ref,
+      publishVersionRef: latestRun.latest_publish_version_ref ?? null,
+      previewBuildRef: parsedQaReport.data.preview_build_ref,
+      diagnostics: proofGateDiagnostics,
+      externalTarget: parsedRequest.externalTarget,
+    });
+    const blockedRecord = await insertOperation({
+      db,
+      operation: blockedOperation,
+    });
+
+    if (!blockedRecord.ok) {
+      return blockedRecord.response;
+    }
+
+    return Response.json(
+      {
+        status: `${parsedRequest.operationType}_control_plane_blocked`,
+        projectId: options.projectId,
+        runId: latestRun.id,
+        previewReady: true,
+        pageSpecRef: latestRun.latest_page_spec_ref,
+        qaReportRef: latestRun.latest_qa_report_ref,
+        publishVersionRef: latestRun.latest_publish_version_ref ?? null,
+        previewBuildRef: parsedQaReport.data.preview_build_ref,
+        operation: operationResponse(blockedRecord.operation),
+        diagnostics: proofGateDiagnostics,
+        externalExportImplemented: false,
+        externalPublishingImplemented: false,
+      },
+      { status: 409 },
+    );
+  }
+
   const operation = createReadyPublishExportOperation({
     projectId: options.projectId,
     runId: latestRun.id,
@@ -269,24 +324,11 @@ export async function handlePublishExportControlPlaneRequest(options: {
     previewBuildRef: parsedQaReport.data.preview_build_ref,
     externalTarget: parsedRequest.externalTarget,
   });
-  const { data: insertedOperation, error: operationError } = await db
-    .from("publish_export_operations")
-    .insert(operation)
-    .select("id, operation_type, status")
-    .single();
+  const readyRecord = await insertOperation({ db, operation });
 
-  if (operationError || !insertedOperation) {
-    return Response.json(
-      {
-        error:
-          operationError?.message ?? "Publish/export operation was not recorded",
-      },
-      { status: 500 },
-    );
+  if (!readyRecord.ok) {
+    return readyRecord.response;
   }
-
-  const operationRecord =
-    insertedOperation as unknown as PublishExportOperationRecord;
 
   return Response.json({
     status: `${parsedRequest.operationType}_control_plane_ready`,
@@ -297,12 +339,153 @@ export async function handlePublishExportControlPlaneRequest(options: {
     qaReportRef: latestRun.latest_qa_report_ref,
     publishVersionRef: latestRun.latest_publish_version_ref ?? null,
     previewBuildRef: parsedQaReport.data.preview_build_ref,
-    operation: {
-      id: operationRecord.id,
-      operationType: operationRecord.operation_type,
-      status: operationRecord.status,
-    },
+    operation: operationResponse(readyRecord.operation),
+    diagnostics: [],
     externalExportImplemented: false,
     externalPublishingImplemented: false,
   });
+}
+
+async function readProofGateDiagnostics(options: {
+  db: Awaited<ReturnType<typeof createDbClient>>;
+  latestRun: LatestPublishRunRecord;
+}): Promise<PublishExportOperationDiagnostic[]> {
+  const diagnostics: PublishExportOperationDiagnostic[] = [];
+  const productBrief = await readValidatedProofArtifact({
+    db: options.db,
+    artifactType: "ProductBrief",
+    artifactRef: options.latestRun.latest_product_brief_ref,
+  });
+  const sectionGraph = await readValidatedProofArtifact({
+    db: options.db,
+    artifactType: "SectionGraph",
+    artifactRef: options.latestRun.latest_section_graph_ref,
+  });
+
+  diagnostics.push(...productBrief.diagnostics, ...sectionGraph.diagnostics);
+
+  if (productBrief.artifact && sectionGraph.artifact) {
+    diagnostics.push(
+      ...evaluateProofHardGate({
+        productBriefPayload: productBrief.artifact.payload,
+        productBriefRef: productBrief.artifact.artifact_id,
+        sectionGraphPayload: sectionGraph.artifact.payload,
+        sectionGraphRef: sectionGraph.artifact.artifact_id,
+      }),
+    );
+  }
+
+  return diagnostics;
+}
+
+async function readValidatedProofArtifact(options: {
+  db: Awaited<ReturnType<typeof createDbClient>>;
+  artifactType: "ProductBrief" | "SectionGraph";
+  artifactRef: string | null;
+}): Promise<{
+  artifact: LatestArtifactRecord | null;
+  diagnostics: PublishExportOperationDiagnostic[];
+}> {
+  if (!options.artifactRef) {
+    return {
+      artifact: null,
+      diagnostics: [
+        proofGateDiagnostic({
+          code: `missing_${artifactTypeToCodePrefix(options.artifactType)}_ref`,
+          message: `${options.artifactType} ref is required for proof hard gate.`,
+          artifactType: options.artifactType,
+          artifactRef: null,
+        }),
+      ],
+    };
+  }
+
+  const { data: artifact, error } = await options.db
+    .from("artifacts")
+    .select("artifact_id, artifact_type, status, validation, payload")
+    .eq("artifact_id", options.artifactRef)
+    .eq("artifact_type", options.artifactType)
+    .single();
+
+  if (error || !artifact) {
+    return {
+      artifact: null,
+      diagnostics: [
+        proofGateDiagnostic({
+          code: `${artifactTypeToCodePrefix(options.artifactType)}_artifact_missing`,
+          message: `${options.artifactType} artifact is missing for proof hard gate.`,
+          artifactType: options.artifactType,
+          artifactRef: options.artifactRef,
+        }),
+      ],
+    };
+  }
+
+  const latestArtifact = artifact as unknown as LatestArtifactRecord;
+
+  if (!isValidatedArtifact(latestArtifact)) {
+    return {
+      artifact: null,
+      diagnostics: [
+        proofGateDiagnostic({
+          code: `${artifactTypeToCodePrefix(options.artifactType)}_artifact_not_validated`,
+          message: `${options.artifactType} artifact is not validated for proof hard gate.`,
+          artifactType: options.artifactType,
+          artifactRef: options.artifactRef,
+        }),
+      ],
+    };
+  }
+
+  return {
+    artifact: latestArtifact,
+    diagnostics: [],
+  };
+}
+
+function artifactTypeToCodePrefix(artifactType: "ProductBrief" | "SectionGraph") {
+  return artifactType === "ProductBrief" ? "product_brief" : "section_graph";
+}
+
+async function insertOperation(options: {
+  db: Awaited<ReturnType<typeof createDbClient>>;
+  operation: PublishExportOperationInsert;
+}): Promise<
+  | { ok: true; operation: PublishExportOperationRecord }
+  | { ok: false; response: Response }
+> {
+  const { data: insertedOperation, error: operationError } = await options.db
+    .from("publish_export_operations")
+    .insert(options.operation)
+    .select("id, operation_type, status, diagnostics")
+    .single();
+
+  if (operationError || !insertedOperation) {
+    return {
+      ok: false,
+      response: Response.json(
+        {
+          error:
+            operationError?.message ?? "Publish/export operation was not recorded",
+        },
+        { status: 500 },
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    operation: insertedOperation as unknown as PublishExportOperationRecord,
+  };
+}
+
+function operationResponse(operation: PublishExportOperationRecord) {
+  return {
+    id: operation.id,
+    operationType: operation.operation_type,
+    status: operation.status,
+    diagnostics: Array.isArray(operation.diagnostics)
+      ? operation.diagnostics
+      : [],
+  };
 }
