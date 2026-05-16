@@ -82,6 +82,54 @@ const pageSpecPayload = {
   compile_targets: ["preview"],
 };
 
+const productBriefPayload = {
+  product_name: "Atlas Bottle",
+  audiences: ["Urban commuters"],
+  core_problem: "Leak-proof daily carry",
+  value_props: ["Leak-proof", "Insulated"],
+  product_details: [{ label: "Capacity", value: "24 oz" }],
+  cta_goal: "Shop now",
+  proof_inputs: ["500+ reviews"],
+  proof_sources: [
+    {
+      proof_ref: "proof:reviews.1",
+      claim: "500+ reviews",
+      source: "Review export supplied by brand",
+      url: "https://example.com/reviews",
+    },
+  ],
+  claim_refs: [
+    {
+      claim_ref: "claim:reviews.1",
+      claim: "500+ reviews",
+      proof_refs: ["proof:reviews.1"],
+    },
+  ],
+  claim_policy: "proof-required",
+};
+
+const sectionGraphPayload = {
+  nodes: [
+    {
+      section_id: "hero",
+      section_type: "hero",
+      title: "Atlas Bottle",
+      props: {},
+    },
+    {
+      section_id: "proof",
+      section_type: "proof",
+      title: "Loved by commuters",
+      props: {},
+    },
+  ],
+  edges: [{ from: "hero", to: "proof", relationship: "supports" }],
+  section_order: ["hero", "proof"],
+  required_props: {},
+  proof_bindings: [{ section_id: "proof", proof_ref: "proof:reviews.1" }],
+  claim_policy: "proof-required",
+};
+
 const failingQaReportPayload = {
   ...passingQaReportPayload,
   verdict: "fail",
@@ -185,6 +233,8 @@ describe("publish/export control-plane routes", () => {
       .mockReturnValueOnce(
         runQuery({
           id: "run_01",
+          latest_product_brief_ref: "product-brief_01",
+          latest_section_graph_ref: "section-graph_01",
           latest_page_spec_ref: "page-spec_01",
           latest_qa_report_ref: "qa-report_01",
           latest_publish_version_ref: "publish-version_01",
@@ -208,6 +258,24 @@ describe("publish/export control-plane routes", () => {
           payload: pageSpecPayload,
         }),
       )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "product-brief_01",
+          artifact_type: "ProductBrief",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: productBriefPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "section-graph_01",
+          artifact_type: "SectionGraph",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: sectionGraphPayload,
+        }),
+      )
       .mockReturnValueOnce(operation);
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
@@ -223,6 +291,7 @@ describe("publish/export control-plane routes", () => {
       id: "operation_01",
       operationType: "publish",
       status: "ready",
+      diagnostics: [],
     });
     expect(body.externalPublishingImplemented).toBe(false);
     expect(operation.insert).toHaveBeenCalledWith({
@@ -236,6 +305,7 @@ describe("publish/export control-plane routes", () => {
       preview_build_ref: "preview:run_01",
       failure_code: null,
       failure_reason: null,
+      diagnostics: [],
       external_target: null,
       external_result: null,
     });
@@ -547,17 +617,32 @@ describe("publish/export control-plane routes", () => {
     expect(mocks.from).not.toHaveBeenCalled();
   });
 
-  it("records a ready export control-plane operation without external export", async () => {
+  it("records blocked operation diagnostics when ClaimRefs point at missing ProofRefs", async () => {
     const operation = operationQuery({
-      id: "operation_export_01",
-      operation_type: "export",
-      status: "ready",
+      id: "operation_blocked_01",
+      operation_type: "publish",
+      status: "blocked",
+      diagnostics: [
+        {
+          code: "claim_ref_unknown_proof_ref",
+          severity: "blocking",
+          message: "ClaimRef claim:reviews.1 points at missing ProofRef proof:missing.",
+          artifactType: "ProductBrief",
+          artifactRef: "product-brief_01",
+          details: {
+            claimRef: "claim:reviews.1",
+            proofRef: "proof:missing",
+          },
+        },
+      ],
     });
 
     mocks.from
       .mockReturnValueOnce(
         runQuery({
           id: "run_01",
+          latest_product_brief_ref: "product-brief_01",
+          latest_section_graph_ref: "section-graph_01",
           latest_page_spec_ref: "page-spec_01",
           latest_qa_report_ref: "qa-report_01",
           latest_publish_version_ref: "publish-version_01",
@@ -579,6 +664,120 @@ describe("publish/export control-plane routes", () => {
           status: "validated",
           validation: { valid: true, errors: [] },
           payload: pageSpecPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "product-brief_01",
+          artifact_type: "ProductBrief",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: {
+            ...productBriefPayload,
+            proof_sources: [],
+            claim_refs: [
+              {
+                claim_ref: "claim:reviews.1",
+                claim: "500+ reviews",
+                proof_refs: ["proof:missing"],
+              },
+            ],
+          },
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "section-graph_01",
+          artifact_type: "SectionGraph",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: {
+            ...sectionGraphPayload,
+            proof_bindings: [{ section_id: "proof", proof_ref: "proof:missing" }],
+          },
+        }),
+      )
+      .mockReturnValueOnce(operation);
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await publishPost(new Request("http://localhost"), {
+      params: Promise.resolve({ projectId: "project_01" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.status).toBe("publish_control_plane_blocked");
+    expect(body.operation.status).toBe("blocked");
+    expect(body.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "proof_required_without_proof_refs" }),
+        expect.objectContaining({ code: "claim_ref_unknown_proof_ref" }),
+        expect.objectContaining({ code: "section_graph_unknown_proof_ref" }),
+      ]),
+    );
+    expect(operation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "blocked",
+        failure_code: "proof_required_without_proof_refs",
+        diagnostics: expect.arrayContaining([
+          expect.objectContaining({ severity: "blocking" }),
+        ]),
+      }),
+    );
+  });
+
+  it("records a ready export control-plane operation without external export", async () => {
+    const operation = operationQuery({
+      id: "operation_export_01",
+      operation_type: "export",
+      status: "ready",
+    });
+
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_product_brief_ref: "product-brief_01",
+          latest_section_graph_ref: "section-graph_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: "publish-version_01",
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "page-spec_01",
+          artifact_type: "PageSpec",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: pageSpecPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "product-brief_01",
+          artifact_type: "ProductBrief",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: productBriefPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "section-graph_01",
+          artifact_type: "SectionGraph",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: sectionGraphPayload,
         }),
       )
       .mockReturnValueOnce(operation);
@@ -603,6 +802,7 @@ describe("publish/export control-plane routes", () => {
       id: "operation_export_01",
       operationType: "export",
       status: "ready",
+      diagnostics: [],
     });
     expect(body.externalExportImplemented).toBe(false);
     expect(operation.insert).toHaveBeenCalledWith(
