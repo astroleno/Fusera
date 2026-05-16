@@ -48,13 +48,13 @@ function operationRecord(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
-function latestOperationQuery(data: unknown) {
+function latestOperationQuery(data: unknown, error: unknown = null) {
   return {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data, error }),
   };
 }
 
@@ -109,28 +109,66 @@ describe("publish/export operation inspection", () => {
     mocks.from.mockReturnValueOnce(query);
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const inspection = await loadLatestPublishExportOperation({
+    const result = await loadLatestPublishExportOperation({
       projectId: "project_01",
       runId: "run_01",
       operationType: "export",
     });
 
-    expect(inspection?.operationType).toBe("export");
+    expect(result).toMatchObject({
+      ok: true,
+      operation: expect.objectContaining({ operationType: "export" }),
+    });
     expect(mocks.from).toHaveBeenCalledWith("publish_export_operations");
     expect(query.eq).toHaveBeenCalledWith("project_id", "project_01");
     expect(query.eq).toHaveBeenCalledWith("run_id", "run_01");
     expect(query.eq).toHaveBeenCalledWith("operation_type", "export");
     expect(query.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(query.limit).toHaveBeenCalledWith(1);
+    expect(query.maybeSingle).toHaveBeenCalled();
   });
 
-  it("returns null when no operation exists", async () => {
+  it("returns an empty successful result when no operation exists", async () => {
     mocks.from.mockReturnValueOnce(latestOperationQuery(null));
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
     await expect(
       loadLatestPublishExportOperation({ projectId: "project_01" }),
-    ).resolves.toBeNull();
+    ).resolves.toEqual({ ok: true, operation: null });
+  });
+
+  it("returns an explicit error for database query failures", async () => {
+    mocks.from.mockReturnValueOnce(
+      latestOperationQuery(null, { message: "permission denied" }),
+    );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    await expect(
+      loadLatestPublishExportOperation({ projectId: "project_01" }),
+    ).resolves.toEqual({
+      ok: false,
+      error: {
+        code: "query_failed",
+        message: "permission denied",
+      },
+    });
+  });
+
+  it("returns an explicit error for malformed latest operation rows", async () => {
+    mocks.from.mockReturnValueOnce(
+      latestOperationQuery(operationRecord({ status: "half-published" })),
+    );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    await expect(
+      loadLatestPublishExportOperation({ projectId: "project_01" }),
+    ).resolves.toEqual({
+      ok: false,
+      error: {
+        code: "malformed_operation",
+        message: "Latest publish/export operation row is malformed.",
+      },
+    });
   });
 
   it("GET returns latest blocked operation diagnostics", async () => {
@@ -153,6 +191,60 @@ describe("publish/export operation inspection", () => {
           remediation: "Add the referenced ProofRef or update the ClaimRef binding.",
         }),
       ],
+    });
+  });
+
+  it("GET returns operation null only when the latest query has no row", async () => {
+    mocks.from.mockReturnValueOnce(latestOperationQuery(null));
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await GET(
+      new Request("http://localhost/api/projects/project_01/operations?type=publish"),
+      { params: Promise.resolve({ projectId: "project_01" }) },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ operation: null });
+  });
+
+  it("GET returns 500 for database query failures", async () => {
+    mocks.from.mockReturnValueOnce(
+      latestOperationQuery(null, { message: "relation does not exist" }),
+    );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await GET(
+      new Request("http://localhost/api/projects/project_01/operations?type=publish"),
+      { params: Promise.resolve({ projectId: "project_01" }) },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({
+      error: "Failed to load publish/export operation",
+      code: "query_failed",
+      message: "relation does not exist",
+    });
+  });
+
+  it("GET returns 500 for malformed latest operation rows", async () => {
+    mocks.from.mockReturnValueOnce(
+      latestOperationQuery(operationRecord({ operation_type: "poster" })),
+    );
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await GET(
+      new Request("http://localhost/api/projects/project_01/operations?type=publish"),
+      { params: Promise.resolve({ projectId: "project_01" }) },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({
+      error: "Failed to load publish/export operation",
+      code: "malformed_operation",
+      message: "Latest publish/export operation row is malformed.",
     });
   });
 

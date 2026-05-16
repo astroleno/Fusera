@@ -26,6 +26,26 @@ export type PublishExportOperationInspection = {
   updatedAt: string;
 };
 
+export type PublishExportOperationInspectionErrorCode =
+  | "db_client_error"
+  | "query_failed"
+  | "malformed_operation";
+
+export type PublishExportOperationInspectionError = {
+  code: PublishExportOperationInspectionErrorCode;
+  message: string;
+};
+
+export type LoadLatestPublishExportOperationResult =
+  | {
+      ok: true;
+      operation: PublishExportOperationInspection | null;
+    }
+  | {
+      ok: false;
+      error: PublishExportOperationInspectionError;
+    };
+
 type PublishExportOperationRecord = {
   id: string;
   project_id: string;
@@ -51,7 +71,7 @@ type PublishExportOperationQuery = {
     options: { ascending: boolean },
   ): PublishExportOperationQuery;
   limit(count: number): PublishExportOperationQuery;
-  single(): Promise<{ data: unknown; error: unknown }>;
+  maybeSingle(): Promise<{ data: unknown; error: unknown }>;
 };
 
 type PublishExportOperationDb = {
@@ -62,13 +82,19 @@ export async function loadLatestPublishExportOperation(options: {
   projectId: string;
   runId?: string;
   operationType?: PublishExportOperationType;
-}): Promise<PublishExportOperationInspection | null> {
+}): Promise<LoadLatestPublishExportOperationResult> {
   let db: PublishExportOperationDb;
 
   try {
     db = (await createDbClient()) as unknown as PublishExportOperationDb;
   } catch {
-    return null;
+    return {
+      ok: false,
+      error: {
+        code: "db_client_error",
+        message: "Failed to create the database client.",
+      },
+    };
   }
 
   let query = db
@@ -104,13 +130,37 @@ export async function loadLatestPublishExportOperation(options: {
   const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if (error) {
+    return {
+      ok: false,
+      error: {
+        code: "query_failed",
+        message: errorMessage(error),
+      },
+    };
   }
 
-  return operationRecordToInspection(data as unknown as PublishExportOperationRecord);
+  if (!data) {
+    return { ok: true, operation: null };
+  }
+
+  const operation = operationRecordToInspection(
+    data as unknown as PublishExportOperationRecord,
+  );
+
+  if (!operation) {
+    return {
+      ok: false,
+      error: {
+        code: "malformed_operation",
+        message: "Latest publish/export operation row is malformed.",
+      },
+    };
+  }
+
+  return { ok: true, operation };
 }
 
 export function operationRecordToInspection(
@@ -192,4 +242,12 @@ function normalizeDiagnostic(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function errorMessage(error: unknown) {
+  if (isRecord(error) && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return "Failed to load the latest publish/export operation.";
 }
