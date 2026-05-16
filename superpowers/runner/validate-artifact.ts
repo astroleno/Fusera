@@ -141,12 +141,27 @@ export async function readValidatedArtifact(runDir: string, artifactType: string
   return artifact;
 }
 
-export function validateJsonSchema(value: unknown, schema: Record<string, unknown>, pointer = "$"): string[] {
+export function validateJsonSchema(
+  value: unknown,
+  schema: Record<string, unknown>,
+  pointer = "$",
+  rootSchema: Record<string, unknown> = schema
+): string[] {
   const errors: string[] = [];
+
+  if (typeof schema.$ref === "string") {
+    const resolved = resolveJsonSchemaRef(schema.$ref, rootSchema);
+
+    if (!resolved) {
+      return [`${pointer} references unsupported schema ${schema.$ref}`];
+    }
+
+    return validateJsonSchema(value, resolved, pointer, rootSchema);
+  }
 
   if (Array.isArray(schema.anyOf)) {
     const optionErrors = schema.anyOf.map((option) =>
-      validateJsonSchema(value, option as Record<string, unknown>, pointer)
+      validateJsonSchema(value, option as Record<string, unknown>, pointer, rootSchema)
     );
 
     if (!optionErrors.some((items) => items.length === 0)) {
@@ -173,6 +188,14 @@ export function validateJsonSchema(value: unknown, schema: Record<string, unknow
     errors.push(`${pointer} must contain at least ${schema.minLength} character(s)`);
   }
 
+  if (typeof value === "string" && typeof schema.pattern === "string") {
+    const pattern = new RegExp(schema.pattern);
+
+    if (!pattern.test(value)) {
+      errors.push(`${pointer} must match pattern ${schema.pattern}`);
+    }
+  }
+
   if (Array.isArray(value)) {
     if (typeof schema.minItems === "number" && value.length < schema.minItems) {
       errors.push(`${pointer} must contain at least ${schema.minItems} item(s)`);
@@ -181,7 +204,7 @@ export function validateJsonSchema(value: unknown, schema: Record<string, unknow
     if (schema.items && typeof schema.items === "object") {
       value.forEach((item, index) => {
         errors.push(
-          ...validateJsonSchema(item, schema.items as Record<string, unknown>, `${pointer}[${index}]`)
+          ...validateJsonSchema(item, schema.items as Record<string, unknown>, `${pointer}[${index}]`, rootSchema)
         );
       });
     }
@@ -204,7 +227,8 @@ export function validateJsonSchema(value: unknown, schema: Record<string, unknow
           ...validateJsonSchema(
             (value as Record<string, unknown>)[key],
             childSchema as Record<string, unknown>,
-            `${pointer}.${key}`
+            `${pointer}.${key}`,
+            rootSchema
           )
         );
       }
@@ -227,7 +251,8 @@ export function validateJsonSchema(value: unknown, schema: Record<string, unknow
             ...validateJsonSchema(
               childValue,
               schema.additionalProperties as Record<string, unknown>,
-              `${pointer}.${key}`
+              `${pointer}.${key}`,
+              rootSchema
             )
           );
         }
@@ -236,6 +261,28 @@ export function validateJsonSchema(value: unknown, schema: Record<string, unknow
   }
 
   return errors;
+}
+
+function resolveJsonSchemaRef(ref: string, rootSchema: Record<string, unknown>): Record<string, unknown> | null {
+  if (!ref.startsWith("#/")) {
+    return null;
+  }
+
+  const parts = ref
+    .slice(2)
+    .split("/")
+    .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"));
+  let current: unknown = rootSchema;
+
+  for (const part of parts) {
+    if (!isPlainObject(current) || !(part in current)) {
+      return null;
+    }
+
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return isPlainObject(current) ? current : null;
 }
 
 function validateArtifactInvariants(candidate: unknown): string[] {

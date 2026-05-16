@@ -4,6 +4,45 @@
   "title": "ProductBrief Artifact",
   "type": "object",
   "additionalProperties": false,
+  "$defs": {
+    "ProofRefId": {
+      "type": "string",
+      "pattern": "^proof:[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "ClaimRefId": {
+      "type": "string",
+      "pattern": "^claim:[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "ProofRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proof_ref", "claim", "source", "url"],
+      "properties": {
+        "proof_ref": { "$ref": "#/$defs/ProofRefId" },
+        "claim": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "url": {
+          "anyOf": [
+            { "type": "string", "format": "uri" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "ClaimRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_ref", "claim", "proof_refs"],
+      "properties": {
+        "claim_ref": { "$ref": "#/$defs/ClaimRefId" },
+        "claim": { "type": "string", "minLength": 1 },
+        "proof_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ProofRefId" }
+        }
+      }
+    }
+  },
   "required": [
     "artifact_type",
     "schema_version",
@@ -85,38 +124,11 @@
         },
         "proof_sources": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["proof_ref", "claim", "source", "url"],
-            "properties": {
-              "proof_ref": { "type": "string", "minLength": 1 },
-              "claim": { "type": "string", "minLength": 1 },
-              "source": { "type": "string", "minLength": 1 },
-              "url": {
-                "anyOf": [
-                  { "type": "string", "format": "uri" },
-                  { "type": "null" }
-                ]
-              }
-            }
-          }
+          "items": { "$ref": "#/$defs/ProofRef" }
         },
         "claim_refs": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["claim_ref", "claim", "proof_refs"],
-            "properties": {
-              "claim_ref": { "type": "string", "minLength": 1 },
-              "claim": { "type": "string", "minLength": 1 },
-              "proof_refs": {
-                "type": "array",
-                "items": { "type": "string", "minLength": 1 }
-              }
-            }
-          }
+          "items": { "$ref": "#/$defs/ClaimRef" }
         },
         "claim_policy": { "enum": ["proof-required", "low-proof", "no-claims"] }
       }

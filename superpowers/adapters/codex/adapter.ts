@@ -216,7 +216,7 @@ function makeSectionGraph(bundle: CodexInvocationBundle): Record<string, unknown
         section_type: "proof",
         title: "Preview publish is gated",
         props: {
-          proof_ref: "preview-publish-handoff"
+          proof_ref: "proof:preview-publish-handoff"
         }
       },
       {
@@ -245,7 +245,7 @@ function makeSectionGraph(bundle: CodexInvocationBundle): Record<string, unknown
     proof_bindings: [
       {
         section_id: "proof",
-        proof_ref: "preview-publish-handoff"
+        proof_ref: "proof:preview-publish-handoff"
       }
     ],
     claim_policy: "proof-required"
