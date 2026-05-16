@@ -1,6 +1,9 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { buildPageArtifacts } from "@/lib/ai/page-strategy";
 import { createDbClient } from "@/lib/db";
+import {
+  initialExportStateForCompletedGeneration,
+} from "@/lib/domain/publish-control-plane";
 import { projectInputSchema, type ProjectInput } from "@/lib/domain/project-input";
 
 type GeneratePagePayload = {
@@ -74,7 +77,7 @@ export const generatePageTask = task({
         .update({
           status: "completed",
           review_state: publishableQa ? "review_ready" : "qa_failed",
-          export_state: publishableQa ? "export_ready" : "none",
+          export_state: initialExportStateForCompletedGeneration(),
           latest_product_brief_ref: result.latestRefs.productBriefRef,
           latest_brand_profile_ref: result.latestRefs.brandProfileRef,
           latest_page_plan_ref: result.latestRefs.pagePlanRef,

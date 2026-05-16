@@ -9,6 +9,6 @@ export async function POST(
   return handlePublishExportControlPlaneRequest({
     request,
     projectId,
-    defaultOperationType: "publish",
+    defaultOperationType: "export",
   });
 }
