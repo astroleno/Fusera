@@ -9,7 +9,8 @@ vi.mock("@/lib/db", () => ({
   createDbClient: mocks.createDbClient,
 }));
 
-import { POST } from "@/app/api/projects/[projectId]/publish/route";
+import { POST as exportPost } from "@/app/api/projects/[projectId]/export/route";
+import { POST as publishPost } from "@/app/api/projects/[projectId]/publish/route";
 
 function runQuery(data: unknown) {
   return {
@@ -26,6 +27,18 @@ function artifactQuery(data: unknown) {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data, error: null }),
+  };
+}
+
+function operationQuery(data: unknown) {
+  const single = vi.fn().mockResolvedValue({ data, error: null });
+  const select = vi.fn().mockReturnValue({ single });
+  const insert = vi.fn().mockReturnValue({ select });
+
+  return {
+    insert,
+    select,
+    single,
   };
 }
 
@@ -118,7 +131,7 @@ const passWithFailedNonWaivableGatePayload = {
   ],
 };
 
-describe("POST /api/projects/[projectId]/publish", () => {
+describe("publish/export control-plane routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -134,7 +147,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
     );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_legacy" }),
     });
 
@@ -152,7 +165,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
     );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_missing_qa" }),
     });
     const body = await response.json();
@@ -161,7 +174,13 @@ describe("POST /api/projects/[projectId]/publish", () => {
     expect(body.error).toContain("QAReport");
   });
 
-  it("returns publish_ready but does not mark a project as published", async () => {
+  it("records a ready publish control-plane operation without external publishing", async () => {
+    const operation = operationQuery({
+      id: "operation_01",
+      operation_type: "publish",
+      status: "ready",
+    });
+
     mocks.from
       .mockReturnValueOnce(
         runQuery({
@@ -188,17 +207,38 @@ describe("POST /api/projects/[projectId]/publish", () => {
           validation: { valid: true, errors: [] },
           payload: pageSpecPayload,
         }),
-      );
+      )
+      .mockReturnValueOnce(operation);
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.status).toBe("publish_ready");
-    expect(body.publishingImplemented).toBe(false);
+    expect(body.status).toBe("publish_control_plane_ready");
+    expect(body.previewReady).toBe(true);
+    expect(body.operation).toEqual({
+      id: "operation_01",
+      operationType: "publish",
+      status: "ready",
+    });
+    expect(body.externalPublishingImplemented).toBe(false);
+    expect(operation.insert).toHaveBeenCalledWith({
+      project_id: "project_01",
+      run_id: "run_01",
+      operation_type: "publish",
+      status: "ready",
+      page_spec_ref: "page-spec_01",
+      qa_report_ref: "qa-report_01",
+      publish_version_ref: "publish-version_01",
+      preview_build_ref: "preview:run_01",
+      failure_code: null,
+      failure_reason: null,
+      external_target: null,
+      external_result: null,
+    });
   });
 
   it("returns 409 for rejected QAReport artifacts even when payload passes", async () => {
@@ -222,7 +262,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -252,7 +292,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -282,7 +322,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -312,7 +352,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -342,7 +382,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -372,7 +412,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -403,7 +443,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       .mockReturnValueOnce(artifactQuery(null));
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -442,7 +482,7 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
@@ -481,12 +521,96 @@ describe("POST /api/projects/[projectId]/publish", () => {
       );
     mocks.createDbClient.mockResolvedValue({ from: mocks.from });
 
-    const response = await POST(new Request("http://localhost"), {
+    const response = await publishPost(new Request("http://localhost"), {
       params: Promise.resolve({ projectId: "project_01" }),
     });
     const body = await response.json();
 
     expect(response.status).toBe(409);
     expect(body.error).toContain("PageSpec artifact payload is invalid");
+  });
+
+  it("rejects export operations sent to the publish endpoint", async () => {
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await publishPost(
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ operationType: "export" }),
+      }),
+      {
+        params: Promise.resolve({ projectId: "project_01" }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("records a ready export control-plane operation without external export", async () => {
+    const operation = operationQuery({
+      id: "operation_export_01",
+      operation_type: "export",
+      status: "ready",
+    });
+
+    mocks.from
+      .mockReturnValueOnce(
+        runQuery({
+          id: "run_01",
+          latest_page_spec_ref: "page-spec_01",
+          latest_qa_report_ref: "qa-report_01",
+          latest_publish_version_ref: "publish-version_01",
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "qa-report_01",
+          artifact_type: "QAReport",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: passingQaReportPayload,
+        }),
+      )
+      .mockReturnValueOnce(
+        artifactQuery({
+          artifact_id: "page-spec_01",
+          artifact_type: "PageSpec",
+          status: "validated",
+          validation: { valid: true, errors: [] },
+          payload: pageSpecPayload,
+        }),
+      )
+      .mockReturnValueOnce(operation);
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await exportPost(
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({
+          externalTarget: { format: "html" },
+        }),
+      }),
+      {
+        params: Promise.resolve({ projectId: "project_01" }),
+      },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("export_control_plane_ready");
+    expect(body.operation).toEqual({
+      id: "operation_export_01",
+      operationType: "export",
+      status: "ready",
+    });
+    expect(body.externalExportImplemented).toBe(false);
+    expect(operation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation_type: "export",
+        status: "ready",
+        external_target: { format: "html" },
+      }),
+    );
   });
 });
