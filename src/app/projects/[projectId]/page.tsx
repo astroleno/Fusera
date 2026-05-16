@@ -1,3 +1,4 @@
+import CommercialIntentWorkbench from "@/components/editor/commercial-intent-workbench";
 import MicroAdjustmentsPanel from "@/components/editor/micro-adjustments-panel";
 import PagePreview from "@/components/editor/page-preview";
 import { loadProjectPreview } from "@/lib/projects/load-project-preview";
@@ -33,7 +34,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             ) : null}
             <PagePreview page={preview.page} />
           </div>
-          <MicroAdjustmentsPanel projectId={projectId} />
+          <aside className="project-side-panel">
+            <CommercialIntentWorkbench
+              projectId={projectId}
+              runId={preview.runId}
+              pageSpecRef={preview.pageSpecRef}
+              qaReportRef={preview.qaReportRef}
+              publishReady={preview.publishReady}
+              qaFailureReason={preview.qaFailureReason}
+            />
+            <MicroAdjustmentsPanel projectId={projectId} runId={preview.runId} />
+          </aside>
         </section>
       ) : (
         <section className="empty-preview">

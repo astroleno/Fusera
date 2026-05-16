@@ -13,9 +13,12 @@ import {
 
 export type ProjectPreview = {
   page: CompiledPage;
+  runId: string;
   mode: "page-spec" | "legacy-section-graph";
   publishReady: boolean;
+  pageSpecRef: string | null;
   qaReportRef: string | null;
+  qaFailureReason: string | null;
   legacyReason: string | null;
 };
 
@@ -57,6 +60,38 @@ function hasFailedNonWaivableGate(
   return gateResults.some(
     (gateResult) => gateResult.result === "fail" && !gateResult.waivable,
   );
+}
+
+function qaFailureReason(input: {
+  hasPageSpec: boolean;
+  hasQaReport: boolean;
+  qaReportParsed: ReturnType<typeof qaReportPayloadSchema.safeParse>;
+}) {
+  if (!input.hasPageSpec) {
+    return "Latest run has no PageSpec.";
+  }
+
+  if (!input.hasQaReport) {
+    return "Latest run has no QAReport.";
+  }
+
+  if (!input.qaReportParsed.success) {
+    return "Latest QAReport payload is invalid.";
+  }
+
+  if (input.qaReportParsed.data.verdict !== "pass") {
+    const issueSummaries = input.qaReportParsed.data.issues
+      .map((issue) => issue.summary)
+      .filter(Boolean);
+
+    return issueSummaries[0] ?? `Latest QAReport verdict is ${input.qaReportParsed.data.verdict}.`;
+  }
+
+  if (hasFailedNonWaivableGate(input.qaReportParsed.data.gate_results)) {
+    return "Latest QAReport has failed non-waivable gates.";
+  }
+
+  return null;
 }
 
 export async function loadProjectPreview(projectId: string) {
@@ -158,9 +193,18 @@ export async function loadProjectPreview(projectId: string) {
         pageSpec: parsedPageSpec.data,
         themeTokens: parsedThemeTokens.data,
       }),
+      runId: latestRun.id,
       mode: "page-spec",
       publishReady,
+      pageSpecRef: latestRun.latest_page_spec_ref ?? null,
       qaReportRef: latestRun.latest_qa_report_ref ?? null,
+      qaFailureReason: publishReady
+        ? null
+        : qaFailureReason({
+            hasPageSpec: Boolean(latestRun.latest_page_spec_ref),
+            hasQaReport: Boolean(latestRun.latest_qa_report_ref),
+            qaReportParsed: parsedQaReport,
+          }),
       legacyReason: null,
     };
   }
@@ -178,9 +222,12 @@ export async function loadProjectPreview(projectId: string) {
       sectionGraph: parsedSectionGraph.data,
       themeTokens: parsedThemeTokens.data,
     }),
+    runId: latestRun.id,
     mode: "legacy-section-graph",
     publishReady: false,
+    pageSpecRef: null,
     qaReportRef: null,
+    qaFailureReason: "Legacy preview cannot become publish-ready.",
     legacyReason:
       "This run predates PageSpec and QAReport refs, so it can only be previewed.",
   };

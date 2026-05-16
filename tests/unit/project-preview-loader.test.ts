@@ -161,6 +161,10 @@ describe("loadProjectPreview", () => {
 
     expect(preview?.mode).toBe("page-spec");
     expect(preview?.publishReady).toBe(true);
+    expect(preview?.runId).toBe("run_01");
+    expect(preview?.pageSpecRef).toBe("page-spec_01");
+    expect(preview?.qaReportRef).toBe("qa-report_01");
+    expect(preview?.qaFailureReason).toBeNull();
     expect(preview?.page.sections[0]).toMatchObject({
       key: "hero:hero",
       sectionType: "hero",
@@ -215,6 +219,8 @@ describe("loadProjectPreview", () => {
 
     expect(preview?.mode).toBe("legacy-section-graph");
     expect(preview?.publishReady).toBe(false);
+    expect(preview?.pageSpecRef).toBeNull();
+    expect(preview?.qaFailureReason).toContain("Legacy preview");
     expect(preview?.legacyReason).toContain("predates PageSpec");
   });
 
