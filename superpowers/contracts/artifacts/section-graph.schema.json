@@ -4,6 +4,12 @@
   "title": "SectionGraph Artifact",
   "type": "object",
   "additionalProperties": false,
+  "$defs": {
+    "ProofRefId": {
+      "type": "string",
+      "pattern": "^proof:[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    }
+  },
   "required": [
     "artifact_type",
     "schema_version",
@@ -100,7 +106,7 @@
             "required": ["section_id", "proof_ref"],
             "properties": {
               "section_id": { "type": "string", "minLength": 1 },
-              "proof_ref": { "type": "string", "minLength": 1 }
+              "proof_ref": { "$ref": "#/$defs/ProofRefId" }
             }
           }
         },

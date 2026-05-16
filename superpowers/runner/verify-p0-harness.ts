@@ -1858,7 +1858,7 @@ if (bundle.stage === "normalize-input") {
   fence("fusera-artifact-json", artifact("SectionGraph", "section-planning", [artifactId("PagePlan")], {
     nodes: [
       { section_id: "hero", section_type: "hero", title: "Invalid DesignSpec probe", props: { headline: "Rejected candidates persist.", cta_label: "Preview" } },
-      { section_id: "proof", section_type: "proof", title: "Rejected artifact evidence", props: { proof_ref: "artifact ledger" } },
+      { section_id: "proof", section_type: "proof", title: "Rejected artifact evidence", props: { proof_ref: "proof:artifact-ledger" } },
       { section_id: "cta", section_type: "cta", title: "Run the preview", props: { cta_label: "Preview" } }
     ],
     edges: [
@@ -1871,7 +1871,7 @@ if (bundle.stage === "normalize-input") {
       proof: ["proof_ref"],
       cta: ["cta_label"]
     },
-    proof_bindings: [{ section_id: "proof", proof_ref: "artifact ledger" }],
+    proof_bindings: [{ section_id: "proof", proof_ref: "proof:artifact-ledger" }],
     claim_policy: "proof-required"
   }));
 } else if (bundle.stage === "design-system-pass") {
@@ -2088,7 +2088,7 @@ if (bundle.stage === "normalize-input") {
         section_type: "proof",
         title: "Auditable artifact ledger",
         props: {
-          proof_ref: "artifact ledger and preview publish handoff"
+          proof_ref: "proof:artifact-ledger, proof:preview-publish-handoff"
         }
       },
       {
@@ -2111,8 +2111,8 @@ if (bundle.stage === "normalize-input") {
       cta: ["cta_label"]
     },
     proof_bindings: [
-      { section_id: "proof", proof_ref: "artifact ledger" },
-      { section_id: "proof", proof_ref: "preview publish handoff" }
+      { section_id: "proof", proof_ref: "proof:artifact-ledger" },
+      { section_id: "proof", proof_ref: "proof:preview-publish-handoff" }
     ],
     claim_policy: "proof-required"
   }));

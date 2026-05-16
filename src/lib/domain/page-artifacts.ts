@@ -2,6 +2,12 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 const nonEmptyString = z.string().min(1);
+export const proofRefIdSchema = z
+  .string()
+  .regex(/^proof:[A-Za-z0-9][A-Za-z0-9._:-]*$/);
+export const claimRefIdSchema = z
+  .string()
+  .regex(/^claim:[A-Za-z0-9][A-Za-z0-9._:-]*$/);
 const claimPolicySchema = z.enum(["proof-required", "low-proof", "no-claims"]);
 const artifactStatusSchema = z.enum([
   "draft",
@@ -34,6 +40,19 @@ export type ArtifactEnvelope<TPayload> = Omit<
   payload: TPayload;
 };
 
+export const proofRefSchema = z.object({
+  proof_ref: proofRefIdSchema,
+  claim: nonEmptyString,
+  source: nonEmptyString,
+  url: z.string().url().nullable(),
+}).strict();
+
+export const claimRefSchema = z.object({
+  claim_ref: claimRefIdSchema,
+  claim: nonEmptyString,
+  proof_refs: z.array(proofRefIdSchema),
+}).strict();
+
 export const productBriefPayloadSchema = z.object({
   product_name: nonEmptyString,
   audiences: z.array(nonEmptyString).min(1),
@@ -47,21 +66,8 @@ export const productBriefPayloadSchema = z.object({
   ),
   cta_goal: nonEmptyString,
   proof_inputs: z.array(z.string()),
-  proof_sources: z.array(
-    z.object({
-      proof_ref: nonEmptyString,
-      claim: nonEmptyString,
-      source: nonEmptyString,
-      url: z.string().url().nullable(),
-    }).strict(),
-  ),
-  claim_refs: z.array(
-    z.object({
-      claim_ref: nonEmptyString,
-      claim: nonEmptyString,
-      proof_refs: z.array(nonEmptyString),
-    }).strict(),
-  ),
+  proof_sources: z.array(proofRefSchema),
+  claim_refs: z.array(claimRefSchema),
   claim_policy: claimPolicySchema,
 }).strict();
 
@@ -123,7 +129,7 @@ export const sectionGraphPayloadSchema = z.object({
     z
       .object({
         section_id: nonEmptyString,
-        proof_ref: nonEmptyString,
+        proof_ref: proofRefIdSchema,
       })
       .strict(),
   ),
@@ -281,6 +287,8 @@ export const publishVersionPayloadSchema = z.object({
 }).strict();
 
 export type ProductBriefPayload = z.infer<typeof productBriefPayloadSchema>;
+export type ProofRef = z.infer<typeof proofRefSchema>;
+export type ClaimRef = z.infer<typeof claimRefSchema>;
 export type BrandProfilePayload = z.infer<typeof brandProfilePayloadSchema>;
 export type PagePlanPayload = z.infer<typeof pagePlanPayloadSchema>;
 export type SectionGraphPayload = z.infer<typeof sectionGraphPayloadSchema>;
