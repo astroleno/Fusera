@@ -68,6 +68,17 @@ export type PublishExportOperationInsert = z.infer<
   typeof publishExportOperationInsertSchema
 >;
 
+export type PublishExportDiagnosticInspection = {
+  code: string;
+  severity: "blocking";
+  message: string;
+  artifactType: string;
+  artifactRef: string | null;
+  details: Record<string, unknown>;
+  operatorMessage: string;
+  remediation: string;
+};
+
 export const publishExportAllowedTransitions: Record<
   PublishExportOperationStatus,
   PublishExportOperationStatus[]
@@ -370,4 +381,93 @@ export function evaluateProofHardGate(input: {
   }
 
   return diagnostics;
+}
+
+const diagnosticCopy: Record<
+  string,
+  { operatorMessage: string; remediation: string }
+> = {
+  missing_product_brief_ref: {
+    operatorMessage: "Latest run has no ProductBrief ref for proof checks.",
+    remediation: "Regenerate the page so the full artifact spine includes ProductBrief.",
+  },
+  missing_section_graph_ref: {
+    operatorMessage: "Latest run has no SectionGraph ref for proof checks.",
+    remediation: "Regenerate the page so the full artifact spine includes SectionGraph.",
+  },
+  product_brief_artifact_missing: {
+    operatorMessage: "The referenced ProductBrief artifact is missing.",
+    remediation: "Regenerate the page or inspect artifact persistence for the run.",
+  },
+  section_graph_artifact_missing: {
+    operatorMessage: "The referenced SectionGraph artifact is missing.",
+    remediation: "Regenerate the page or inspect artifact persistence for the run.",
+  },
+  product_brief_artifact_not_validated: {
+    operatorMessage: "The ProductBrief artifact is not validated.",
+    remediation: "Review ProductBrief validation errors and regenerate the artifact.",
+  },
+  section_graph_artifact_not_validated: {
+    operatorMessage: "The SectionGraph artifact is not validated.",
+    remediation: "Review SectionGraph validation errors and regenerate the artifact.",
+  },
+  product_brief_payload_invalid: {
+    operatorMessage: "The ProductBrief payload cannot be parsed.",
+    remediation: "Fix ProductBrief schema output before retrying publish/export.",
+  },
+  section_graph_payload_invalid: {
+    operatorMessage: "The SectionGraph payload cannot be parsed.",
+    remediation: "Fix SectionGraph schema output before retrying publish/export.",
+  },
+  duplicate_proof_ref: {
+    operatorMessage: "A ProofRef appears more than once.",
+    remediation: "Deduplicate ProductBrief proof_sources so each proof_ref is unique.",
+  },
+  proof_required_without_proof_refs: {
+    operatorMessage: "Proof is required, but no ProofRefs are present.",
+    remediation: "Add proof sources or lower the claim policy before retrying.",
+  },
+  proof_required_without_claim_refs: {
+    operatorMessage: "Proof is required, but no ClaimRefs are present.",
+    remediation: "Bind claims to ProofRefs before retrying publish/export.",
+  },
+  claim_ref_without_proof_refs: {
+    operatorMessage: "A ClaimRef has no ProofRefs.",
+    remediation: "Attach at least one matching ProofRef to every ClaimRef.",
+  },
+  claim_ref_unknown_proof_ref: {
+    operatorMessage: "A ClaimRef points at a missing ProofRef.",
+    remediation: "Add the referenced ProofRef or update the ClaimRef binding.",
+  },
+  claim_proof_claim_mismatch: {
+    operatorMessage: "A ClaimRef claim does not match its ProofRef claim.",
+    remediation: "Align the claim text on ClaimRef and ProofRef before retrying.",
+  },
+  proof_ref_not_bound_to_section_graph: {
+    operatorMessage: "A ProofRef is not bound into the SectionGraph.",
+    remediation: "Add a SectionGraph proof binding for the ProofRef.",
+  },
+  proof_binding_unknown_section: {
+    operatorMessage: "A proof binding points at an unknown section.",
+    remediation: "Bind proof only to section ids present in SectionGraph.nodes.",
+  },
+  section_graph_unknown_proof_ref: {
+    operatorMessage: "SectionGraph binds a missing ProofRef.",
+    remediation: "Update SectionGraph proof_bindings to reference ProductBrief ProofRefs.",
+  },
+};
+
+export function inspectPublishExportDiagnostic(
+  diagnostic: PublishExportOperationDiagnostic,
+): PublishExportDiagnosticInspection {
+  const copy = diagnosticCopy[diagnostic.code] ?? {
+    operatorMessage: diagnostic.message,
+    remediation: "Inspect the operation diagnostic details and regenerate if needed.",
+  };
+
+  return {
+    ...diagnostic,
+    operatorMessage: copy.operatorMessage,
+    remediation: copy.remediation,
+  };
 }
