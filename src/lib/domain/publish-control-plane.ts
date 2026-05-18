@@ -25,6 +25,15 @@ export const publishExportRequestSchema = z
   })
   .strict();
 
+export const publishExportOperationTransitionRequestSchema = z
+  .object({
+    status: publishExportOperationStatusSchema,
+    operationType: publishExportOperationTypeSchema.optional(),
+    externalTarget: z.record(z.unknown()).optional(),
+    externalResult: z.record(z.unknown()).optional(),
+  })
+  .strict();
+
 export const publishExportOperationDiagnosticSchema = z
   .object({
     code: nonEmptyString,
@@ -61,6 +70,9 @@ export type PublishExportOperationStatus = z.infer<
   typeof publishExportOperationStatusSchema
 >;
 export type PublishExportRequest = z.infer<typeof publishExportRequestSchema>;
+export type PublishExportOperationTransitionRequest = z.infer<
+  typeof publishExportOperationTransitionRequestSchema
+>;
 export type PublishExportOperationDiagnostic = z.infer<
   typeof publishExportOperationDiagnosticSchema
 >;
