@@ -22,6 +22,8 @@ export type PublishExportOperationInspection = {
   failureCode: string | null;
   failureReason: string | null;
   diagnostics: PublishExportDiagnosticInspection[];
+  externalTarget: Record<string, unknown> | null;
+  externalResult: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -59,6 +61,8 @@ type PublishExportOperationRecord = {
   failure_code: string | null;
   failure_reason: string | null;
   diagnostics: unknown;
+  external_target: unknown;
+  external_result: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -113,6 +117,8 @@ export async function loadLatestPublishExportOperation(options: {
         "failure_code",
         "failure_reason",
         "diagnostics",
+        "external_target",
+        "external_result",
         "created_at",
         "updated_at",
       ].join(", "),
@@ -196,6 +202,8 @@ export function operationRecordToInspection(
     failureCode: record.failure_code,
     failureReason: record.failure_reason,
     diagnostics,
+    externalTarget: isRecord(record.external_target) ? record.external_target : null,
+    externalResult: isRecord(record.external_result) ? record.external_result : null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };

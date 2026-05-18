@@ -29,6 +29,8 @@ function operationRecord(overrides: Partial<Record<string, unknown>> = {}) {
     preview_build_ref: "preview:run_01",
     failure_code: "claim_ref_unknown_proof_ref",
     failure_reason: "ClaimRef points at missing ProofRef.",
+    external_target: { adapter: "noop-publish" },
+    external_result: null,
     diagnostics: [
       {
         code: "claim_ref_unknown_proof_ref",
@@ -89,6 +91,8 @@ describe("publish/export operation inspection", () => {
       operationType: "publish",
       status: "blocked",
       failureCode: "claim_ref_unknown_proof_ref",
+      externalTarget: { adapter: "noop-publish" },
+      externalResult: null,
       diagnostics: [
         expect.objectContaining({
           code: "claim_ref_unknown_proof_ref",
