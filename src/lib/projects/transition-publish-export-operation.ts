@@ -46,12 +46,14 @@ type PublishExportOperationRecord = {
 type PublishExportOperationReadQuery = {
   select(columns: string): PublishExportOperationReadQuery;
   eq(column: string, value: string): PublishExportOperationReadQuery;
-  single(): Promise<{ data: unknown; error: unknown }>;
+  maybeSingle(): Promise<{ data: unknown; error: unknown }>;
 };
 
 type PublishExportOperationUpdateQuery = {
   eq(column: string, value: string): PublishExportOperationUpdateQuery;
-  select(columns: string): { single(): Promise<{ data: unknown; error: unknown }> };
+  select(columns: string): {
+    maybeSingle(): Promise<{ data: unknown; error: unknown }>;
+  };
 };
 
 type PublishExportOperationTable = {
@@ -94,9 +96,17 @@ export async function transitionPublishExportOperation(options: {
     .select(operationColumns)
     .eq("id", options.operationId)
     .eq("project_id", options.projectId)
-    .single();
+    .maybeSingle();
 
-  if (readError || !currentOperation) {
+  if (readError) {
+    return failure(
+      500,
+      "operation_read_failed",
+      errorMessage(readError) ?? "Publish/export operation could not be read.",
+    );
+  }
+
+  if (!currentOperation) {
     return failure(
       404,
       "operation_not_found",
@@ -149,14 +159,27 @@ export async function transitionPublishExportOperation(options: {
     .update(update)
     .eq("id", options.operationId)
     .eq("project_id", options.projectId)
+    .eq("status", current.status)
     .select(operationColumns)
-    .single();
+    .maybeSingle();
 
-  if (updateError || !updatedOperation) {
+  if (updateError) {
     return failure(
       500,
       "transition_update_failed",
       errorMessage(updateError) ?? "Publish/export operation transition failed.",
+    );
+  }
+
+  if (!updatedOperation) {
+    return failure(
+      409,
+      "operation_state_changed",
+      "Publish/export operation changed before the transition could be recorded.",
+      {
+        expectedStatus: current.status,
+        requestedStatus: options.request.status,
+      },
     );
   }
 

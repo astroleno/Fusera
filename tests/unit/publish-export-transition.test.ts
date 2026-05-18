@@ -32,18 +32,18 @@ function transitionTable(options: {
   const readQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
+    maybeSingle: vi.fn().mockResolvedValue({
       data: options.current,
       error: options.readError ?? null,
     }),
   };
-  const updateSingle = vi.fn().mockResolvedValue({
+  const updateMaybeSingle = vi.fn().mockResolvedValue({
     data: options.updated ?? null,
     error: options.updateError ?? null,
   });
   const updateQuery = {
     eq: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnValue({ single: updateSingle }),
+    select: vi.fn().mockReturnValue({ maybeSingle: updateMaybeSingle }),
   };
   const table = {
     select: vi.fn().mockReturnValue(readQuery),
@@ -54,7 +54,7 @@ function transitionTable(options: {
     table,
     readQuery,
     updateQuery,
-    updateSingle,
+    updateMaybeSingle,
   };
 }
 
@@ -121,6 +121,49 @@ describe("publish/export operation lifecycle transitions", () => {
     expect(harness.table.update.mock.calls[0][0]).not.toHaveProperty(
       "external_result",
     );
+    expect(harness.updateQuery.eq).toHaveBeenCalledWith("status", "ready");
+  });
+
+  it("returns 404 only when the operation row is absent", async () => {
+    const harness = transitionTable({
+      current: null,
+    });
+    mocks.from.mockReturnValue(harness.table);
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await patchOperation({
+      operationType: "publish",
+      status: "external_pending",
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body).toMatchObject({
+      code: "operation_not_found",
+    });
+    expect(harness.table.update).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 for operation read failures", async () => {
+    const harness = transitionTable({
+      current: null,
+      readError: { message: "permission denied" },
+    });
+    mocks.from.mockReturnValue(harness.table);
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await patchOperation({
+      operationType: "publish",
+      status: "external_pending",
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toMatchObject({
+      code: "operation_read_failed",
+      error: "permission denied",
+    });
+    expect(harness.table.update).not.toHaveBeenCalled();
   });
 
   it("moves export operations from external_pending to external_succeeded with result metadata", async () => {
@@ -162,6 +205,42 @@ describe("publish/export operation lifecycle transitions", () => {
         status: "external_succeeded",
         external_result: { artifactUrl: "mock://export/output.html" },
       }),
+    );
+    expect(harness.updateQuery.eq).toHaveBeenCalledWith(
+      "status",
+      "external_pending",
+    );
+  });
+
+  it("rejects stale concurrent transitions when the stored status changed", async () => {
+    const harness = transitionTable({
+      current: operationRecord({
+        operation_type: "export",
+        status: "external_pending",
+      }),
+      updated: null,
+    });
+    mocks.from.mockReturnValue(harness.table);
+    mocks.createDbClient.mockResolvedValue({ from: mocks.from });
+
+    const response = await patchOperation({
+      operationType: "export",
+      status: "external_succeeded",
+      externalResult: { artifactUrl: "mock://export/output.html" },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body).toMatchObject({
+      code: "operation_state_changed",
+      details: {
+        expectedStatus: "external_pending",
+        requestedStatus: "external_succeeded",
+      },
+    });
+    expect(harness.updateQuery.eq).toHaveBeenCalledWith(
+      "status",
+      "external_pending",
     );
   });
 
