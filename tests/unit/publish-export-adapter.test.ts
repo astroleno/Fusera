@@ -1,0 +1,292 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  noopAdapterForOperationType,
+  noopExportAdapter,
+  noopPublishAdapter,
+  type PublishExportAdapter,
+} from "@/lib/domain/publish-export-adapter";
+import { runPublishExportAdapter } from "@/lib/projects/run-publish-export-adapter";
+import type { PublishExportOperationTransitionInspection } from "@/lib/projects/transition-publish-export-operation";
+
+function operation(
+  status: PublishExportOperationTransitionInspection["status"],
+  operationType: PublishExportOperationTransitionInspection["operationType"],
+  overrides: Partial<PublishExportOperationTransitionInspection> = {},
+): PublishExportOperationTransitionInspection {
+  return {
+    id: "operation_01",
+    operationType,
+    status,
+    externalTarget: null,
+    externalResult: null,
+    diagnostics: [],
+    ...overrides,
+  };
+}
+
+describe("publish/export external adapter contract", () => {
+  it("defines stable noop publish/export adapter target and result shapes", async () => {
+    const exportContext = {
+      projectId: "project_01",
+      operationId: "operation_01",
+      operationType: "export" as const,
+    };
+    const exportTarget = noopExportAdapter.prepare(exportContext);
+    const exportExecution = await noopExportAdapter.execute(
+      exportContext,
+      exportTarget,
+    );
+
+    expect(exportTarget).toEqual({
+      adapter: "noop-export",
+      operationType: "export",
+      mode: "noop",
+      externalRuntimeImplemented: false,
+    });
+    expect(noopExportAdapter.normalizeResult(exportExecution)).toEqual({
+      adapter: "noop-export",
+      operationType: "export",
+      mode: "noop",
+      ok: true,
+      externalRuntimeImplemented: false,
+      details: {
+        externalRuntime: "not_implemented",
+      },
+    });
+    expect(noopAdapterForOperationType("publish")).toBe(noopPublishAdapter);
+    expect(noopAdapterForOperationType("export")).toBe(noopExportAdapter);
+  });
+
+  it("runs noop publish through ready -> external_pending -> external_succeeded", async () => {
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "publish", {
+          externalTarget: {
+            adapter: "noop-publish",
+            operationType: "publish",
+            mode: "noop",
+            externalRuntimeImplemented: false,
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_succeeded", "publish", {
+          externalResult: {
+            adapter: "noop-publish",
+            operationType: "publish",
+            mode: "noop",
+            ok: true,
+            externalRuntimeImplemented: false,
+            details: { externalRuntime: "not_implemented" },
+          },
+        }),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: noopPublishAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      operation: {
+        status: "external_succeeded",
+        operationType: "publish",
+      },
+      adapterResult: {
+        adapter: "noop-publish",
+        operationType: "publish",
+        ok: true,
+        externalRuntimeImplemented: false,
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(1, {
+      projectId: "project_01",
+      operationId: "operation_01",
+      request: {
+        operationType: "publish",
+        status: "external_pending",
+        externalTarget: {
+          adapter: "noop-publish",
+          operationType: "publish",
+          mode: "noop",
+          externalRuntimeImplemented: false,
+        },
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(2, {
+      projectId: "project_01",
+      operationId: "operation_01",
+      request: {
+        operationType: "publish",
+        status: "external_succeeded",
+        externalResult: {
+          adapter: "noop-publish",
+          operationType: "publish",
+          mode: "noop",
+          ok: true,
+          externalRuntimeImplemented: false,
+          details: {
+            externalRuntime: "not_implemented",
+          },
+        },
+      },
+    });
+  });
+
+  it("records adapter failures as external_failed through the transition helper", async () => {
+    const failingAdapter: PublishExportAdapter = {
+      ...noopExportAdapter,
+      execute: vi.fn().mockResolvedValue({
+        ok: false,
+        errorCode: "noop_adapter_failed",
+        message: "Noop adapter failure fixture.",
+        details: { fixture: true },
+      }),
+    };
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "export"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_failed", "export", {
+          externalResult: {
+            adapter: "noop-export",
+            operationType: "export",
+            mode: "noop",
+            ok: false,
+            externalRuntimeImplemented: false,
+            errorCode: "noop_adapter_failed",
+            message: "Noop adapter failure fixture.",
+            details: { fixture: true },
+          },
+        }),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: failingAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      operation: {
+        status: "external_failed",
+      },
+      adapterResult: {
+        ok: false,
+        errorCode: "noop_adapter_failed",
+        message: "Noop adapter failure fixture.",
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        request: expect.objectContaining({
+          status: "external_failed",
+          externalResult: expect.objectContaining({
+            ok: false,
+            errorCode: "noop_adapter_failed",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("does not execute adapters when the operation is not ready", async () => {
+    const execute = vi.fn();
+    const adapter: PublishExportAdapter = {
+      ...noopPublishAdapter,
+      execute,
+    };
+    const transitionOperation = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      error: {
+        status: 409,
+        code: "invalid_transition",
+        message: "Invalid publish/export transition: blocked -> external_pending",
+        details: {
+          from: "blocked",
+          to: "external_pending",
+        },
+      },
+    });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter,
+      transitionOperation,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      phase: "start",
+      error: {
+        status: 409,
+        code: "invalid_transition",
+        message: "Invalid publish/export transition: blocked -> external_pending",
+        details: {
+          from: "blocked",
+          to: "external_pending",
+        },
+      },
+    });
+    expect(execute).not.toHaveBeenCalled();
+    expect(transitionOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it("surfaces completion transition failures with the normalized adapter result", async () => {
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "export"),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        error: {
+          status: 409,
+          code: "operation_state_changed",
+          message:
+            "Publish/export operation changed before the transition could be recorded.",
+          details: {
+            expectedStatus: "external_pending",
+            requestedStatus: "external_succeeded",
+          },
+        },
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: noopExportAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      phase: "complete",
+      error: {
+        code: "operation_state_changed",
+      },
+      adapterResult: {
+        adapter: "noop-export",
+        operationType: "export",
+        ok: true,
+      },
+    });
+  });
+});
