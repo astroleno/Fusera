@@ -71,6 +71,11 @@ Adapters must not write the database directly.
 If the first transition fails, the adapter is not executed. This keeps blocked,
 terminal, or stale operations from starting external work.
 
+If adapter execution or result normalization throws, the runner records a stable
+failed `external_result` and transitions the operation to `external_failed`.
+Operations must not remain indefinitely in `external_pending` because a provider
+call raised.
+
 ## Runtime Boundary
 
 The noop adapters are contract fixtures. They prove the control-plane state
