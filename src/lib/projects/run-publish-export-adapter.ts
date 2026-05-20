@@ -1,5 +1,6 @@
 import type {
   PublishExportAdapter,
+  PublishExportAdapterExecution,
   PublishExportAdapterResult,
 } from "@/lib/domain/publish-export-adapter";
 import {
@@ -56,8 +57,39 @@ export async function runPublishExportAdapter(options: {
     };
   }
 
-  const execution = await options.adapter.execute(context, target);
-  const adapterResult = options.adapter.normalizeResult(execution);
+  let adapterResult: PublishExportAdapterResult | null = null;
+  let execution: PublishExportAdapterExecution | null = null;
+
+  try {
+    execution = await options.adapter.execute(context, target);
+  } catch (error) {
+    adapterResult = failedAdapterResult({
+      adapter: options.adapter,
+      error,
+      phase: "execute",
+    });
+  }
+
+  if (!adapterResult) {
+    if (execution === null) {
+      adapterResult = failedAdapterResult({
+        adapter: options.adapter,
+        error: new Error("Publish/export adapter returned no execution result."),
+        phase: "execute",
+      });
+    } else {
+      try {
+        adapterResult = options.adapter.normalizeResult(execution);
+      } catch (error) {
+        adapterResult = failedAdapterResult({
+          adapter: options.adapter,
+          error,
+          phase: "normalize",
+        });
+      }
+    }
+  }
+
   const completionStatus = adapterResult.ok
     ? "external_succeeded"
     : "external_failed";
@@ -86,4 +118,41 @@ export async function runPublishExportAdapter(options: {
     operation: completed.operation,
     adapterResult,
   };
+}
+
+function failedAdapterResult(options: {
+  adapter: PublishExportAdapter;
+  error: unknown;
+  phase: "execute" | "normalize";
+}): PublishExportAdapterResult {
+  const details: Record<string, unknown> = {
+    phase: options.phase,
+  };
+
+  if (options.error instanceof Error) {
+    details.errorName = options.error.name;
+  }
+
+  return {
+    adapter: options.adapter.id,
+    operationType: options.adapter.operationType,
+    mode: "noop",
+    ok: false,
+    externalRuntimeImplemented: false,
+    errorCode: `adapter_${options.phase}_exception`,
+    message: errorMessage(options.error),
+    details,
+  };
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.length > 0) {
+    return error.message;
+  }
+
+  if (typeof error === "string" && error.length > 0) {
+    return error;
+  }
+
+  return "Publish/export adapter failed with an unexpected exception.";
 }

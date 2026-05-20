@@ -205,6 +205,126 @@ describe("publish/export external adapter contract", () => {
     );
   });
 
+  it("records execute exceptions as external_failed through the transition helper", async () => {
+    const execute = vi
+      .fn()
+      .mockRejectedValue(new Error("Provider credentials were rejected."));
+    const throwingAdapter: PublishExportAdapter = {
+      ...noopExportAdapter,
+      execute,
+    };
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "export"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_failed", "export"),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: throwingAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      operation: {
+        status: "external_failed",
+      },
+      adapterResult: {
+        adapter: "noop-export",
+        operationType: "export",
+        ok: false,
+        errorCode: "adapter_execute_exception",
+        message: "Provider credentials were rejected.",
+        details: {
+          phase: "execute",
+          errorName: "Error",
+        },
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        request: expect.objectContaining({
+          status: "external_failed",
+          externalResult: expect.objectContaining({
+            errorCode: "adapter_execute_exception",
+            details: expect.objectContaining({
+              phase: "execute",
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("records normalize exceptions as external_failed through the transition helper", async () => {
+    const normalizeResult = vi.fn(() => {
+      throw new TypeError("Provider result could not be normalized.");
+    });
+    const throwingAdapter: PublishExportAdapter = {
+      ...noopPublishAdapter,
+      normalizeResult,
+    };
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "publish"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_failed", "publish"),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: throwingAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      operation: {
+        status: "external_failed",
+      },
+      adapterResult: {
+        adapter: "noop-publish",
+        operationType: "publish",
+        ok: false,
+        errorCode: "adapter_normalize_exception",
+        message: "Provider result could not be normalized.",
+        details: {
+          phase: "normalize",
+          errorName: "TypeError",
+        },
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        request: expect.objectContaining({
+          status: "external_failed",
+          externalResult: expect.objectContaining({
+            errorCode: "adapter_normalize_exception",
+            details: expect.objectContaining({
+              phase: "normalize",
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
   it("does not execute adapters when the operation is not ready", async () => {
     const execute = vi.fn();
     const adapter: PublishExportAdapter = {
