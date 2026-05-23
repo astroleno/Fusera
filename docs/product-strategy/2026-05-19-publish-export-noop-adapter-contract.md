@@ -76,6 +76,13 @@ failed `external_result` and transitions the operation to `external_failed`.
 Operations must not remain indefinitely in `external_pending` because a provider
 call raised.
 
+If adapter preparation throws, the runner returns a stable `start` error without
+starting a transition or executing the adapter.
+
+Adapter exception messages are sanitized before persistence. Stable operator
+copy may include adapter id, operation type, phase, and error type, but not raw
+provider messages that could contain credentials or tokens.
+
 ## Runtime Boundary
 
 The noop adapters are contract fixtures. They prove the control-plane state
