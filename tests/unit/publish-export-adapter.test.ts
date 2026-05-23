@@ -208,7 +208,7 @@ describe("publish/export external adapter contract", () => {
   it("records execute exceptions as external_failed through the transition helper", async () => {
     const execute = vi
       .fn()
-      .mockRejectedValue(new Error("Provider credentials were rejected."));
+      .mockRejectedValue(new Error("token=secret-provider-token"));
     const throwingAdapter: PublishExportAdapter = {
       ...noopExportAdapter,
       execute,
@@ -242,7 +242,7 @@ describe("publish/export external adapter contract", () => {
         operationType: "export",
         ok: false,
         errorCode: "adapter_execute_exception",
-        message: "Provider credentials were rejected.",
+        message: "Publish/export adapter failed before external completion.",
         details: {
           phase: "execute",
           errorName: "Error",
@@ -267,7 +267,7 @@ describe("publish/export external adapter contract", () => {
 
   it("records normalize exceptions as external_failed through the transition helper", async () => {
     const normalizeResult = vi.fn(() => {
-      throw new TypeError("Provider result could not be normalized.");
+      throw new TypeError("provider response included secret=abc123");
     });
     const throwingAdapter: PublishExportAdapter = {
       ...noopPublishAdapter,
@@ -302,7 +302,7 @@ describe("publish/export external adapter contract", () => {
         operationType: "publish",
         ok: false,
         errorCode: "adapter_normalize_exception",
-        message: "Provider result could not be normalized.",
+        message: "Publish/export adapter failed before external completion.",
         details: {
           phase: "normalize",
           errorName: "TypeError",
@@ -323,6 +323,43 @@ describe("publish/export external adapter contract", () => {
         }),
       }),
     );
+  });
+
+  it("returns a stable start error when prepare throws without starting a transition", async () => {
+    const prepare = vi.fn(() => {
+      throw new Error("credential token=secret-provider-token");
+    });
+    const execute = vi.fn();
+    const adapter: PublishExportAdapter = {
+      ...noopPublishAdapter,
+      prepare,
+      execute,
+    };
+    const transitionOperation = vi.fn();
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter,
+      transitionOperation,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      phase: "start",
+      error: {
+        status: 500,
+        code: "adapter_prepare_exception",
+        message: "Publish/export adapter failed before external completion.",
+        details: {
+          adapter: "noop-publish",
+          operationType: "publish",
+          errorName: "Error",
+        },
+      },
+    });
+    expect(transitionOperation).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("does not execute adapters when the operation is not ready", async () => {

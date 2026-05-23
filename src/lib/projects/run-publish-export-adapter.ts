@@ -2,6 +2,7 @@ import type {
   PublishExportAdapter,
   PublishExportAdapterExecution,
   PublishExportAdapterResult,
+  PublishExportAdapterTarget,
 } from "@/lib/domain/publish-export-adapter";
 import {
   transitionPublishExportOperation,
@@ -25,6 +26,9 @@ export type PublishExportAdapterRunResult =
 
 type TransitionOperation = typeof transitionPublishExportOperation;
 
+const ADAPTER_EXCEPTION_MESSAGE =
+  "Publish/export adapter failed before external completion.";
+
 export async function runPublishExportAdapter(options: {
   projectId: string;
   operationId: string;
@@ -38,7 +42,22 @@ export async function runPublishExportAdapter(options: {
     operationId: options.operationId,
     operationType: options.adapter.operationType,
   };
-  const target = options.adapter.prepare(context);
+  let target: PublishExportAdapterTarget;
+
+  try {
+    target = options.adapter.prepare(context);
+  } catch (error) {
+    return {
+      ok: false,
+      phase: "start",
+      error: adapterStartError({
+        adapter: options.adapter,
+        error,
+        code: "adapter_prepare_exception",
+      }),
+    };
+  }
+
   const start = await transitionOperation({
     projectId: options.projectId,
     operationId: options.operationId,
@@ -140,19 +159,29 @@ function failedAdapterResult(options: {
     ok: false,
     externalRuntimeImplemented: false,
     errorCode: `adapter_${options.phase}_exception`,
-    message: errorMessage(options.error),
+    message: ADAPTER_EXCEPTION_MESSAGE,
     details,
   };
 }
 
-function errorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.length > 0) {
-    return error.message;
+function adapterStartError(options: {
+  adapter: PublishExportAdapter;
+  error: unknown;
+  code: string;
+}): PublishExportOperationTransitionError {
+  const details: Record<string, unknown> = {
+    adapter: options.adapter.id,
+    operationType: options.adapter.operationType,
+  };
+
+  if (options.error instanceof Error) {
+    details.errorName = options.error.name;
   }
 
-  if (typeof error === "string" && error.length > 0) {
-    return error;
-  }
-
-  return "Publish/export adapter failed with an unexpected exception.";
+  return {
+    status: 500,
+    code: options.code,
+    message: ADAPTER_EXCEPTION_MESSAGE,
+    details,
+  };
 }
