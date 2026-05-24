@@ -4,17 +4,25 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { extractAdapterOutputFromText } from "../adapters/codex/extract-artifacts.ts";
 import { assembleContext } from "./assemble-context.ts";
+import { assertCapabilityReportOk, writeCapabilityReport } from "./capability-report.ts";
 import { runLiveStability } from "./ci-gates.ts";
 import { compilePack } from "./compile-pack.ts";
 import { invokeBackend } from "./invoke-backend.ts";
-import { resolveStage } from "./resolve-packs.ts";
+import { loadStageProfiles, resolveStage } from "./resolve-packs.ts";
 import { continueStageProof, resumeFailedRun, runFixture, runStageProof } from "./run-stage.ts";
 import { persistAdapterArtifactCandidates } from "./run-stage.ts";
+import {
+  ADOPTION_V0_COORDINATION_EVENT_TYPES,
+  FUTURE_WORKER_EVENT_TYPES,
+  validateRunEventRecord
+} from "./run-event-types.ts";
 import {
   loadArtifactSchema,
   validateArtifactEnvelope,
   type ArtifactEnvelope
 } from "./validate-artifact.ts";
+import { verifyRun } from "./verify-run.ts";
+import { writeRunEvent } from "./write-run-event.ts";
 
 type CheckResult = {
   name: string;
@@ -38,13 +46,20 @@ export async function verifyP0Harness(): Promise<VerificationSummary> {
   const qaFailureRun = await runFixture({ rootDir: ROOT_DIR, mode: "qa-failure" });
 
   checks.push(await checkPublishRun(publishRun.run_dir));
+  checks.push(await checkCapabilityReport(publishRun.run_dir));
+  checks.push(await checkCapabilityReportFailsClosedOnUnprobedCapability());
+  checks.push(await checkRunEventsUseVocabulary(publishRun.run_dir));
+  checks.push(await checkRunEventDataValidation());
   checks.push(await checkRunnerOwnedStagesUseNoopBackend(publishRun.run_dir));
   checks.push(await checkArtifactsValidate(publishRun.run_dir, 9));
   checks.push(await checkCompiledPackBundle(publishRun.run_dir));
+  checks.push(await checkStageReviewCriteriaMetadata(publishRun.run_dir));
   checks.push(await checkAttemptScopedEvidence(publishRun.run_dir));
   checks.push(await checkDesignContextPacks(publishRun.run_dir));
   checks.push(await checkReferenceBudgetPolicy());
   checks.push(await checkQaFailureRun(qaFailureRun.run_dir));
+  checks.push(await checkVerifyRunRejectsMissingPreviewBuildRef());
+  checks.push(await checkQaReportPassRequiresPreviewBuildRef());
   checks.push(await checkStageProofStop());
   checks.push(await checkStageProofContinue());
   checks.push(await checkDesignSpecStageProofBoundary());
@@ -59,6 +74,7 @@ export async function verifyP0Harness(): Promise<VerificationSummary> {
   checks.push(await checkContextStatusAndVersionRejected(publishRun.run_dir));
   checks.push(await checkAdapterCandidateGuards());
   checks.push(await checkArtifactExtractor());
+  checks.push(await checkAmendmentRequestedEvent());
   checks.push(await checkRealAdapterArtifactPositivePath());
   checks.push(await checkRealAdapterDesignSpecPositivePath());
   checks.push(await checkRealAdapterDesignSpecInvalidPath());
@@ -320,6 +336,7 @@ async function checkFailedRunResumeRetry(): Promise<CheckResult> {
     retryDecision.transition === "retrying" &&
     retryDecision.failure_mode === "validation_failure" &&
     events.some((event) => event.type === "retry_decision_persisted" && event.stage === "page-strategy") &&
+    events.some((event) => event.type === "stage_unblocked" && event.stage === "page-strategy") &&
     events.some((event) => event.type === "resume_failed_run" && event.stage === "page-strategy") &&
     events.some((event) => event.type === "publish_succeeded");
 
@@ -342,7 +359,8 @@ async function checkFailedRunResumeRetry(): Promise<CheckResult> {
       page_strategy_attempt_count: pageStrategyAttempts.length,
       latest_page_strategy_mode: latestPageStrategyResult.usage?.mode,
       retry_transition: retryDecision.transition,
-      retry_failure_mode: retryDecision.failure_mode
+      retry_failure_mode: retryDecision.failure_mode,
+      has_stage_unblocked_event: events.some((event) => event.type === "stage_unblocked" && event.stage === "page-strategy")
     }
   };
 }
@@ -461,7 +479,8 @@ async function checkBackendRetryBudgetExhausted(): Promise<CheckResult> {
     retryDecision.transition === "needs_review" &&
     retryDecision.remaining_retry_attempts === 0 &&
     attemptCountBefore === attemptCountAfter &&
-    events.some((event) => event.type === "resume_failed_run_blocked" && event.stage === "page-strategy");
+    events.some((event) => event.type === "resume_failed_run_blocked" && event.stage === "page-strategy") &&
+    events.some((event) => event.type === "stage_blocked" && event.stage === "page-strategy");
 
   return {
     name: "backend-retry-budget-exhausted",
@@ -473,7 +492,10 @@ async function checkBackendRetryBudgetExhausted(): Promise<CheckResult> {
       remaining_retry_attempts: retryDecision.remaining_retry_attempts,
       attempt_count_before: attemptCountBefore,
       attempt_count_after: attemptCountAfter,
-      has_blocked_event: events.some((event) => event.type === "resume_failed_run_blocked" && event.stage === "page-strategy")
+      has_resume_blocked_event: events.some(
+        (event) => event.type === "resume_failed_run_blocked" && event.stage === "page-strategy"
+      ),
+      has_stage_blocked_event: events.some((event) => event.type === "stage_blocked" && event.stage === "page-strategy")
     }
   };
 }
@@ -651,17 +673,29 @@ async function checkLiveStabilityCanonicalDefaults(): Promise<CheckResult> {
 
 async function checkPublishRun(runDir: string): Promise<CheckResult> {
   const run = await readJson(path.join(runDir, "run.json"));
+  const designSpec = await readJson(path.join(runDir, "artifacts/design-spec.json"));
   const pageSpec = await readJson(path.join(runDir, "artifacts/page-spec.json"));
   const qaReport = await readJson(path.join(runDir, "artifacts/qa-report.json"));
   const publishVersion = await readJson(path.join(runDir, "artifacts/publish-version.json"));
   const previewBuild = await readJson(path.join(runDir, "compiled/preview-build.json"));
+  const publishHandoff = await readJson(path.join(runDir, "previews/publish-handoff.json"));
+  const firstSection = Array.isArray(pageSpec.payload.sections) ? pageSpec.payload.sections[0] : null;
   const ok =
     run.state === "published" &&
+    pageSpec.input_refs.includes(designSpec.artifact_id) &&
+    pageSpec.payload.token_refs?.design_spec_ref === designSpec.artifact_id &&
+    previewBuild.design_spec_ref === designSpec.artifact_id &&
+    Boolean(firstSection?.design_intent) &&
     qaReport.payload.verdict === "pass" &&
     qaReport.payload.page_spec_ref === pageSpec.artifact_id &&
     qaReport.payload.preview_build_ref === previewBuild.preview_build_ref &&
     publishVersion.payload.publish_target === "preview" &&
-    publishVersion.payload.previous_active_pointer === null;
+    publishVersion.payload.previous_active_pointer === null &&
+    publishHandoff.run_id === run.run_id &&
+    publishHandoff.page_spec_ref === pageSpec.artifact_id &&
+    publishHandoff.qa_report_ref === qaReport.artifact_id &&
+    publishHandoff.preview_build_ref === previewBuild.preview_build_ref &&
+    publishHandoff.publish_version_ref === publishVersion.artifact_id;
 
   return {
     name: "publish-run",
@@ -671,8 +705,98 @@ async function checkPublishRun(runDir: string): Promise<CheckResult> {
       qa_verdict: qaReport.payload.verdict,
       publish_target: publishVersion.payload.publish_target,
       previous_active_pointer: publishVersion.payload.previous_active_pointer,
+      page_spec_consumes_design_spec: pageSpec.input_refs.includes(designSpec.artifact_id),
+      page_spec_design_spec_ref: pageSpec.payload.token_refs?.design_spec_ref,
+      preview_design_spec_ref: previewBuild.design_spec_ref,
+      first_section_has_design_intent: Boolean(firstSection?.design_intent),
       qa_page_binding: qaReport.payload.page_spec_ref === pageSpec.artifact_id,
-      qa_preview_binding: qaReport.payload.preview_build_ref === previewBuild.preview_build_ref
+      qa_preview_binding: qaReport.payload.preview_build_ref === previewBuild.preview_build_ref,
+      handoff_run_binding: publishHandoff.run_id === run.run_id,
+      handoff_page_binding: publishHandoff.page_spec_ref === pageSpec.artifact_id,
+      handoff_qa_binding: publishHandoff.qa_report_ref === qaReport.artifact_id,
+      handoff_preview_binding: publishHandoff.preview_build_ref === previewBuild.preview_build_ref,
+      handoff_publish_binding: publishHandoff.publish_version_ref === publishVersion.artifact_id
+    }
+  };
+}
+
+async function checkCapabilityReport(runDir: string): Promise<CheckResult> {
+  const report = await readJson(path.join(runDir, "logs/capability-report.json"));
+  const requiredByStage = isRecord(report.required_by_stage) ? report.required_by_stage : {};
+  const missingRequired = isRecord(report.missing_required) ? report.missing_required : {};
+  const probeResults = isRecord(report.probe_results) ? report.probe_results : {};
+  const reconciledCapabilities = Array.isArray(report.reconciled_capabilities)
+    ? report.reconciled_capabilities
+    : [];
+  const ok =
+    report.ok === true &&
+    report.phase === "post_resolution" &&
+    Array.isArray(report.declared_adapter_capabilities) &&
+    Array.isArray(report.runner_managed_capabilities) &&
+    isRecord(probeResults.run_directory) &&
+    Object.keys(requiredByStage).includes("publish-preview") &&
+    Object.keys(missingRequired).length === 0 &&
+    !reconciledCapabilities.includes("image.inspect") &&
+    !reconciledCapabilities.includes("screenshot.capture");
+
+  return {
+    name: "capability-report",
+    ok,
+    details: {
+      phase: report.phase,
+      declared_adapter_capabilities: report.declared_adapter_capabilities,
+      runner_managed_capabilities: report.runner_managed_capabilities,
+      required_stage_count: Object.keys(requiredByStage).length,
+      missing_required: missingRequired,
+      has_run_directory_probe: isRecord(probeResults.run_directory),
+      reconciled_capabilities: reconciledCapabilities
+    }
+  };
+}
+
+async function checkCapabilityReportFailsClosedOnUnprobedCapability(): Promise<CheckResult> {
+  const tempRoot = await mkdtemp(path.join(os.tmpdir(), "fusera-capability-report-check-"));
+  await mkdir(path.join(tempRoot, "superpowers/packs"), { recursive: true });
+  await mkdir(path.join(tempRoot, "superpowers/contracts/artifacts"), { recursive: true });
+  await cp(
+    path.join(ROOT_DIR, "superpowers/packs/stage-profiles.yaml"),
+    path.join(tempRoot, "superpowers/packs/stage-profiles.yaml")
+  );
+  let registry = await readFile(path.join(ROOT_DIR, "superpowers/packs/registry.yaml"), "utf8");
+  registry = registry.replace(
+    "  - id: tasks/page-strategy\n    path: superpowers/packs/tasks/page-strategy/SKILL.md\n    kind: task\n    description: Produce the PagePlan artifact from validated brief artifacts.\n    priority: 90\n    selection_role: primary\n    stage: page-strategy\n    output_modes:\n      - landing-page\n    positive_triggers:\n      - page strategy\n    negative_triggers: []\n    backend_support:\n      tier: portable-core\n      adapters:\n        - codex\n      preferred_adapters:\n        - codex\n      instruction_only_adapters:\n        - claude-code\n    capabilities_required:\n      - workspace.read\n      - artifact.attach",
+    "  - id: tasks/page-strategy\n    path: superpowers/packs/tasks/page-strategy/SKILL.md\n    kind: task\n    description: Produce the PagePlan artifact from validated brief artifacts.\n    priority: 90\n    selection_role: primary\n    stage: page-strategy\n    output_modes:\n      - landing-page\n    positive_triggers:\n      - page strategy\n    negative_triggers: []\n    backend_support:\n      tier: portable-core\n      adapters:\n        - codex\n      preferred_adapters:\n        - codex\n      instruction_only_adapters:\n        - claude-code\n    capabilities_required:\n      - workspace.read\n      - artifact.attach\n      - screenshot.capture"
+  );
+  await writeFile(path.join(tempRoot, "superpowers/packs/registry.yaml"), registry, "utf8");
+
+  const report = await writeCapabilityReport({
+    rootDir: tempRoot,
+    runDir: path.join(tempRoot, ".fusera/runs/run_capability_probe"),
+    phase: "post_resolution"
+  });
+  let failedClosed = false;
+
+  try {
+    assertCapabilityReportOk(report);
+  } catch (error) {
+    failedClosed = String(error).includes("screenshot.capture");
+  }
+
+  const missingRequired = report.missing_required["page-strategy"] ?? [];
+  const ok =
+    report.ok === false &&
+    missingRequired.includes("screenshot.capture") &&
+    !report.reconciled_capabilities.includes("screenshot.capture") &&
+    failedClosed;
+
+  return {
+    name: "capability-report-fail-closed",
+    ok,
+    details: {
+      report_ok: report.ok,
+      page_strategy_missing_required: missingRequired,
+      reconciled_capabilities: report.reconciled_capabilities,
+      failed_closed: failedClosed
     }
   };
 }
@@ -718,6 +842,81 @@ async function checkRunnerOwnedStagesUseNoopBackend(runDir: string): Promise<Che
         attempt_id: result.usage?.attempt_id,
         has_backend_skipped_event: skippedStages.has(stage)
       }))
+    }
+  };
+}
+
+async function checkRunEventsUseVocabulary(runDir: string): Promise<CheckResult> {
+  const events = await readEvents(runDir);
+  const eventErrors = events.flatMap((event, index) =>
+    validateRunEventRecord(event).map((error) => `event ${index}: ${error}`)
+  );
+  const adoptionV0EventsPresent = ADOPTION_V0_COORDINATION_EVENT_TYPES.every((type) =>
+    typeof type === "string" && type.length > 0
+  );
+  const futureWorkerEventsPresent = FUTURE_WORKER_EVENT_TYPES.every((type) =>
+    typeof type === "string" && type.startsWith("worker_")
+  );
+  const ok = eventErrors.length === 0 && adoptionV0EventsPresent && futureWorkerEventsPresent;
+
+  return {
+    name: "run-events-use-typed-vocabulary",
+    ok,
+    details: {
+      event_count: events.length,
+      event_errors: eventErrors,
+      adoption_v0_events: ADOPTION_V0_COORDINATION_EVENT_TYPES,
+      future_worker_events: FUTURE_WORKER_EVENT_TYPES
+    }
+  };
+}
+
+async function checkRunEventDataValidation(): Promise<CheckResult> {
+  const invalidJoin = validateRunEventRecord({
+    type: "stage_join_ready",
+    stage: "page-strategy",
+    data: {
+      required_artifacts: "PagePlan",
+      validated_artifact_refs: []
+    }
+  });
+  const invalidReason = validateRunEventRecord({
+    type: "stage_blocked",
+    stage: "page-strategy",
+    data: {
+      reason: "",
+      blocked_by: ["retry_policy"]
+    }
+  });
+  const invalidMessage = validateRunEventRecord({
+    type: "agent_message",
+    data: {
+      message: 42
+    }
+  });
+  const validJoin = validateRunEventRecord({
+    type: "stage_join_ready",
+    stage: "page-strategy",
+    data: {
+      required_artifacts: ["PagePlan"],
+      validated_artifact_refs: ["page-plan_01"],
+      next_stage: "section-planning"
+    }
+  });
+  const ok =
+    invalidJoin.length > 0 &&
+    invalidReason.length > 0 &&
+    invalidMessage.length > 0 &&
+    validJoin.length === 0;
+
+  return {
+    name: "run-event-data-validation",
+    ok,
+    details: {
+      invalid_join_errors: invalidJoin,
+      invalid_reason_errors: invalidReason,
+      invalid_message_errors: invalidMessage,
+      valid_join_errors: validJoin
     }
   };
 }
@@ -778,6 +977,38 @@ async function checkCompiledPackBundle(runDir: string): Promise<CheckResult> {
       compiled_pack_ids: compiledPacks.map((pack: Record<string, unknown>) => pack.pack_id),
       has_skill_source: hasSkillSource,
       candidate_types: candidateTypes
+    }
+  };
+}
+
+async function checkStageReviewCriteriaMetadata(runDir: string): Promise<CheckResult> {
+  const profiles = await loadStageProfiles(ROOT_DIR);
+  const metadataValid = profiles.stages.every(
+    (profile) =>
+      optionalStringArray(profile.review_focus) &&
+      optionalStringArray(profile.success_criteria)
+  );
+  const bundle = await readJson(path.join(runDir, "bundles/page-strategy.json"));
+  const bundleProfile = isRecord(bundle.stage_profile) ? bundle.stage_profile : {};
+  const bundleReviewFocus = Array.isArray(bundleProfile.review_focus) ? bundleProfile.review_focus : [];
+  const bundleSuccessCriteria = Array.isArray(bundleProfile.success_criteria)
+    ? bundleProfile.success_criteria
+    : [];
+  const ok =
+    metadataValid &&
+    bundleReviewFocus.length > 0 &&
+    bundleReviewFocus.every((item) => typeof item === "string" && item.length > 0) &&
+    bundleSuccessCriteria.length > 0 &&
+    bundleSuccessCriteria.every((item) => typeof item === "string" && item.length > 0);
+
+  return {
+    name: "stage-review-criteria",
+    ok,
+    details: {
+      stage_count: profiles.stages.length,
+      metadata_valid: metadataValid,
+      page_strategy_review_focus: bundleReviewFocus,
+      page_strategy_success_criteria: bundleSuccessCriteria
     }
   };
 }
@@ -999,7 +1230,8 @@ async function checkQaFailureRun(runDir: string): Promise<CheckResult> {
     repairDecision.transition === "needs_review" &&
     !artifactFiles.includes("publish-version.json") &&
     events.some((event) => event.type === "repair_decision_persisted") &&
-    events.some((event) => event.type === "qa_failed_review");
+    events.some((event) => event.type === "qa_failed_review") &&
+    events.some((event) => event.type === "stage_blocked" && event.stage === "verify-publishable-page");
 
   return {
     name: "qa-failure-repair-decision",
@@ -1010,7 +1242,100 @@ async function checkQaFailureRun(runDir: string): Promise<CheckResult> {
       repair_transition: repairDecision.transition,
       has_publish_version: artifactFiles.includes("publish-version.json"),
       has_repair_event: events.some((event) => event.type === "repair_decision_persisted"),
-      has_qa_failed_event: events.some((event) => event.type === "qa_failed_review")
+      has_qa_failed_event: events.some((event) => event.type === "qa_failed_review"),
+      has_stage_blocked_event: events.some(
+        (event) => event.type === "stage_blocked" && event.stage === "verify-publishable-page"
+      )
+    }
+  };
+}
+
+async function checkVerifyRunRejectsMissingPreviewBuildRef(): Promise<CheckResult> {
+  const proofRun = await runStageProof({
+    rootDir: ROOT_DIR,
+    targetStage: "page-compile"
+  });
+  const previewBuildPath = path.join(proofRun.run_dir, "compiled/preview-build.json");
+  const previewBuild = await readJson(previewBuildPath);
+  delete previewBuild.preview_build_ref;
+  await writeFile(previewBuildPath, `${JSON.stringify(previewBuild, null, 2)}\n`, "utf8");
+
+  const verified = await verifyRun({
+    runDir: proofRun.run_dir,
+    contractsDir: CONTRACTS_DIR
+  });
+  const gate = Array.isArray(verified.qa_report.payload.gate_results)
+    ? verified.qa_report.payload.gate_results.find((item: Record<string, unknown>) => item.gate_id === "artifact-binding")
+    : null;
+  const issue = Array.isArray(verified.qa_report.payload.issues)
+    ? verified.qa_report.payload.issues.find((item: Record<string, unknown>) => item.category === "artifact-binding")
+    : null;
+  const ok =
+    verified.transition !== "approved" &&
+    verified.qa_report.payload.verdict === "fail" &&
+    verified.qa_report.payload.preview_build_ref === null &&
+    gate?.result === "fail" &&
+    gate?.blocking === true &&
+    gate?.waivable === false &&
+    typeof issue?.summary === "string" &&
+    issue.summary.includes("preview_build_ref is missing or empty");
+
+  return {
+    name: "verify-run-missing-preview-build-ref",
+    ok,
+    details: {
+      transition: verified.transition,
+      verdict: verified.qa_report.payload.verdict,
+      preview_build_ref: verified.qa_report.payload.preview_build_ref,
+      artifact_binding_gate: gate,
+      issue_summary: issue?.summary
+    }
+  };
+}
+
+async function checkQaReportPassRequiresPreviewBuildRef(): Promise<CheckResult> {
+  const schema = await loadArtifactSchema(CONTRACTS_DIR, "QAReport");
+  const qaReport: ArtifactEnvelope = {
+    artifact_type: "QAReport",
+    schema_version: "1.0.0",
+    artifact_id: "qa-report_null_preview_pass_probe",
+    run_id: "run_qa_invariant_probe",
+    status: "draft",
+    producer_stage: "verify-publishable-page",
+    input_refs: ["page-spec_probe", "compiled/preview-build.json"],
+    validation: {
+      valid: false,
+      errors: []
+    },
+    payload: {
+      page_spec_ref: "page-spec_probe",
+      preview_build_ref: null,
+      verdict: "pass",
+      gate_results: [
+        {
+          gate_id: "artifact-binding",
+          result: "pass",
+          blocking: false,
+          waivable: false,
+          evidence_refs: ["compiled/preview-build.json"]
+        }
+      ],
+      issues: [],
+      repair_directives: [],
+      evidence_refs: ["compiled/preview-build.json"],
+      waiver: null
+    }
+  };
+  const errors = validateArtifactEnvelope(qaReport, schema);
+  const ok = errors.some((error) =>
+    error.includes("$.payload.preview_build_ref must be a non-empty string unless verdict is fail")
+  );
+
+  return {
+    name: "qa-report-pass-preview-ref-invariant",
+    ok,
+    details: {
+      errors
     }
   };
 }
@@ -1018,14 +1343,15 @@ async function checkQaFailureRun(runDir: string): Promise<CheckResult> {
 async function checkUnsupportedCapabilityRejected(): Promise<CheckResult> {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), "fusera-capability-check-"));
   await mkdir(path.join(tempRoot, "superpowers/packs"), { recursive: true });
+  await mkdir(path.join(tempRoot, "superpowers/contracts/artifacts"), { recursive: true });
   await cp(
     path.join(ROOT_DIR, "superpowers/packs/stage-profiles.yaml"),
     path.join(tempRoot, "superpowers/packs/stage-profiles.yaml")
   );
   let registry = await readFile(path.join(ROOT_DIR, "superpowers/packs/registry.yaml"), "utf8");
   registry = registry.replace(
-    "capabilities_required:\n      - workspace.read\n      - workspace.write\n    required_inputs:\n      - normalized_input_bundle\n    required_artifacts:\n      - artifact_type: ProductBrief",
-    "capabilities_required:\n      - workspace.read\n      - workspace.write\n      - browser.teleport\n    required_inputs:\n      - normalized_input_bundle\n    required_artifacts:\n      - artifact_type: ProductBrief"
+    "capabilities_required:\n      - workspace.read\n      - artifact.attach\n    required_inputs:\n      - normalized_input_bundle\n    required_artifacts:\n      - artifact_type: ProductBrief",
+    "capabilities_required:\n      - workspace.read\n      - artifact.attach\n      - browser.teleport\n    required_inputs:\n      - normalized_input_bundle\n    required_artifacts:\n      - artifact_type: ProductBrief"
   );
   await writeFile(path.join(tempRoot, "superpowers/packs/registry.yaml"), registry, "utf8");
 
@@ -1041,11 +1367,44 @@ async function checkUnsupportedCapabilityRejected(): Promise<CheckResult> {
     rejected = String(error).includes("browser.teleport");
   }
 
+  const agentSpawnRegistry = registry.replace("browser.teleport", "agent.spawn");
+  await writeFile(path.join(tempRoot, "superpowers/packs/registry.yaml"), agentSpawnRegistry, "utf8");
+  let agentSpawnRejected = false;
+  const agentSpawnReport = await writeCapabilityReport({
+    rootDir: tempRoot,
+    runDir: path.join(tempRoot, ".fusera/runs/run_agent_spawn_probe"),
+    phase: "post_resolution"
+  });
+  let agentSpawnFailedClosed = false;
+
+  try {
+    await resolveStage({
+      rootDir: tempRoot,
+      stage: "page-strategy",
+      backend: "codex"
+    });
+  } catch (error) {
+    agentSpawnRejected = String(error).includes("agent.spawn");
+  }
+
+  try {
+    assertCapabilityReportOk(agentSpawnReport);
+  } catch (error) {
+    agentSpawnFailedClosed = String(error).includes("agent.spawn");
+  }
+
   return {
     name: "unsupported-capability-rejected",
-    ok: rejected,
+    ok:
+      rejected &&
+      agentSpawnRejected &&
+      agentSpawnReport.missing_required["page-strategy"]?.includes("agent.spawn") === true &&
+      agentSpawnFailedClosed,
     details: {
-      rejected
+      rejected,
+      agent_spawn_rejected_by_resolver: agentSpawnRejected,
+      agent_spawn_missing_required: agentSpawnReport.missing_required["page-strategy"] ?? [],
+      agent_spawn_failed_closed_by_report: agentSpawnFailedClosed
     }
   };
 }
@@ -1195,6 +1554,37 @@ async function checkArtifactExtractor(): Promise<CheckResult> {
       malformed_candidate_count: malformedExtraction.candidates.length,
       malformed_attachment_count: malformedExtraction.attachments.length,
       malformed_error_count: malformedExtraction.errors.length
+    }
+  };
+}
+
+async function checkAmendmentRequestedEvent(): Promise<CheckResult> {
+  const runDir = await mkdtemp(path.join(os.tmpdir(), "fusera-amendment-event-"));
+  const event = await writeRunEvent(runDir, {
+    run_id: "run_amendment_probe",
+    type: "amendment_requested",
+    data: {
+      request: "Make the hero more restrained.",
+      affected_artifact_hints: ["DesignSpec", "ThemeTokens", "PageSpec"]
+    }
+  });
+  const events = await readEvents(runDir);
+  const validationErrors = validateRunEventRecord(events[0] ?? {});
+  const ok =
+    event.type === "amendment_requested" &&
+    events.length === 1 &&
+    events[0]?.type === "amendment_requested" &&
+    events[0]?.data?.request === "Make the hero more restrained." &&
+    validationErrors.length === 0;
+
+  return {
+    name: "amendment-requested-event",
+    ok,
+    details: {
+      persisted: events.length === 1,
+      event_type: events[0]?.type,
+      affected_artifact_hints: events[0]?.data?.affected_artifact_hints,
+      validation_errors: validationErrors
     }
   };
 }
@@ -2225,6 +2615,14 @@ async function readEvents(runDir: string): Promise<Array<Record<string, any>>> {
     .split("\n")
     .filter(Boolean)
     .map((line) => JSON.parse(line));
+}
+
+function optionalStringArray(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.every((item) => typeof item === "string"));
+}
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === "object" && value !== null;
 }
 
 async function withEnv<T>(

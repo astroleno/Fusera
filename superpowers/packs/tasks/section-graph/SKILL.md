@@ -17,17 +17,27 @@ stage: section-planning
 
 ## Forbidden Outputs
 
-- Must not emit `ThemeTokens`, `PageSpec`, `QAReport`, or `PublishVersion`.
+- Must not emit `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, or `PublishVersion`.
 - Must not use unknown section types.
 - Must not leave proof bindings empty when claim policy is `proof-required`.
 
 ## Handoff Shape
 
-```json
+Emit one fenced artifact candidate block:
+
+```fusera-artifact-json
 {
+  "artifact_id": "section-graph_<run-local-id>",
   "artifact_type": "SectionGraph",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "draft",
   "producer_stage": "section-planning",
+  "input_refs": ["<PagePlan artifact_id>"],
+  "validation": {
+    "valid": false,
+    "errors": []
+  },
   "payload": {
     "nodes": [],
     "edges": [],

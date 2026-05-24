@@ -23,11 +23,12 @@ export async function publishPreview(options: {
   const previewBuild = JSON.parse(
     await readFile(path.join(options.runDir, "compiled", "preview-build.json"), "utf8")
   ) as Record<string, unknown>;
-  const previewBuildRef = String(previewBuild.preview_build_ref);
+  const previewBuildRef = nonEmptyString(previewBuild.preview_build_ref, "preview_build_ref");
 
   assertPublishable({
     pageSpec,
     qaReport,
+    previewBuild,
     previewBuildRef
   });
 
@@ -77,9 +78,16 @@ export async function publishPreview(options: {
     `${JSON.stringify(
       {
         publish_version_ref: validation.artifact.artifact_id,
+        run_id: pageSpec.run_id,
+        page_spec_ref: pageSpec.artifact_id,
+        qa_report_ref: qaReport.artifact_id,
         preview_build_ref: previewBuildRef,
         preview_url: previewUrl,
-        pointer_transaction_ref: pointerTransactionRef
+        pointer_transaction_ref: pointerTransactionRef,
+        provider_metadata: {
+          provider: "runner-owned-preview-handoff",
+          publish_target: "preview"
+        }
       },
       null,
       2
@@ -96,12 +104,25 @@ export async function publishPreview(options: {
 function assertPublishable(options: {
   pageSpec: ArtifactEnvelope;
   qaReport: ArtifactEnvelope;
+  previewBuild: Record<string, unknown>;
   previewBuildRef: string;
 }): void {
   const verdict = options.qaReport.payload.verdict;
 
   if (verdict !== "pass" && verdict !== "waived") {
     throw new Error(`QAReport verdict ${String(verdict)} cannot be published`);
+  }
+
+  if (!options.pageSpec.run_id || options.pageSpec.run_id !== options.qaReport.run_id) {
+    throw new Error("QAReport run_id does not match PageSpec run_id");
+  }
+
+  if (options.previewBuild.run_id !== options.pageSpec.run_id) {
+    throw new Error("preview build run_id does not match PageSpec run_id");
+  }
+
+  if (options.previewBuild.page_spec_ref !== options.pageSpec.artifact_id) {
+    throw new Error("preview build page_spec_ref does not match PageSpec");
   }
 
   if (options.qaReport.payload.page_spec_ref !== options.pageSpec.artifact_id) {
@@ -125,6 +146,14 @@ function assertPublishable(options: {
   if (failedNonWaivableGate) {
     throw new Error("Publish refused because a non-waivable gate failed");
   }
+}
+
+function nonEmptyString(value: unknown, field: string): string {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`preview build ${field} must be a non-empty string`);
+  }
+
+  return value;
 }
 
 function stableHash(input: string): string {

@@ -148,7 +148,7 @@ The runner reads:
 
 Retry policy:
 
-- retryable stages are the model-owned stages: `normalize-input`, `product-and-brand-brief`, `page-strategy`, `section-planning`, and `design-system-pass`
+- retryable stages are the model-owned stages: `normalize-input`, `product-and-brand-brief`, `page-strategy`, `section-planning`, `design-system-pass`, and `design-spec-pass`
 - retryable failure modes are `invocation_failure`, `extraction_failure`, `validation_failure`, and `missing_output`
 - retries reuse the same run and reassemble context from already validated artifacts
 - prior attempt directories remain immutable audit evidence

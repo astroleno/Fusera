@@ -26,6 +26,24 @@ type RunInspection = {
     handoff_present: boolean;
     publish_version_ref?: string;
     preview_url?: string;
+    run_id?: string;
+    page_spec_ref?: string;
+    qa_report_ref?: string;
+    preview_build_ref?: string;
+  };
+  qa_report: {
+    present: boolean;
+    artifact_id?: string;
+    verdict?: string;
+    page_spec_ref?: string;
+    preview_build_ref?: string;
+  };
+  capability_report: {
+    present: boolean;
+    ok?: boolean;
+    phase?: string;
+    missing_required?: Record<string, unknown>;
+    report_path?: string;
   };
   graph?: HarnessGraphSummary | null;
   recent_events: Array<Record<string, unknown>>;
@@ -94,6 +112,8 @@ export async function inspectRun(options: {
   const artifacts = await inspectArtifacts(runDir);
   const previewBuild = await readJsonIfPresent(path.join(runDir, "compiled/preview-build.json"));
   const handoff = await readJsonIfPresent(path.join(runDir, "previews/publish-handoff.json"));
+  const qaReport = await readJsonIfPresent(path.join(runDir, "artifacts/qa-report.json"));
+  const capabilityReport = await readJsonIfPresent(path.join(runDir, "logs/capability-report.json"));
   const recentEventCount = options.recentEventCount ?? DEFAULT_RECENT_EVENT_COUNT;
   const persistedAdapterMode = stringOrUndefined(run.adapter_mode);
   const inferredAdapterMode = inferAdapterModeFromStages(stages);
@@ -120,7 +140,25 @@ export async function inspectRun(options: {
     preview_publish: {
       handoff_present: handoff !== null,
       publish_version_ref: stringOrUndefined(handoff?.publish_version_ref),
-      preview_url: stringOrUndefined(handoff?.preview_url)
+      preview_url: stringOrUndefined(handoff?.preview_url),
+      run_id: stringOrUndefined(handoff?.run_id),
+      page_spec_ref: stringOrUndefined(handoff?.page_spec_ref),
+      qa_report_ref: stringOrUndefined(handoff?.qa_report_ref),
+      preview_build_ref: stringOrUndefined(handoff?.preview_build_ref)
+    },
+    qa_report: {
+      present: qaReport !== null,
+      artifact_id: stringOrUndefined(qaReport?.artifact_id),
+      verdict: stringOrUndefined(qaReport?.payload?.verdict),
+      page_spec_ref: stringOrUndefined(qaReport?.payload?.page_spec_ref),
+      preview_build_ref: stringOrUndefined(qaReport?.payload?.preview_build_ref)
+    },
+    capability_report: {
+      present: capabilityReport !== null,
+      ok: typeof capabilityReport?.ok === "boolean" ? capabilityReport.ok : undefined,
+      phase: stringOrUndefined(capabilityReport?.phase),
+      missing_required: isRecord(capabilityReport?.missing_required) ? capabilityReport.missing_required : undefined,
+      report_path: stringOrUndefined(capabilityReport?.report_path)
     },
     graph: options.includeGraph ? await readRunGraphSummary({ rootDir, runDir }) : undefined,
     recent_events: events.slice(Math.max(0, events.length - recentEventCount))
@@ -136,6 +174,8 @@ export function formatInspectionText(inspection: RunInspection): string {
     `proof: ${inspection.proof_target_stage ?? "none"} (${inspection.proof_completed === true ? "completed" : "not-completed"})`,
     `preview_build_ref: ${inspection.compiled.preview_build_ref ?? "none"}`,
     `publish_handoff: ${inspection.preview_publish.handoff_present ? inspection.preview_publish.preview_url ?? "present" : "none"}`,
+    `qa_verdict: ${inspection.qa_report.verdict ?? "none"}`,
+    `capability_report: ${inspection.capability_report.present ? inspection.capability_report.ok === true ? "ok" : "attention" : "none"}`,
     "",
     "stages:"
   ];

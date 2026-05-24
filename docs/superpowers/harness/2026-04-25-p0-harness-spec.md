@@ -88,6 +88,8 @@ superpowers/
         SKILL.md
       design-pass/
         SKILL.md
+      design-spec/
+        SKILL.md
       page-compile/
         SKILL.md
     verifiers/
@@ -103,6 +105,7 @@ superpowers/
       page-plan.schema.json
       section-graph.schema.json
       theme-tokens.schema.json
+      design-spec.schema.json
       page-spec.schema.json
       qa-report.schema.json
       publish-version.schema.json
@@ -184,6 +187,7 @@ Required stable artifacts:
 - `PagePlan`
 - `SectionGraph`
 - `ThemeTokens`
+- `DesignSpec`
 - `PageSpec`
 - `QAReport`
 
@@ -222,6 +226,7 @@ Files required in `superpowers/contracts/artifacts/`:
 - `page-plan.schema.json`
 - `section-graph.schema.json`
 - `theme-tokens.schema.json`
+- `design-spec.schema.json`
 - `page-spec.schema.json`
 - `qa-report.schema.json`
 - `publish-version.schema.json`
@@ -247,7 +252,8 @@ P0 stage map:
 | `product-and-brand-brief` | `tasks/product-brief` | `tasks/brand-profile` | `ProductBrief`, `BrandProfile` | none | `codex` | `page-strategy` |
 | `page-strategy` | `tasks/page-strategy` | none | `PagePlan` | none | `codex` | `section-planning` |
 | `section-planning` | `tasks/section-graph` | none | `SectionGraph` | none | `codex` | `design-system-pass` |
-| `design-system-pass` | `tasks/design-pass` | none | `ThemeTokens` | none | `codex` | `page-compile` |
+| `design-system-pass` | `tasks/design-pass` | none | `ThemeTokens` | none | `codex` | `design-spec-pass` |
+| `design-spec-pass` | `tasks/design-spec` | none | `DesignSpec` | none | `codex` | `page-compile` |
 | `page-compile` | `tasks/page-compile` | none | `PageSpec` | none | `codex` | `verify-publishable-page` |
 | `verify-publishable-page` | `verifiers/publishable-page` | none | `QAReport` | `verifiers/publishable-page` | `codex` | `publish-preview` on pass, otherwise `repairing` or `needs_review` per lifecycle |
 | `publish-preview` | `deploy/publish-preview` | none | `PublishVersion` | publish-safety gate inside deploy step | `codex` | end |
@@ -396,16 +402,15 @@ P0 must define a concrete Codex adapter contract.
 
 ### 11.1 Capabilities
 
-The Codex adapter must expose or be wrapped to satisfy:
+The Codex capability model is split by ownership:
 
-- `workspace.read`
-- `workspace.write`
-- `workspace.search`
-- `process.exec`
-- `artifact.attach`
-- `image.inspect`
-- `screenshot.capture`
-- `agent.spawn` when packs request bounded fan-out
+- adapter runtime capabilities: `workspace.read`, `workspace.search`,
+  `artifact.attach`, `image.inspect`, `screenshot.capture`
+- runner-managed capabilities: `workspace.write`, `process.exec`
+- experimental capabilities: `agent.spawn`
+
+P0 runtime selection must treat `agent.spawn` as unavailable until bounded child
+attempts and runner-owned join validation exist.
 
 ### 11.2 Input Bundle Shape
 
@@ -465,6 +470,7 @@ P0 runtime output under `.fusera/runs/` should look like this:
         page-strategy/
         section-planning/
         design-system-pass/
+        design-spec-pass/
         page-compile/
         verify-publishable-page/
         publish-preview/
@@ -476,6 +482,7 @@ P0 runtime output under `.fusera/runs/` should look like this:
         page-plan.json
         section-graph.json
         theme-tokens.json
+        design-spec.json
         page-spec.json
         qa-report.json
         publish-version.json
@@ -505,8 +512,8 @@ P0 is complete only if all of the following are true:
 2. the stage sequence can be resolved through `superpowers/packs/stage-profiles.yaml`
 3. the runner executes the path against the `codex` adapter
 4. every stable artifact is produced by its declared stage only
-5. the run materializes validated instances of `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `PageSpec`, `QAReport`, and preview-scoped `PublishVersion`
-6. the deterministic compiler emits `PageSpec` plus exact `preview_build_ref`
+5. the run materializes validated instances of `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, and preview-scoped `PublishVersion`
+6. the deterministic compiler consumes `DesignSpec` and emits `PageSpec` plus exact `preview_build_ref`
 7. `QAReport` binds the exact `page_spec_ref` and `preview_build_ref`
 8. failed QA transitions to `repairing` or `needs_review` according to `docs/superpowers/architecture/run-lifecycle.md`
 9. the runner enforces a maximum of 2 repair attempts

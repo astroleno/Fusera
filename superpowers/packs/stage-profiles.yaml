@@ -6,6 +6,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: product-and-brand-brief
+    review_focus:
+      - "Input payload is normalized without inventing product claims."
+    success_criteria:
+      - "Normalized input bundle is persisted for downstream stages."
   - stage: product-and-brand-brief
     primary_task: tasks/product-brief
     allowed_auxiliary_tasks:
@@ -16,6 +20,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: page-strategy
+    review_focus:
+      - "ProductBrief and BrandProfile claims stay traceable to normalized input."
+    success_criteria:
+      - "ProductBrief and BrandProfile validate against canonical schemas."
   - stage: page-strategy
     primary_task: tasks/page-strategy
     allowed_auxiliary_tasks: []
@@ -24,6 +32,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: section-planning
+    review_focus:
+      - "PagePlan uses validated ProductBrief and BrandProfile claims."
+    success_criteria:
+      - "PagePlan validates and declares section intents for the landing page flow."
   - stage: section-planning
     primary_task: tasks/section-graph
     allowed_auxiliary_tasks: []
@@ -32,6 +44,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: design-system-pass
+    review_focus:
+      - "SectionGraph preserves PagePlan intent and proof bindings."
+    success_criteria:
+      - "SectionGraph validates and orders all required page sections."
   - stage: design-system-pass
     primary_task: tasks/design-pass
     allowed_auxiliary_tasks: []
@@ -44,6 +60,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: design-spec-pass
+    review_focus:
+      - "ThemeTokens express the selected design direction without breaking brand constraints."
+    success_criteria:
+      - "ThemeTokens validate and reference the source design context packs."
   - stage: design-spec-pass
     primary_task: tasks/design-spec
     allowed_auxiliary_tasks: []
@@ -52,6 +72,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: page-compile
+    review_focus:
+      - "DesignSpec binds every SectionGraph section to concrete design intent."
+    success_criteria:
+      - "DesignSpec validates against upstream artifact refs and section coverage checks."
   - stage: page-compile
     primary_task: tasks/page-compile
     allowed_auxiliary_tasks: []
@@ -60,6 +84,10 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: verify-publishable-page
+    review_focus:
+      - "Compiled PageSpec exactly reflects the validated DesignSpec and SectionGraph."
+    success_criteria:
+      - "PageSpec validates and preview-build evidence binds the same page spec."
   - stage: verify-publishable-page
     primary_task: verifiers/publishable-page
     allowed_auxiliary_tasks: []
@@ -68,6 +96,10 @@ stages:
     default_verifier: verifiers/publishable-page
     default_backend: codex
     next_stage: publish-preview
+    review_focus:
+      - "QAReport verdict is bound to the exact PageSpec and preview build."
+    success_criteria:
+      - "QAReport validates and contains no failed non-waivable gate before publish."
   - stage: publish-preview
     primary_task: deploy/publish-preview
     allowed_auxiliary_tasks: []
@@ -76,3 +108,7 @@ stages:
     default_verifier: none
     default_backend: codex
     next_stage: end
+    review_focus:
+      - "PublishVersion and handoff sidecar bind the same run, page spec, QA report, and preview build."
+    success_criteria:
+      - "PublishVersion validates with publish_target preview and handoff metadata is persisted."

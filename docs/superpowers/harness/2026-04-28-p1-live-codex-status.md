@@ -19,7 +19,7 @@ Closed capabilities:
 - real Codex adapter mode behind `FUSERA_CODEX_ADAPTER=real`
 - run-level `adapter_mode` persistence and continue-time adapter-mode locking
 - live `normalize-input` attachment extraction
-- live stable artifact candidate extraction for `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, and `ThemeTokens`
+- live stable artifact candidate extraction for `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, and `DesignSpec`
 - candidate route guards for current `run_id`, expected artifact type, duplicate artifact type, and schema validity
 - immutable attempt-scoped raw evidence under `stages/<stage>/attempts/<attempt_id>/`
 - runner-owned no-op backend evidence for `page-compile`, `verify-publishable-page`, and `publish-preview`
@@ -267,7 +267,7 @@ Observed evidence:
 
 Current P2 retry/resume rules:
 
-- retryable stages are model-owned stages only: `normalize-input`, `product-and-brand-brief`, `page-strategy`, `section-planning`, `design-system-pass`
+- retryable stages are model-owned stages only: `normalize-input`, `product-and-brand-brief`, `page-strategy`, `section-planning`, `design-system-pass`, `design-spec-pass`
 - retryable failure modes are `invocation_failure`, `extraction_failure`, `validation_failure`, and `missing_output`
 - runner-owned stage failures do not retry through the backend path
 - retry reassembles context from validated artifacts and does not mutate prior attempt evidence

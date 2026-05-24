@@ -25,11 +25,26 @@ stage: publish-preview
 
 ## Handoff Shape
 
-```json
+This is a runner-owned deploy stage. The backend must not emit a
+`PublishVersion`; the runner persists an envelope shaped like:
+
+```fusera-artifact-json
 {
+  "artifact_id": "publish-version_<run-local-id>",
   "artifact_type": "PublishVersion",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "validated",
   "producer_stage": "publish-preview",
+  "input_refs": [
+    "<PageSpec artifact_id>",
+    "<QAReport artifact_id>",
+    "<compiled preview_build_ref>"
+  ],
+  "validation": {
+    "valid": true,
+    "errors": []
+  },
   "payload": {
     "publish_version_id": "",
     "page_spec_ref": "",

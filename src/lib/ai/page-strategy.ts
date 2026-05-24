@@ -366,15 +366,26 @@ export async function buildPageArtifacts({
     payload: designSpecPayload,
   });
 
+  const designIntentBySectionId = new Map(
+    designSpecPayload.section_design_intents.map((intent) => [
+      intent.section_id,
+      intent,
+    ]),
+  );
   const pageSpecPayload: PageSpecPayload = {
     route_id: `landing-page:${runId}`,
     sections: sectionGraphPayload.section_order.map((sectionId) => {
       const node = sectionGraphPayload.nodes.find(
         (candidate) => candidate.section_id === sectionId,
       );
+      const designIntent = designIntentBySectionId.get(sectionId);
 
       if (!node) {
         throw new Error(`SectionGraph references missing section ${sectionId}`);
+      }
+
+      if (!designIntent) {
+        throw new Error(`DesignSpec references missing section ${sectionId}`);
       }
 
       return {
@@ -383,6 +394,13 @@ export async function buildPageArtifacts({
         component: `landing.${node.section_type}`,
         title: node.title,
         props: node.props,
+        design_intent: {
+          layout: designIntent.layout,
+          media: designIntent.media,
+          copy: designIntent.copy,
+          proof: designIntent.proof,
+          motion: designIntent.motion,
+        },
       };
     }),
     token_refs: {

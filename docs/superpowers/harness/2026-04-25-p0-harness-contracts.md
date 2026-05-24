@@ -34,6 +34,7 @@ P0 harness stable artifacts:
 - `PagePlan`
 - `SectionGraph`
 - `ThemeTokens`
+- `DesignSpec`
 - `PageSpec`
 - `QAReport`
 - `PublishVersion`
@@ -63,6 +64,7 @@ Every stable artifact emitted by the harness must carry:
 P0 consumption rule:
 
 - planning and compile stages consume only `validated`
+- `page-compile` consumes validated `SectionGraph`, `ThemeTokens`, and `DesignSpec`
 - publish consumes only a validated `QAReport` that binds the exact publish candidate
 
 ## 4. Required P0 Payload Minima
@@ -74,7 +76,8 @@ P0 consumption rule:
 | `PagePlan` | `page_goal`, `narrative_arc`, `section_intents[]`, `cta_strategy`, `proof_strategy` |
 | `SectionGraph` | `nodes[]`, `edges[]`, `section_order[]`, `required_props`, `proof_bindings[]`, `claim_policy` |
 | `ThemeTokens` | `colors`, `typography`, `spacing`, `radii`, `shadows`, `motion` |
-| `PageSpec` | `route_id`, `sections[]`, `token_refs`, `asset_refs`, `compile_targets[]` |
+| `DesignSpec` | `visual_thesis`, `brand_alignment`, `token_directives`, `layout_directives`, `motion_directives`, `section_design_intents[]`, `claim_and_proof_constraints`, `anti_patterns` |
+| `PageSpec` | `route_id`, `sections[]` with `design_intent`, `token_refs`, `asset_refs`, `compile_targets[]` |
 | `QAReport` | `page_spec_ref`, `preview_build_ref`, `verdict`, `gate_results[]`, `issues[]`, `repair_directives[]`, `evidence_refs[]`, `waiver` |
 | `PublishVersion` | `publish_version_id`, `page_spec_ref`, `qa_report_ref`, `preview_url`, `published_at`, `publish_target`, `previous_active_pointer`, `pointer_transaction_ref` |
 
@@ -211,6 +214,18 @@ P0 adapter selection precedence:
 3. first common adapter from remaining candidate packs' ordered `preferred_adapters`
 4. P0 primary backend `codex`
 5. otherwise fail closed
+
+Runtime support is codex-first. `claude-code` may appear only as an
+instruction-only compatibility target until a concrete adapter exists.
+
+Capability matching uses the normalized Codex capability groups:
+
+- adapter runtime capabilities: `workspace.read`, `workspace.search`,
+  `artifact.attach`, `image.inspect`, `screenshot.capture`
+- runner-managed capabilities: `workspace.write`, `process.exec`
+- experimental capabilities: `agent.spawn`
+
+`agent.spawn` is not selectable for correctness-critical stages in P0.
 
 P0 artifact filtering rule:
 

@@ -20,6 +20,7 @@ export type PackManifest = {
   backend_support: {
     adapters: string[];
     preferred_adapters: string[];
+    instruction_only_adapters?: string[];
   };
   capabilities_required: string[];
   required_artifacts: Array<{
@@ -42,6 +43,8 @@ export type StageProfile = {
   default_verifier: string;
   default_backend: string;
   next_stage: string;
+  review_focus?: string[];
+  success_criteria?: string[];
 };
 
 export type StageResolution = {
@@ -162,6 +165,8 @@ export function validateRegistryStageComposition(options: {
   validateUniqueArtifactProducerStages(options.stageProfiles.stages, issues);
 
   for (const profile of profilesToValidate) {
+    validateStageReviewMetadata(profile, issues);
+
     const selectedPacks = selectedPacksForProfile(profile, packsById, issues);
     const contextPacks = (profile.context_packs ?? [])
       .map((packId) => packsById.get(packId))
@@ -202,6 +207,32 @@ export function validateRegistryStageComposition(options: {
   }
 
   return issues;
+}
+
+function validateStageReviewMetadata(
+  profile: StageProfile,
+  issues: RegistryStageCompositionIssue[]
+): void {
+  for (const field of ["review_focus", "success_criteria"] as const) {
+    const value = profile[field];
+
+    if (value === undefined) {
+      continue;
+    }
+
+    if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || item.length === 0)) {
+      issues.push({
+        code: "invalid_stage_review_metadata",
+        message: `Stage ${profile.stage} ${field} must be an array of non-empty strings when present`,
+        source_ref: "superpowers/packs/stage-profiles.yaml",
+        stage: profile.stage,
+        target_ids: [`stage:${profile.stage}`],
+        metadata: {
+          field
+        }
+      });
+    }
+  }
 }
 
 function missingCapabilitiesForBackend(backend: string, requiredCapabilities: string[]): string[] {

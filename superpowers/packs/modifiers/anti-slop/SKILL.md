@@ -52,7 +52,7 @@ It is a quality modifier, not a producer. The selected primary task remains resp
 
 ## Forbidden Outputs
 
-- Must not emit `ThemeTokens`, `QAReport`, or `PublishVersion`.
+- Must not emit `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, or `PublishVersion`.
 - Must not mutate upstream artifacts.
 - Must not loosen artifact validation or verifier gates.
 

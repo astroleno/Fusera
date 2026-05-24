@@ -15,6 +15,7 @@ The stable artifact spine is:
 - `PagePlan`
 - `SectionGraph`
 - `ThemeTokens`
+- `DesignSpec`
 - `PageSpec`
 - `QAReport`
 - `PublishVersion`
@@ -107,6 +108,7 @@ P0 consumption rule:
 | `PagePlan` | page strategy stage | section planning, design, QA | narrative, section order intent, CTA strategy | reject if stage goal and section intent conflict |
 | `SectionGraph` | section planning stage | compiler, QA | ordered sections, allowed section types, required props, proof bindings consistent with claim policy | reject if unknown section type, missing required props, or claim policy and proof bindings conflict |
 | `ThemeTokens` | design system pass | compiler, QA | color, typography, spacing, motion token sets | reject if token references are unresolved or incomplete |
+| `DesignSpec` | design spec pass | compiler, QA | section-level design intents cover `SectionGraph.section_order`, claim policy matches `ProductBrief`, token directives bind to `ThemeTokens` | reject if section ids are unknown, duplicated, or omitted |
 | `PageSpec` | deterministic compiler | renderer, QA, publish | compiled structure references only valid sections and tokens | reject if compile output includes unresolved component or asset refs |
 | `QAReport` | verifier layer or approval flow when a waiver is recorded | repair loop, approval, publish | artifact validation status plus payload verdict, exact `PageSpec` binding, preview build binding, gate results, waiver metadata when applicable, suggested repair directives, evidence refs | failed reports stay materialized and block publish |
 | `PublishVersion` | publish handoff | serving layer, rollback flow | immutable version id, source `PageSpec`, source `QAReport`, publish target, previous active pointer snapshot | failed publish creates no active pointer change |
@@ -177,17 +179,30 @@ Required payload fields:
 - `shadows`
 - `motion`
 
-### 7.6 `PageSpec`
+### 7.6 `DesignSpec`
+
+Required payload fields:
+
+- `visual_thesis`
+- `brand_alignment`
+- `token_directives`
+- `layout_directives`
+- `motion_directives`
+- `section_design_intents[]`
+- `claim_and_proof_constraints`
+- `anti_patterns`
+
+### 7.7 `PageSpec`
 
 Required payload fields:
 
 - `route_id`
-- `sections[]`
+- `sections[]` with `design_intent`
 - `token_refs`
 - `asset_refs`
 - `compile_targets[]`
 
-### 7.7 `QAReport`
+### 7.8 `QAReport`
 
 Required payload fields:
 
@@ -241,7 +256,7 @@ P0 non-waivable gates:
 
 If any failed gate has `waivable: false`, the report cannot be used for publish even if a human records a waiver.
 
-### 7.8 `PublishVersion`
+### 7.9 `PublishVersion`
 
 Required payload fields:
 
@@ -254,7 +269,7 @@ Required payload fields:
 - `previous_active_pointer`
 - `pointer_transaction_ref`
 
-### 7.9 Preview `PublishVersion` Semantics
+### 7.10 Preview `PublishVersion` Semantics
 
 P0 introduces `PublishVersion` only for preview publish.
 

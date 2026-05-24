@@ -20,7 +20,7 @@ stage: workflow-entry
 
 ## Forbidden Outputs
 
-- Must not emit `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `PageSpec`, `QAReport`, or `PublishVersion`.
+- Must not emit `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, or `PublishVersion`.
 - Must not bypass stage profiles or infer producer ownership from prose.
 
 ## Handoff Shape

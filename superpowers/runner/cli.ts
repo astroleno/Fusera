@@ -4,6 +4,7 @@ import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { CodexAdapterMode } from "../adapters/codex/adapter.ts";
+import { formatCapabilityReportText, writeCapabilityReport } from "./capability-report.ts";
 import { runCiIsolatedLive, runCiLive, runCiMock, runLiveStability } from "./ci-gates.ts";
 import { checkLiveRunner } from "./check-live-runner.ts";
 import { inspectRun, formatInspectionText } from "./inspect-run.ts";
@@ -65,6 +66,10 @@ export async function runCli(argv = process.argv.slice(2)): Promise<CliResult> {
 
   if (command === "doctor") {
     return doctorCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
+  }
+
+  if (command === "capability-report") {
+    return capabilityReportCommand([subcommand, ...rest].filter((arg): arg is string => typeof arg === "string"));
   }
 
   if (command === "graph") {
@@ -395,6 +400,38 @@ async function doctorCommand(args: string[]): Promise<CliResult> {
   };
 }
 
+async function capabilityReportCommand(args: string[]): Promise<CliResult> {
+  const sourceRoot = process.env.FUSERA_SOURCE_ROOT ?? process.cwd();
+  const runFlagIndex = args.indexOf("--run");
+  const runDir = runFlagIndex === -1
+    ? path.join(sourceRoot, ".fusera/runs", makeRunId())
+    : args[runFlagIndex + 1];
+
+  if (!runDir) {
+    throw new Error(`capability-report --run requires a run directory\n\n${usage()}`);
+  }
+
+  const report = await writeCapabilityReport({
+    rootDir: sourceRoot,
+    runDir,
+    phase: "post_resolution"
+  });
+
+  if (args.includes("--json")) {
+    return {
+      ok: report.ok,
+      command: "capability-report",
+      report
+    };
+  }
+
+  return {
+    ok: report.ok,
+    command: "capability-report",
+    text: formatCapabilityReportText(report)
+  };
+}
+
 async function skillsCommand(subcommand: string | undefined, args: string[]): Promise<CliResult> {
   if (subcommand !== "install") {
     throw new Error(`Unknown skills command: ${subcommand ?? "(missing)"}\n\n${usage()}`);
@@ -474,6 +511,7 @@ function usage(): string {
     "  node --experimental-strip-types superpowers/runner/cli.ts continue <run-dir> <target-stage> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts resume <run-dir> [--live|--mock]",
     "  node --experimental-strip-types superpowers/runner/cli.ts inspect <run-dir> [--json] [--recent-events <n>] [--graph]",
+    "  node --experimental-strip-types superpowers/runner/cli.ts capability-report [--json] [--run <run-dir>]",
     "  node --experimental-strip-types superpowers/runner/cli.ts doctor [--deep] [--live] [--auth-probe]",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify p0",
     "  node --experimental-strip-types superpowers/runner/cli.ts verify live-preview <run-dir>",
@@ -532,6 +570,12 @@ function parseCaseFilter(value: string | undefined): string[] | undefined {
     .split(",")
     .map((caseId) => caseId.trim())
     .filter(Boolean);
+}
+
+function makeRunId(): string {
+  return `run_${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}_${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
 }
 
 function adapterModeFlag(args: string[]): CodexAdapterMode | undefined {

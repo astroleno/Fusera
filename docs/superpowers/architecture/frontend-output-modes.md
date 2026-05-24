@@ -21,7 +21,7 @@ Specialized presentation and brand outputs branch from these families but still 
 
 | Output Mode | Family | Agent-Produced Artifacts | Deterministic Compiler | Final Outputs | Primary Verifiers |
 |---|---|---|---|---|---|
-| `landing-page` | `page-generation` | `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens` | page compiler | `PageSpec`, preview build | publishable page, proof and claims, responsive/accessibility |
+| `landing-page` | `page-generation` | `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `DesignSpec` | page compiler | `PageSpec`, preview build | publishable page, proof and claims, responsive/accessibility |
 | `app-ui-design` | `app-ui-design` | `UXBrief`, `ScreenGraph`, `FlowSpec`, `StateMatrix`, `ComponentContract`, `ThemeTokens` | screen compiler | screen preview package, component contract bundle | UI consistency, state coverage, responsive/accessibility |
 | `hi-fi-prototype` | either | `PrototypeSpec` plus referenced tokens and flows | prototype compiler | interactive HTML prototype | UI consistency, design review |
 | `slides` | either | `DeckSpec` | deck compiler | HTML deck, export-ready package, optional speaker notes | publishable page, narrative consistency |

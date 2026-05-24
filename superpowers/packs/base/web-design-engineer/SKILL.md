@@ -42,7 +42,7 @@ It provides design-engineering guidance only. It does not own stage execution, s
 
 ## Forbidden Outputs
 
-- Must not emit `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `PageSpec`, `QAReport`, or `PublishVersion` directly.
+- Must not emit `ProductBrief`, `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, or `PublishVersion` directly.
 - Must not bypass `tasks/design-pass`.
 - Must not introduce visual requirements that conflict with validated upstream artifacts.
 

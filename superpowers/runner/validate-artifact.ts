@@ -343,6 +343,13 @@ function validateArtifactInvariants(candidate: unknown): string[] {
       errors.push("$.payload.verdict cannot be pass while blocking issues remain");
     }
 
+    if (
+      (payload.verdict === "pass" || payload.verdict === "waived") &&
+      (typeof payload.preview_build_ref !== "string" || payload.preview_build_ref.length === 0)
+    ) {
+      errors.push("$.payload.preview_build_ref must be a non-empty string unless verdict is fail");
+    }
+
     if (payload.verdict === "waived" && payload.waiver === null) {
       errors.push("$.payload.waiver is required when verdict is waived");
     }

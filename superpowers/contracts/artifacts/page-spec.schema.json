@@ -50,12 +50,24 @@
           "items": {
             "type": "object",
             "additionalProperties": true,
-            "required": ["section_id", "section_type", "component", "props"],
+            "required": ["section_id", "section_type", "component", "props", "design_intent"],
             "properties": {
               "section_id": { "type": "string", "minLength": 1 },
               "section_type": { "type": "string", "minLength": 1 },
               "component": { "type": "string", "minLength": 1 },
-              "props": { "type": "object" }
+              "props": { "type": "object" },
+              "design_intent": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["layout", "media", "copy", "proof", "motion"],
+                "properties": {
+                  "layout": { "type": "string", "minLength": 1 },
+                  "media": { "type": "string", "minLength": 1 },
+                  "copy": { "type": "string", "minLength": 1 },
+                  "proof": { "type": "string", "minLength": 1 },
+                  "motion": { "type": "string", "minLength": 1 }
+                }
+              }
             }
           }
         },

@@ -40,8 +40,11 @@ Emit one fenced artifact block:
 
 ```fusera-artifact-json
 {
+  "artifact_id": "design-spec_<run-local-id>",
   "artifact_type": "DesignSpec",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "draft",
   "producer_stage": "design-spec-pass",
   "input_refs": [
     "<ProductBrief artifact_id>",
@@ -50,6 +53,10 @@ Emit one fenced artifact block:
     "<SectionGraph artifact_id>",
     "<ThemeTokens artifact_id>"
   ],
+  "validation": {
+    "valid": false,
+    "errors": []
+  },
   "payload": {
     "visual_thesis": "Product-specific design thesis.",
     "brand_alignment": {

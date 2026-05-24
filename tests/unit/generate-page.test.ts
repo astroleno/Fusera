@@ -146,6 +146,13 @@ describe("buildPageArtifacts", () => {
         expect.objectContaining({
           section_id: "buyer-fit",
           section_type: "problem",
+          design_intent: expect.objectContaining({
+            layout: expect.any(String),
+            media: expect.any(String),
+            copy: expect.any(String),
+            proof: expect.any(String),
+            motion: expect.any(String),
+          }),
           props: expect.objectContaining({
             headline: "Built for Urban commuters",
           }),

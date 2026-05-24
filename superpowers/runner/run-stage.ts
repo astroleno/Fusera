@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { CodexAdapterMode, CodexInvocationResult } from "../adapters/codex/adapter.ts";
+import { assertCapabilityReportOk, writeCapabilityReport } from "./capability-report.ts";
 import { compilePage } from "./compile-page.ts";
 import { adapterModeFromEnv, invokeBackend, invokeNoopBackend } from "./invoke-backend.ts";
 import { publishPreview } from "./publish-preview.ts";
@@ -42,7 +43,32 @@ export async function runFixture(options: {
   const runDir = path.join(rootDir, ".fusera/runs", runId);
   const inputPath = options.inputPath ?? path.join(rootDir, "superpowers/runner/fixtures/landing-input.json");
   const input = JSON.parse(await readFile(inputPath, "utf8")) as Record<string, unknown>;
-  const stageSequence = await resolveStageSequence(rootDir);
+  await writeCapabilityReport({
+    rootDir,
+    runDir,
+    phase: "pre_resolution"
+  });
+
+  let stageSequence: string[];
+
+  try {
+    stageSequence = await resolveStageSequence(rootDir);
+  } catch (error) {
+    const report = await writeCapabilityReport({
+      rootDir,
+      runDir,
+      phase: "post_resolution"
+    });
+    assertCapabilityReportOk(report);
+    throw error;
+  }
+
+  assertCapabilityReportOk(await writeCapabilityReport({
+    rootDir,
+    runDir,
+    phase: "post_resolution"
+  }));
+
   const stopAfterStage = options.stopAfterStage;
   const adapterMode = options.adapterMode ?? adapterModeFromEnv();
 
@@ -430,6 +456,18 @@ export async function resumeFailedRun(options: {
         failure_mode: decision.failure_mode
       }
     });
+    await writeRunEvent(runDir, {
+      run_id: runId,
+      type: "stage_blocked",
+      stage: failedStage,
+      from_state: "failed",
+      to_state: "needs_review",
+      data: {
+        reason: decision.reason,
+        blocked_by: ["retry_policy"],
+        artifact_refs: []
+      }
+    });
     await writeRunRecord(runDir, finalRecord);
 
     return {
@@ -446,6 +484,17 @@ export async function resumeFailedRun(options: {
     updated_at: new Date().toISOString(),
     adapter_mode: lockedAdapterMode,
     last_retry_decision: decision
+  });
+  await writeRunEvent(runDir, {
+    run_id: runId,
+    type: "stage_unblocked",
+    stage: failedStage,
+    from_state: "failed",
+    to_state: "retrying",
+    data: {
+      reason: decision.reason,
+      artifact_refs: []
+    }
   });
   await writeRunEvent(runDir, {
     run_id: runId,
@@ -639,6 +688,19 @@ async function executeStage(options: {
       if (error instanceof StageStopError) {
         await writeRunEvent(options.runDir, {
           run_id: options.runId,
+          type: "stage_blocked",
+          stage: options.stage,
+          from_state: "running",
+          to_state: error.final_state,
+          data: {
+            reason: `Stage stopped in ${error.final_state}`,
+            blocked_by: ["runner_stage_stop"],
+            artifact_refs: [],
+            attempt_id: attemptIdFrom(adapterResult)
+          }
+        });
+        await writeRunEvent(options.runDir, {
+          run_id: options.runId,
           type: "stage_completed",
           stage: options.stage,
           data: {
@@ -652,6 +714,20 @@ async function executeStage(options: {
       }
 
       throw new StageExecutionError(options.stage, (error as Error).message, "validation_failure");
+    }
+
+    const joinReadyData = await stageJoinReadyData({
+      runDir: options.runDir,
+      resolution
+    });
+
+    if (joinReadyData) {
+      await writeRunEvent(options.runDir, {
+        run_id: options.runId,
+        type: "stage_join_ready",
+        stage: options.stage,
+        data: joinReadyData
+      });
     }
 
     await writeRunEvent(options.runDir, {
@@ -672,6 +748,30 @@ async function executeStage(options: {
 
     throw new StageExecutionError(options.stage, (error as Error).message, "unknown");
   }
+}
+
+async function stageJoinReadyData(options: {
+  runDir: string;
+  resolution: StageResolution;
+}): Promise<Record<string, unknown> | null> {
+  const requiredArtifacts = options.resolution.stage_profile.allowed_outputs;
+
+  if (requiredArtifacts.length === 0 || options.resolution.next_stage === "end") {
+    return null;
+  }
+
+  const validatedArtifactRefs: string[] = [];
+
+  for (const artifactType of requiredArtifacts) {
+    const artifact = await readValidatedArtifact(options.runDir, artifactType);
+    validatedArtifactRefs.push(artifact.artifact_id);
+  }
+
+  return {
+    required_artifacts: requiredArtifacts,
+    validated_artifact_refs: validatedArtifactRefs,
+    next_stage: options.resolution.next_stage
+  };
 }
 
 async function persistStageOutputs(options: {

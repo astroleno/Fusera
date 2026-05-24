@@ -23,11 +23,25 @@ stage: verify-publishable-page
 
 ## Handoff Shape
 
-```json
+This is a runner-owned verifier stage. The backend must not emit a `QAReport`;
+the runner persists an envelope shaped like:
+
+```fusera-artifact-json
 {
+  "artifact_id": "qa-report_<run-local-id>",
   "artifact_type": "QAReport",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "validated",
   "producer_stage": "verify-publishable-page",
+  "input_refs": [
+    "<PageSpec artifact_id>",
+    "<compiled preview_build_ref>"
+  ],
+  "validation": {
+    "valid": true,
+    "errors": []
+  },
   "payload": {
     "page_spec_ref": "",
     "preview_build_ref": "",

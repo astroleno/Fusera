@@ -114,6 +114,8 @@ function normalizeRunnerArgs(rawArgs) {
     normalizeFirstPathAfter(next, 1, new Set(["--mock"]), new Set(["--runs"]));
   } else if (command === "graph" && next[1] === "run") {
     normalizeFixedPath(next, 2);
+  } else if (command === "capability-report") {
+    normalizeValueFlag(next, "--run");
   } else if (command === "skills" && next[1] === "install") {
     normalizeValueFlag(next, "--workspace-root");
   }

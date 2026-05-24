@@ -16,13 +16,12 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
       - workspace.search
       - process.exec
     required_inputs:
@@ -54,13 +53,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - raw_request
     required_artifacts: []
@@ -90,13 +89,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - normalized_input_bundle
     required_artifacts: []
@@ -129,13 +128,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - normalized_input_bundle
     required_artifacts: []
@@ -167,13 +166,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - normalized_input_bundle
     required_artifacts:
@@ -213,13 +212,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - normalized_input_bundle
     required_artifacts:
@@ -256,13 +255,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - normalized_input_bundle
     required_artifacts:
@@ -309,13 +308,13 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
-      - workspace.write
+      - artifact.attach
     required_inputs:
       - normalized_input_bundle
     required_artifacts:
@@ -371,9 +370,9 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
@@ -427,9 +426,9 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
@@ -483,9 +482,9 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
@@ -543,9 +542,9 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
@@ -597,9 +596,9 @@ packs:
       tier: backend-preferred
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
@@ -612,6 +611,10 @@ packs:
           - validated
         version_range: ^1.0.0
       - artifact_type: ThemeTokens
+        allowed_statuses:
+          - validated
+        version_range: ^1.0.0
+      - artifact_type: DesignSpec
         allowed_statuses:
           - validated
         version_range: ^1.0.0
@@ -643,9 +646,9 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read
@@ -685,9 +688,9 @@ packs:
       tier: portable-core
       adapters:
         - codex
-        - claude-code
       preferred_adapters:
         - codex
+      instruction_only_adapters:
         - claude-code
     capabilities_required:
       - workspace.read

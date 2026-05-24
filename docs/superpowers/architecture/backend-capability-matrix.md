@@ -59,13 +59,13 @@ These capabilities are not portable and must be explicitly declared in the manif
 | Capability | Tier | Codex adapter strategy | Claude adapter strategy | Runner emulation boundary | Failure rule |
 |---|---|---|---|---|---|
 | `workspace.read` | A | native adapter requirement | native adapter requirement | none | fail closed if missing |
-| `workspace.write` | A | native adapter requirement | native adapter requirement | none | fail closed if missing |
+| `workspace.write` | A | runner-managed for artifact persistence | future runner/adapter decision | validated artifacts are written by the runner | fail if a pack requires unrestricted workspace mutation |
 | `workspace.search` | A | native adapter requirement | native adapter requirement | none | fail closed if missing |
-| `process.exec` | A | native adapter requirement | native adapter requirement or runner wrapper | only bounded compile, lint, export, and inspect steps | fail if pack expects unrestricted shell behavior |
+| `process.exec` | A | runner-managed for harness-owned commands | future runner/adapter decision | only bounded compile, lint, export, and inspect steps | fail if pack expects unrestricted shell behavior |
 | `artifact.attach` | A | runner-managed | runner-managed | always runner-owned | fail if backend-specific attachment semantics are required |
 | `image.inspect` | A | adapter or runner path | adapter or runner path | runner may supply screenshots or local image refs | fail only if neither adapter nor runner can inspect evidence |
 | `screenshot.capture` | B | adapter path or runner-owned browser step | adapter path or runner-owned browser step | runner may capture preview pages only | fail if pack requires arbitrary authenticated browsing not declared elsewhere |
-| `agent.spawn` | B | use bounded fan-out when available | use bounded fan-out when available | runner may degrade to serial execution only | fail if pack requires parallelism for correctness |
+| `agent.spawn` | B | experimental; unavailable for P0 routing | future bounded fan-out only | serial runner is the only P0 path | fail closed until child attempt contracts and join validation exist |
 | `hook.enforce` | B | adapter hooks or runner-owned gate step | adapter hooks or runner-owned gate step | runner owns final decision and logging | fail if required policy cannot be enforced deterministically |
 | `browser.automation` | C | only if the selected adapter path supplies it | only if the selected adapter path supplies it | no generic runner emulation in P0 | fail closed when backend path lacks it |
 

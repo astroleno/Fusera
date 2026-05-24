@@ -211,6 +211,16 @@ export const designSpecPayloadSchema = z.object({
     .strict(),
 }).strict();
 
+const sectionDesignIntentSchema = z
+  .object({
+    layout: nonEmptyString,
+    media: nonEmptyString,
+    copy: nonEmptyString,
+    proof: nonEmptyString,
+    motion: nonEmptyString,
+  })
+  .strict();
+
 export const pageSpecPayloadSchema = z.object({
   route_id: nonEmptyString,
   sections: z
@@ -221,6 +231,7 @@ export const pageSpecPayloadSchema = z.object({
           section_type: nonEmptyString,
           component: nonEmptyString,
           props: z.record(z.unknown()),
+          design_intent: sectionDesignIntentSchema,
         })
         .catchall(z.unknown()),
     )

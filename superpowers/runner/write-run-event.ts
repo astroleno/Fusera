@@ -1,11 +1,12 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { validateRunEventRecord, type RunEventType } from "./run-event-types.ts";
 
 export type RunEvent = {
   event_id?: string;
   run_id?: string;
-  type: string;
+  type: RunEventType;
   stage?: string;
   from_state?: string;
   to_state?: string;
@@ -21,6 +22,11 @@ export async function writeRunEvent(runDir: string, event: RunEvent): Promise<Ru
     ts: event.ts ?? new Date().toISOString(),
     ...event
   };
+  const errors = validateRunEventRecord(normalized as Record<string, unknown>);
+
+  if (errors.length > 0) {
+    throw new Error(`Invalid run event: ${errors.join("; ")}`);
+  }
 
   await appendFile(
     path.join(runDir, "events.ndjson"),
@@ -43,5 +49,5 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     process.exit(1);
   }
 
-  await writeRunEvent(runDir, { type });
+  await writeRunEvent(runDir, { type: type as RunEventType });
 }

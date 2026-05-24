@@ -51,7 +51,7 @@ Initial mined directions:
 
 ## Forbidden Outputs
 
-- Must not emit `ThemeTokens` directly.
+- Must not emit `ThemeTokens`, `DesignSpec`, or `PageSpec` directly.
 - Must not hard-code a source palette when it conflicts with brand inputs or accessibility gates.
 - Must not produce multiple layered styles in P0.
 

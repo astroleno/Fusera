@@ -72,6 +72,13 @@ const pageSpecPayload = {
         headline: "Atlas Bottle",
         cta_label: "Shop now",
       },
+      design_intent: {
+        layout: "Product-first hero layout.",
+        media: "Use supplied product image.",
+        copy: "Keep copy grounded in the product brief.",
+        proof: "Avoid unsupported proof claims.",
+        motion: "Use subtle interaction feedback.",
+      },
     },
   ],
   token_refs: {

@@ -707,7 +707,7 @@ The current Superpowers pipeline already has a natural pack-driven structure.
 | Page strategy | `tasks/page-strategy` | brief artifacts | `PagePlan` |
 | Section planning | `tasks/section-graph` | `PagePlan`, proof inputs | `SectionGraph` |
 | Design system pass | `base/web-design-engineer`, `tasks/design-pass`, `styles/*` | brief, plan, references | `ThemeTokens`, optional `DESIGN.md` |
-| Page compilation | deterministic compiler | `SectionGraph`, `ThemeTokens` | `PageSpec`, preview build |
+| Page compilation | deterministic compiler | `SectionGraph`, `ThemeTokens`, `DesignSpec` | `PageSpec`, preview build |
 | Critique and repair | `tasks/qa-critique` plus one selected verifier bundle | preview screenshots, `PageSpec` | `QAReport`, repair directives |
 | Publish handoff | `deploy/*`, `verifiers/publishable-page` | approved draft, QA report | `PublishVersion` |
 

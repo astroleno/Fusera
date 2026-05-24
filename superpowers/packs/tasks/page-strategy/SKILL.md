@@ -18,16 +18,29 @@ stage: page-strategy
 
 ## Forbidden Outputs
 
-- Must not emit `SectionGraph`, `ThemeTokens`, `PageSpec`, `QAReport`, or `PublishVersion`.
+- Must not emit `SectionGraph`, `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, or `PublishVersion`.
 - Must not consume rejected or draft artifacts.
 
 ## Handoff Shape
 
-```json
+Emit one fenced artifact candidate block:
+
+```fusera-artifact-json
 {
+  "artifact_id": "page-plan_<run-local-id>",
   "artifact_type": "PagePlan",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "draft",
   "producer_stage": "page-strategy",
+  "input_refs": [
+    "<ProductBrief artifact_id>",
+    "<BrandProfile artifact_id>"
+  ],
+  "validation": {
+    "valid": false,
+    "errors": []
+  },
   "payload": {
     "page_goal": "",
     "narrative_arc": "",

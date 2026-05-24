@@ -18,16 +18,26 @@ stage: product-and-brand-brief
 
 ## Forbidden Outputs
 
-- Must not emit `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `PageSpec`, `QAReport`, or `PublishVersion`.
+- Must not emit `BrandProfile`, `PagePlan`, `SectionGraph`, `ThemeTokens`, `DesignSpec`, `PageSpec`, `QAReport`, or `PublishVersion`.
 - Must not output unenveloped JSON.
 
 ## Handoff Shape
 
-```json
+Emit one fenced artifact candidate block:
+
+```fusera-artifact-json
 {
+  "artifact_id": "product-brief_<run-local-id>",
   "artifact_type": "ProductBrief",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "draft",
   "producer_stage": "product-and-brand-brief",
+  "input_refs": ["stages/normalize-input/normalized-input.json"],
+  "validation": {
+    "valid": false,
+    "errors": []
+  },
   "payload": {
     "product_name": "",
     "audiences": [],
@@ -50,6 +60,7 @@ stage: product-and-brand-brief
 - `ProofRef.proof_ref` ids must use the `proof:<stable-id>` form.
 - `ClaimRef.claim_ref` ids must use the `claim:<stable-id>` form.
 - `ClaimRef.proof_refs` stores only `proof:<stable-id>` references.
+- The example below is a payload excerpt only, not a complete artifact handoff.
 - This is a reference-shape contract only. It does not make a page publishable by itself.
 - Publish/export approval still belongs to downstream QA and publish control-plane checks.
 

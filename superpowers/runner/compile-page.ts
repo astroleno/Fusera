@@ -21,8 +21,9 @@ export async function compilePage(options: {
   const contractsDir = options.contractsDir ?? path.resolve("superpowers/contracts/artifacts");
   const sectionGraph = await readValidatedArtifact(options.runDir, "SectionGraph");
   const themeTokens = await readValidatedArtifact(options.runDir, "ThemeTokens");
+  const designSpec = await readValidatedArtifact(options.runDir, "DesignSpec");
   const runId = sectionGraph.run_id;
-  const seed = stableHash(`${sectionGraph.artifact_id}:${themeTokens.artifact_id}`);
+  const seed = stableHash(`${sectionGraph.artifact_id}:${themeTokens.artifact_id}:${designSpec.artifact_id}`);
   const pageSpecId = `page-spec_${seed.slice(0, 12)}`;
   const previewBuildRef = `preview-build_${seed.slice(12, 24)}`;
   const nodes = Array.isArray(sectionGraph.payload.nodes) ? sectionGraph.payload.nodes : [];
@@ -34,18 +35,38 @@ export async function compilePage(options: {
       .filter((node): node is Record<string, unknown> => typeof node === "object" && node !== null)
       .map((node) => [String(node.section_id), node])
   );
+  const designIntents = Array.isArray(designSpec.payload.section_design_intents)
+    ? designSpec.payload.section_design_intents
+    : [];
+  const designIntentBySectionId = new Map(
+    designIntents
+      .filter((intent): intent is Record<string, unknown> => typeof intent === "object" && intent !== null)
+      .map((intent) => [String(intent.section_id), intent])
+  );
   const sections = sectionOrder.map((sectionId) => {
     const node = nodeById.get(String(sectionId));
+    const designIntent = designIntentBySectionId.get(String(sectionId));
 
     if (!node) {
       throw new Error(`SectionGraph references missing node ${String(sectionId)}`);
+    }
+
+    if (!designIntent) {
+      throw new Error(`DesignSpec omits design intent for section ${String(sectionId)}`);
     }
 
     return {
       section_id: String(node.section_id),
       section_type: String(node.section_type),
       component: `landing.${String(node.section_type)}`,
-      props: node.props && typeof node.props === "object" ? node.props : {}
+      props: node.props && typeof node.props === "object" ? node.props : {},
+      design_intent: {
+        layout: String(designIntent.layout),
+        media: String(designIntent.media),
+        copy: String(designIntent.copy),
+        proof: String(designIntent.proof),
+        motion: String(designIntent.motion)
+      }
     };
   });
 
@@ -56,7 +77,7 @@ export async function compilePage(options: {
     run_id: runId,
     status: "draft",
     producer_stage: "page-compile",
-    input_refs: [sectionGraph.artifact_id, themeTokens.artifact_id],
+    input_refs: [sectionGraph.artifact_id, themeTokens.artifact_id, designSpec.artifact_id],
     validation: {
       valid: false,
       errors: []
@@ -66,6 +87,7 @@ export async function compilePage(options: {
       sections,
       token_refs: {
         theme_tokens_ref: themeTokens.artifact_id,
+        design_spec_ref: designSpec.artifact_id,
         colors: Object.keys((themeTokens.payload.colors as Record<string, unknown>) ?? {})
       },
       asset_refs: [],
@@ -88,12 +110,14 @@ export async function compilePage(options: {
     preview_build_ref: previewBuildRef,
     run_id: runId,
     page_spec_ref: validation.artifact.artifact_id,
+    design_spec_ref: designSpec.artifact_id,
     compiler: "deterministic-p0-stub",
     compiled_at: new Date().toISOString(),
     route_id: validation.artifact.payload.route_id,
     sections: sections.map((section) => ({
       section_id: section.section_id,
-      component: section.component
+      component: section.component,
+      design_intent: section.design_intent
     }))
   };
 

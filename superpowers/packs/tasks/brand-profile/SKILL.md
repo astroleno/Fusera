@@ -18,16 +18,26 @@ stage: product-and-brand-brief
 
 ## Forbidden Outputs
 
-- Must not emit product, strategy, section, token, QA, or publish artifacts.
+- Must not emit product, strategy, section, token, design-spec, QA, or publish artifacts.
 - Must not override `ProductBrief`.
 
 ## Handoff Shape
 
-```json
+Emit one fenced artifact candidate block:
+
+```fusera-artifact-json
 {
+  "artifact_id": "brand-profile_<run-local-id>",
   "artifact_type": "BrandProfile",
   "schema_version": "1.0.0",
+  "run_id": "<run_id>",
+  "status": "draft",
   "producer_stage": "product-and-brand-brief",
+  "input_refs": ["stages/normalize-input/normalized-input.json"],
+  "validation": {
+    "valid": false,
+    "errors": []
+  },
   "payload": {
     "brand_traits": [],
     "tone_keywords": [],
