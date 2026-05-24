@@ -22,10 +22,9 @@ export const publishExportCredentialRefSchema = z.object({
 export const publishExportProviderConfigSchema = z.object({
   provider: z.enum(["noop", "dry-run"]),
   credentialRef: publishExportCredentialRefSchema.optional(),
-  settings: z.record(z.unknown()).optional(),
-});
+}).strict();
 export const publishExportAdapterTargetSchema = z
-  .object({
+  .strictObject({
     adapter: publishExportAdapterIdSchema,
     operationType: publishExportOperationTypeSchema,
     mode: publishExportAdapterModeSchema,
@@ -42,9 +41,54 @@ export const publishExportAdapterTargetSchema = z
         path: ["operationType"],
       });
     }
+
+    const expectedMode = adapterModeForAdapterId(target.adapter);
+    if (target.mode !== expectedMode) {
+      addSchemaIssue(
+        context,
+        ["mode"],
+        "adapter mode does not match adapter id",
+      );
+    }
+
+    if (expectedMode === "noop") {
+      if (target.providerConfig) {
+        addSchemaIssue(
+          context,
+          ["providerConfig"],
+          "noop adapter target must not include provider config",
+        );
+      }
+
+      if (target.dryRun !== undefined) {
+        addSchemaIssue(
+          context,
+          ["dryRun"],
+          "noop adapter target must not set dryRun",
+        );
+      }
+    }
+
+    if (expectedMode === "dry-run") {
+      if (target.dryRun !== true) {
+        addSchemaIssue(
+          context,
+          ["dryRun"],
+          "dry-run adapter target requires dryRun",
+        );
+      }
+
+      if (target.providerConfig?.provider !== "dry-run") {
+        addSchemaIssue(
+          context,
+          ["providerConfig", "provider"],
+          "dry-run adapter target requires dry-run provider",
+        );
+      }
+    }
   });
 export const publishExportAdapterResultSchema = z
-  .object({
+  .strictObject({
     adapter: publishExportAdapterIdSchema,
     operationType: publishExportOperationTypeSchema,
     mode: publishExportAdapterModeSchema,
@@ -61,6 +105,14 @@ export const publishExportAdapterResultSchema = z
         message: "adapter does not support operation type",
         path: ["operationType"],
       });
+    }
+
+    if (result.mode !== adapterModeForAdapterId(result.adapter)) {
+      addSchemaIssue(
+        context,
+        ["mode"],
+        "adapter result mode does not match adapter id",
+      );
     }
 
     if (!result.ok && !result.errorCode) {
@@ -171,6 +223,24 @@ function adapterSupportsOperation(
   operationType: PublishExportOperationType,
 ): boolean {
   return adapterId.endsWith(`-${operationType}`);
+}
+
+function adapterModeForAdapterId(
+  adapterId: PublishExportAdapterId,
+): PublishExportAdapterMode {
+  return adapterId.startsWith("dry-run-") ? "dry-run" : "noop";
+}
+
+function addSchemaIssue(
+  context: z.RefinementCtx,
+  path: Array<string | number>,
+  message: string,
+) {
+  context.addIssue({
+    code: z.ZodIssueCode.custom,
+    message,
+    path,
+  });
 }
 
 function createNoopPublishExportAdapter(

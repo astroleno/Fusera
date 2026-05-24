@@ -13,7 +13,7 @@ It adds:
 - stable `noop-export` and `noop-publish` adapters;
 - stable `dry-run-export` and `dry-run-publish` fixture adapters;
 - an explicit adapter registry;
-- provider config and credential reference schemas;
+- allowlisted provider config and credential reference schemas;
 - runtime validation for `external_target` and `external_result`;
 - an adapter runner that can only move operation state through the existing
   transition helper.
@@ -84,7 +84,18 @@ The dry-run target shape is:
 ```
 
 Credential references are references only. They must never contain plaintext
-secret values.
+secret values. Provider config is strict and allowlisted: it may include only
+`provider` and `credentialRef`. Arbitrary `settings`, `apiKey`, `token`,
+`secret`, or other provider-specific values are rejected until a future
+provider ships its own reviewed schema.
+
+The runtime schema also binds adapter id to mode and fixture provider:
+
+- `noop-*` targets must use `mode: "noop"` and must not include `dryRun` or
+  `providerConfig`;
+- `dry-run-*` targets must use `mode: "dry-run"`, `dryRun: true`, and
+  `providerConfig.provider: "dry-run"`;
+- `external_result.mode` must match the adapter id.
 
 ## State Ownership
 

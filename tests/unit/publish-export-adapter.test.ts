@@ -77,6 +77,12 @@ describe("publish/export external adapter contract", () => {
   });
 
   it("defines provider config and credential refs without plaintext secrets", () => {
+    const dryRunTarget = dryRunExportAdapter.prepare({
+      projectId: "project_01",
+      operationId: "operation_01",
+      operationType: "export",
+    });
+
     expect(
       publishExportCredentialRefSchema.parse({
         kind: "secret_ref",
@@ -93,6 +99,26 @@ describe("publish/export external adapter contract", () => {
         kind: "plaintext",
         ref: "secret-token",
         scope: "runtime",
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...dryRunTarget,
+        providerConfig: {
+          ...dryRunTarget.providerConfig,
+          settings: {
+            apiKey: "secret-provider-key",
+          },
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...dryRunTarget,
+        providerConfig: {
+          ...dryRunTarget.providerConfig,
+          token: "secret-provider-token",
+        },
       }),
     ).toThrow();
   });
@@ -145,6 +171,78 @@ describe("publish/export external adapter contract", () => {
         ...result,
         ok: false,
         errorCode: undefined,
+      }),
+    ).toThrow();
+  });
+
+  it("rejects adapter target and result mode/provider mismatches", async () => {
+    const context = {
+      projectId: "project_01",
+      operationId: "operation_01",
+      operationType: "export" as const,
+    };
+    const noopTarget = noopExportAdapter.prepare(context);
+    const noopExecution = await noopExportAdapter.execute(context, noopTarget);
+    const noopResult = noopExportAdapter.normalizeResult(noopExecution);
+    const dryRunTarget = dryRunExportAdapter.prepare(context);
+    const dryRunExecution = await dryRunExportAdapter.execute(
+      context,
+      dryRunTarget,
+    );
+    const dryRunResult = dryRunExportAdapter.normalizeResult(dryRunExecution);
+
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...noopTarget,
+        mode: "dry-run",
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...noopTarget,
+        providerConfig: { provider: "dry-run" },
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...noopTarget,
+        dryRun: true,
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...dryRunTarget,
+        mode: "noop",
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...dryRunTarget,
+        dryRun: undefined,
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...dryRunTarget,
+        providerConfig: { provider: "noop" },
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...dryRunTarget,
+        providerConfig: undefined,
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterResult({
+        ...noopResult,
+        mode: "dry-run",
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterResult({
+        ...dryRunResult,
+        mode: "noop",
       }),
     ).toThrow();
   });
