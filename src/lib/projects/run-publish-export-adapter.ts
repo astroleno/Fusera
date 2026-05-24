@@ -1,6 +1,7 @@
 import type {
   PublishExportAdapter,
   PublishExportAdapterExecution,
+  PublishExportAdapterMode,
   PublishExportAdapterResult,
   PublishExportAdapterTarget,
 } from "@/lib/domain/publish-export-adapter";
@@ -161,16 +162,22 @@ function failedAdapterResult(options: {
     details.errorName = options.error.name;
   }
 
-  return {
+  return parsePublishExportAdapterResult({
     adapter: options.adapter.id,
     operationType: options.adapter.operationType,
-    mode: "noop",
+    mode: adapterModeForId(options.adapter.id),
     ok: false,
     externalRuntimeImplemented: false,
     errorCode: `adapter_${options.phase}_exception`,
     message: ADAPTER_EXCEPTION_MESSAGE,
     details,
-  };
+  });
+}
+
+function adapterModeForId(
+  adapterId: PublishExportAdapter["id"],
+): PublishExportAdapterMode {
+  return adapterId.startsWith("dry-run-") ? "dry-run" : "noop";
 }
 
 function adapterStartError(options: {
