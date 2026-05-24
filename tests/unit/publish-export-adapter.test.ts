@@ -515,6 +515,110 @@ describe("publish/export external adapter contract", () => {
     );
   });
 
+  it("records dry-run execute exceptions with a schema-consistent failed result", async () => {
+    const execute = vi
+      .fn()
+      .mockRejectedValue(new Error("provider token=abc123"));
+    const throwingAdapter: PublishExportAdapter = {
+      ...dryRunExportAdapter,
+      execute,
+    };
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "export"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_failed", "export"),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: throwingAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      adapterResult: {
+        adapter: "dry-run-export",
+        operationType: "export",
+        mode: "dry-run",
+        ok: false,
+        errorCode: "adapter_execute_exception",
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        request: expect.objectContaining({
+          status: "external_failed",
+          externalResult: expect.objectContaining({
+            adapter: "dry-run-export",
+            mode: "dry-run",
+            errorCode: "adapter_execute_exception",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("records dry-run normalize exceptions with a schema-consistent failed result", async () => {
+    const normalizeResult = vi.fn(() => {
+      throw new TypeError("provider response included secret=abc123");
+    });
+    const throwingAdapter: PublishExportAdapter = {
+      ...dryRunAdapterForOperationType("publish"),
+      normalizeResult,
+    };
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "publish"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_failed", "publish"),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter: throwingAdapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      adapterResult: {
+        adapter: "dry-run-publish",
+        operationType: "publish",
+        mode: "dry-run",
+        ok: false,
+        errorCode: "adapter_normalize_exception",
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        request: expect.objectContaining({
+          status: "external_failed",
+          externalResult: expect.objectContaining({
+            adapter: "dry-run-publish",
+            mode: "dry-run",
+            errorCode: "adapter_normalize_exception",
+          }),
+        }),
+      }),
+    );
+  });
+
   it("returns a stable start error when prepare throws without starting a transition", async () => {
     const prepare = vi.fn(() => {
       throw new Error("credential token=secret-provider-token");
