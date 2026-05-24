@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  PUBLISH_EXPORT_ADAPTER_REGISTRY,
+  dryRunAdapterForOperationType,
+  dryRunExportAdapter,
   noopAdapterForOperationType,
   noopExportAdapter,
   noopPublishAdapter,
+  parsePublishExportAdapterResult,
+  parsePublishExportAdapterTarget,
+  publishExportCredentialRefSchema,
   type PublishExportAdapter,
 } from "@/lib/domain/publish-export-adapter";
 import { runPublishExportAdapter } from "@/lib/projects/run-publish-export-adapter";
@@ -55,6 +61,92 @@ describe("publish/export external adapter contract", () => {
     });
     expect(noopAdapterForOperationType("publish")).toBe(noopPublishAdapter);
     expect(noopAdapterForOperationType("export")).toBe(noopExportAdapter);
+  });
+
+  it("registers only explicit noop and dry-run adapters", () => {
+    expect(Object.keys(PUBLISH_EXPORT_ADAPTER_REGISTRY).sort()).toEqual([
+      "dry-run-export",
+      "dry-run-publish",
+      "noop-export",
+      "noop-publish",
+    ]);
+    expect(dryRunAdapterForOperationType("export")).toBe(dryRunExportAdapter);
+    expect(dryRunAdapterForOperationType("publish").id).toBe(
+      "dry-run-publish",
+    );
+  });
+
+  it("defines provider config and credential refs without plaintext secrets", () => {
+    expect(
+      publishExportCredentialRefSchema.parse({
+        kind: "secret_ref",
+        ref: "publish-export/export/dry-run",
+        scope: "runtime",
+      }),
+    ).toEqual({
+      kind: "secret_ref",
+      ref: "publish-export/export/dry-run",
+      scope: "runtime",
+    });
+    expect(() =>
+      publishExportCredentialRefSchema.parse({
+        kind: "plaintext",
+        ref: "secret-token",
+        scope: "runtime",
+      }),
+    ).toThrow();
+  });
+
+  it("validates dry-run target and result shapes at runtime", async () => {
+    const context = {
+      projectId: "project_01",
+      operationId: "operation_01",
+      operationType: "export" as const,
+    };
+    const target = dryRunExportAdapter.prepare(context);
+    const execution = await dryRunExportAdapter.execute(context, target);
+    const result = dryRunExportAdapter.normalizeResult(execution);
+
+    expect(parsePublishExportAdapterTarget(target)).toEqual({
+      adapter: "dry-run-export",
+      operationType: "export",
+      mode: "dry-run",
+      externalRuntimeImplemented: false,
+      dryRun: true,
+      providerConfig: {
+        provider: "dry-run",
+        credentialRef: {
+          kind: "secret_ref",
+          ref: "publish-export/export/dry-run",
+          scope: "runtime",
+        },
+      },
+      idempotencyKey: "operation_01:dry-run-export",
+    });
+    expect(parsePublishExportAdapterResult(result)).toMatchObject({
+      adapter: "dry-run-export",
+      operationType: "export",
+      mode: "dry-run",
+      ok: true,
+      externalRuntimeImplemented: false,
+      details: {
+        dryRun: true,
+        externalRuntime: "not_implemented",
+      },
+    });
+    expect(() =>
+      parsePublishExportAdapterTarget({
+        ...target,
+        operationType: "publish",
+      }),
+    ).toThrow();
+    expect(() =>
+      parsePublishExportAdapterResult({
+        ...result,
+        ok: false,
+        errorCode: undefined,
+      }),
+    ).toThrow();
   });
 
   it("runs noop publish through ready -> external_pending -> external_succeeded", async () => {
@@ -362,6 +454,44 @@ describe("publish/export external adapter contract", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
+  it("returns a stable start error when prepare returns an invalid target", async () => {
+    const adapter: PublishExportAdapter = {
+      ...noopExportAdapter,
+      prepare: vi.fn(() => ({
+        adapter: "noop-export",
+        operationType: "publish",
+        mode: "noop",
+        externalRuntimeImplemented: false,
+      }) as never),
+      execute: vi.fn(),
+    };
+    const transitionOperation = vi.fn();
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter,
+      transitionOperation,
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      phase: "start",
+      error: {
+        status: 500,
+        code: "adapter_target_invalid",
+        message: "Publish/export adapter failed before external completion.",
+        details: {
+          adapter: "noop-export",
+          operationType: "export",
+          errorName: "ZodError",
+        },
+      },
+    });
+    expect(transitionOperation).not.toHaveBeenCalled();
+    expect(adapter.execute).not.toHaveBeenCalled();
+  });
+
   it("does not execute adapters when the operation is not ready", async () => {
     const execute = vi.fn();
     const adapter: PublishExportAdapter = {
@@ -445,5 +575,66 @@ describe("publish/export external adapter contract", () => {
         ok: true,
       },
     });
+  });
+
+  it("records invalid normalized results as external_failed", async () => {
+    const adapter: PublishExportAdapter = {
+      ...noopExportAdapter,
+      normalizeResult: vi.fn(() => ({
+        adapter: "noop-export",
+        operationType: "publish",
+        mode: "noop",
+        ok: true,
+        externalRuntimeImplemented: false,
+        details: {},
+      }) as never),
+    };
+    const transitionOperation = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_pending", "export"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        operation: operation("external_failed", "export"),
+      });
+
+    const result = await runPublishExportAdapter({
+      projectId: "project_01",
+      operationId: "operation_01",
+      adapter,
+      transitionOperation,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      phase: "completed",
+      operation: {
+        status: "external_failed",
+      },
+      adapterResult: {
+        adapter: "noop-export",
+        operationType: "export",
+        ok: false,
+        errorCode: "adapter_normalize_exception",
+        message: "Publish/export adapter failed before external completion.",
+        details: {
+          phase: "normalize",
+          errorName: "ZodError",
+        },
+      },
+    });
+    expect(transitionOperation).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        request: expect.objectContaining({
+          status: "external_failed",
+          externalResult: expect.objectContaining({
+            errorCode: "adapter_normalize_exception",
+          }),
+        }),
+      }),
+    );
   });
 });

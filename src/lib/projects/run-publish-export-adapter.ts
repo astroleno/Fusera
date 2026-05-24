@@ -5,6 +5,10 @@ import type {
   PublishExportAdapterTarget,
 } from "@/lib/domain/publish-export-adapter";
 import {
+  parsePublishExportAdapterResult,
+  parsePublishExportAdapterTarget,
+} from "@/lib/domain/publish-export-adapter";
+import {
   transitionPublishExportOperation,
   type PublishExportOperationTransitionError,
   type PublishExportOperationTransitionInspection,
@@ -45,7 +49,7 @@ export async function runPublishExportAdapter(options: {
   let target: PublishExportAdapterTarget;
 
   try {
-    target = options.adapter.prepare(context);
+    target = parsePublishExportAdapterTarget(options.adapter.prepare(context));
   } catch (error) {
     return {
       ok: false,
@@ -53,7 +57,10 @@ export async function runPublishExportAdapter(options: {
       error: adapterStartError({
         adapter: options.adapter,
         error,
-        code: "adapter_prepare_exception",
+        code:
+          error instanceof Error && error.name === "ZodError"
+            ? "adapter_target_invalid"
+            : "adapter_prepare_exception",
       }),
     };
   }
@@ -98,7 +105,9 @@ export async function runPublishExportAdapter(options: {
       });
     } else {
       try {
-        adapterResult = options.adapter.normalizeResult(execution);
+        adapterResult = parsePublishExportAdapterResult(
+          options.adapter.normalizeResult(execution),
+        );
       } catch (error) {
         adapterResult = failedAdapterResult({
           adapter: options.adapter,
