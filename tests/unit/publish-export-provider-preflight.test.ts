@@ -133,6 +133,24 @@ describe("publish/export provider preflight contract", () => {
     expect(JSON.stringify(result)).not.toContain("provider-token");
   });
 
+  it("parses credential refs before calling the credential resolver", async () => {
+    const resolveCredential = vi.fn();
+
+    await expect(
+      runFakeProviderPreflight({
+        operationType: "publish",
+        credentialRef: {
+          kind: "plaintext",
+          ref: "provider-token-should-never-cross-boundary",
+          scope: "runtime",
+        },
+        deliveryPlan: publishDeliveryPlan(),
+        resolveCredential,
+      }),
+    ).rejects.toThrow();
+    expect(resolveCredential).not.toHaveBeenCalled();
+  });
+
   it("returns deterministic fake provider results for the same idempotency key", async () => {
     const resolveCredential = vi.fn().mockResolvedValue({
       credentialRef,

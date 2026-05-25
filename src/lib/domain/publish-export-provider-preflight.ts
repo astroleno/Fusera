@@ -99,15 +99,21 @@ export type PublishExportCredentialResolver = (options: {
 }) => Promise<PublishExportResolvedCredential>;
 
 export async function runFakeProviderPreflight(options: {
-  operationType: PublishExportOperationType;
-  credentialRef: PublishExportCredentialRef;
-  deliveryPlan: PublishExportArtifactDeliveryPlan;
+  operationType: unknown;
+  credentialRef: unknown;
+  deliveryPlan: unknown;
   resolveCredential: PublishExportCredentialResolver;
 }): Promise<PublishExportProviderPreflightResult> {
+  const operationType = publishExportOperationTypeSchema.parse(
+    options.operationType,
+  );
+  const credentialRef = publishExportCredentialRefSchema.parse(
+    options.credentialRef,
+  );
   const deliveryPlan = parsePublishExportArtifactDeliveryPlan(
     options.deliveryPlan,
   );
-  if (deliveryPlan.operationType !== options.operationType) {
+  if (deliveryPlan.operationType !== operationType) {
     throw new Error(
       "Delivery plan operationType must match preflight operationType.",
     );
@@ -115,22 +121,22 @@ export async function runFakeProviderPreflight(options: {
 
   const credential = publishExportResolvedCredentialSchema.parse(
     await options.resolveCredential({
-      operationType: options.operationType,
-      credentialRef: options.credentialRef,
+      operationType,
+      credentialRef,
     }),
   );
-  if (!sameCredentialRef(credential.credentialRef, options.credentialRef)) {
+  if (!sameCredentialRef(credential.credentialRef, credentialRef)) {
     throw new Error("Resolved credential must match requested credentialRef.");
   }
 
   return parsePublishExportProviderPreflightResult({
     provider: "fake-provider",
-    operationType: options.operationType,
+    operationType,
     ok: true,
     externalRuntimeImplemented: false,
     idempotencyKey: deliveryPlan.idempotencyKey,
-    providerOperationId: `fake-provider:${options.operationType}:${deliveryPlan.idempotencyKey}`,
-    credentialRef: options.credentialRef,
+    providerOperationId: `fake-provider:${operationType}:${deliveryPlan.idempotencyKey}`,
+    credentialRef,
     artifacts: deliveryPlan.artifacts,
     retry: {
       policy: "same_operation_idempotency_key",
