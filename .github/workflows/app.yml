@@ -57,10 +57,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browser
-        timeout-minutes: 5
-        run: npx playwright install chromium
-
       - name: Run unit tests
         run: npm run test
 
