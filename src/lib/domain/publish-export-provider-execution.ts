@@ -175,6 +175,12 @@ export async function runFakeProviderExecutionEnvelope(options: {
     artifacts = z
       .array(publishExportArtifactDeliveryRefSchema)
       .parse(await options.fetchArtifacts({ deliveryPlan }));
+    if (!sameArtifactRefs(artifacts, deliveryPlan.artifacts)) {
+      throw new Error(
+        "Fetched artifacts must match the requested delivery plan artifacts.",
+      );
+    }
+
     stages.push({ stage: "artifact_fetch", ok: true });
   } catch (error) {
     stages.push({ stage: "artifact_fetch", ok: false });
@@ -232,6 +238,12 @@ export async function runFakeProviderExecutionEnvelope(options: {
     const normalized = publishExportProviderPreflightResultSchema.parse(
       rawProviderResult,
     );
+    assertProviderResultBinding({
+      request,
+      artifacts,
+      normalized,
+    });
+
     const result = parsePublishExportProviderExecutionResult({
       provider: "fake-provider",
       operationType: request.operationType,
@@ -323,6 +335,67 @@ function providerExecutionFailure(options: {
     },
     stages: options.stages,
   });
+}
+
+function assertProviderResultBinding(options: {
+  request: PublishExportProviderExecutionRequest;
+  artifacts: Array<PublishExportArtifactDeliveryRef>;
+  normalized: z.infer<typeof publishExportProviderPreflightResultSchema>;
+}) {
+  if (options.normalized.operationType !== options.request.operationType) {
+    throw new Error("Provider result operationType must match request.");
+  }
+
+  if (options.normalized.idempotencyKey !== options.request.idempotencyKey) {
+    throw new Error("Provider result idempotencyKey must match request.");
+  }
+
+  if (
+    !sameCredentialRef(
+      options.normalized.credentialRef,
+      options.request.credentialRef,
+    )
+  ) {
+    throw new Error("Provider result credentialRef must match request.");
+  }
+
+  if (!sameArtifactRefs(options.normalized.artifacts, options.artifacts)) {
+    throw new Error("Provider result artifacts must match fetched artifacts.");
+  }
+}
+
+function sameArtifactRefs(
+  left: Array<PublishExportArtifactDeliveryRef>,
+  right: Array<PublishExportArtifactDeliveryRef>,
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const leftKeys = left.map(artifactRefKey).sort();
+  const rightKeys = right.map(artifactRefKey).sort();
+  return leftKeys.every((key, index) => key === rightKeys[index]);
+}
+
+function artifactRefKey(artifact: PublishExportArtifactDeliveryRef): string {
+  return [
+    artifact.kind,
+    artifact.ref,
+    artifact.checksumSha256,
+    artifact.mimeType,
+    artifact.sizeBytes,
+  ].join("\u0000");
+}
+
+function sameCredentialRef(
+  left: z.infer<typeof publishExportCredentialRefSchema>,
+  right: z.infer<typeof publishExportCredentialRefSchema>,
+): boolean {
+  return (
+    left.kind === right.kind &&
+    left.ref === right.ref &&
+    left.scope === right.scope
+  );
 }
 
 function sanitizedDiagnostics(error: unknown): { errorName?: string } {
