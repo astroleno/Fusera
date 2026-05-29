@@ -26,6 +26,15 @@ const publishVersionArtifact = {
   sizeBytes: 1024,
 };
 
+const extraArtifact = {
+  kind: "artifact" as const,
+  ref: "asset_01",
+  checksumSha256:
+    "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  mimeType: "image/png",
+  sizeBytes: 512,
+};
+
 const credentialRef = {
   kind: "secret_ref" as const,
   ref: "publish-export/fake-provider/runtime",
@@ -125,6 +134,50 @@ describe("publish/export provider execution envelope", () => {
     ).toThrow();
   });
 
+  it("rejects fetched artifacts that do not match the delivery plan", async () => {
+    const missingResolve = resolveCredential();
+    const missingCallProvider = vi.fn();
+    const missingResult = await runFakeProviderExecutionEnvelope({
+      request: request(),
+      fetchArtifacts: vi.fn().mockResolvedValue([pageSpecArtifact]),
+      resolveCredential: missingResolve,
+      callProvider: missingCallProvider,
+    });
+
+    expect(missingResult).toMatchObject({
+      ok: false,
+      failedStage: "artifact_fetch",
+      errorCode: "artifact_fetch_failed",
+      stages: [{ stage: "artifact_fetch", ok: false }],
+    });
+    expect(missingResolve).not.toHaveBeenCalled();
+    expect(missingCallProvider).not.toHaveBeenCalled();
+
+    const extraResolve = resolveCredential();
+    const extraCallProvider = vi.fn();
+    const extraResult = await runFakeProviderExecutionEnvelope({
+      request: request(),
+      fetchArtifacts: vi
+        .fn()
+        .mockResolvedValue([
+          publishVersionArtifact,
+          pageSpecArtifact,
+          extraArtifact,
+        ]),
+      resolveCredential: extraResolve,
+      callProvider: extraCallProvider,
+    });
+
+    expect(extraResult).toMatchObject({
+      ok: false,
+      failedStage: "artifact_fetch",
+      errorCode: "artifact_fetch_failed",
+      stages: [{ stage: "artifact_fetch", ok: false }],
+    });
+    expect(extraResolve).not.toHaveBeenCalled();
+    expect(extraCallProvider).not.toHaveBeenCalled();
+  });
+
   it("stops before credential resolution when artifact fetch fails", async () => {
     const resolve = resolveCredential();
     const callProvider = vi.fn();
@@ -205,6 +258,56 @@ describe("publish/export provider execution envelope", () => {
       },
     });
     expect(JSON.stringify(result)).not.toContain("secret=abc123");
+  });
+
+  it("rejects provider results that are not bound to the request", async () => {
+    const baseProviderResult = {
+      provider: "fake-provider" as const,
+      operationType: "publish" as const,
+      ok: true,
+      externalRuntimeImplemented: false,
+      idempotencyKey: "operation_01:fake-provider",
+      providerOperationId: "fake-provider:publish:operation_01:fake-provider",
+      credentialRef,
+      artifacts: [publishVersionArtifact, pageSpecArtifact],
+      retry: {
+        policy: "same_operation_idempotency_key" as const,
+        retryable: false,
+      },
+    };
+    const cases = [
+      { operationType: "export" as const },
+      { idempotencyKey: "operation_02:fake-provider" },
+      {
+        credentialRef: {
+          ...credentialRef,
+          ref: "publish-export/fake-provider/other-runtime",
+        },
+      },
+      { artifacts: [pageSpecArtifact] },
+    ];
+
+    for (const providerResultPatch of cases) {
+      const result = await runFakeProviderExecutionEnvelope({
+        request: request(),
+        fetchArtifacts: fetchArtifacts(),
+        resolveCredential: resolveCredential(),
+        callProvider: vi.fn().mockResolvedValue({
+          ...baseProviderResult,
+          ...providerResultPatch,
+        }),
+      });
+
+      expect(result).toMatchObject({
+        ok: false,
+        failedStage: "result_normalize",
+        errorCode: "provider_result_invalid",
+        retry: {
+          classification: "not_retryable",
+          retryable: false,
+        },
+      });
+    }
   });
 
   it("rejects invalid provider responses during result normalization", async () => {
