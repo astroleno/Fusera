@@ -1,0 +1,62 @@
+version: 1
+purpose: Route technology-specific landing-page requests to local skills and official upstream references.
+
+routes:
+  gsap:
+    trigger_terms:
+      - gsap
+      - greensock
+      - scrolltrigger
+      - scroll trigger
+      - scrub
+      - pin
+      - splittext
+      - scrambletext
+      - morphsvg
+      - flip
+      - timeline
+      - gsap timeline
+      - 滚动驱动
+      - 吸顶动效
+    local_skill: skills/08-gsap-landing-motion/SKILL.md
+    upstream_reference: vendor/official/greensock-gsap-skills/README.md
+    use_when: Complex DOM/SVG timelines, ScrollTrigger, pinned/scrubbed scenes, text reveal, precise sequencing.
+    avoid_when: Simple hover/fade/translate can be handled by CSS or motion/react.
+
+  threejs:
+    trigger_terms:
+      - three.js
+      - threejs
+      - three js
+      - webgl
+      - glb
+      - gltf
+      - shader
+      - particles
+      - particle field
+      - 3d model
+      - 真实 3d
+      - webgl 背景
+      - 产品模型
+    local_skill: skills/09-threejs-landing-visuals/SKILL.md
+    upstream_reference: vendor/official/openai-three-webgl-game/README.md
+    docs_reference: vendor/official/threejs-docs/README.md
+    use_when: Real WebGL/Three.js hero, GLB model, shader/material effect, particles, camera motion.
+    avoid_when: CSS 3D, video background, static mockup, or simple parallax is enough.
+
+  gsap_threejs:
+    trigger_terms:
+      - gsap threejs
+      - threejs scrolltrigger
+      - scroll driven camera
+      - scroll-driven camera
+      - webgl scroll
+      - gsap webgl
+      - 滚动驱动 3d
+      - 滚动驱动 three
+    local_skill: skills/10-gsap-threejs-composer/SKILL.md
+    upstream_reference:
+      - vendor/official/greensock-gsap-skills/README.md
+      - vendor/official/openai-three-webgl-game/README.md
+    use_when: Both GSAP/ScrollTrigger and real Three.js are present; scroll/timeline controls camera, mesh, material, or uniform values.
+    avoid_when: Only DOM animation or only static Three.js background is needed.

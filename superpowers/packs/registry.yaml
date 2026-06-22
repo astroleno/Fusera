@@ -465,7 +465,7 @@ packs:
   - id: styles/designprompts-directions
     path: superpowers/packs/styles/designprompts-directions/SKILL.md
     kind: style
-    description: Named visual direction vocabulary mined from designprompts.dev.
+    description: Named visual direction and high-impact landing-pattern vocabulary mined from designprompts.dev and website landing prompt references.
     priority: 70
     selection_role: composable
     stage: design-system-pass
@@ -521,6 +521,19 @@ packs:
       - reference/design/designprompts.dev/monochrome.md
       - reference/design/designprompts.dev/enterprise.md
       - reference/design/designprompts.dev/terminal.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/README.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/route_index.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/prompt_reuse_matrix.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/tech_stack_routes.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/patterns/README.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/patterns/prompt_reuse_discipline.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/patterns/video_hero.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/patterns/scroll_story.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/kb/patterns/asset_fallbacks.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/skills/05-motion-video-interactions/SKILL.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/skills/08-gsap-landing-motion/SKILL.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/skills/09-threejs-landing-visuals/SKILL.md
+      - superpowers/packs/styles/designprompts-directions/references/website-landing-agent-skills/skills/10-gsap-threejs-composer/SKILL.md
   - id: modifiers/anti-slop
     path: superpowers/packs/modifiers/anti-slop/SKILL.md
     kind: modifier

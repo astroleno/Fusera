@@ -1,0 +1,58 @@
+bundle_name: website-landing-agent-skills
+version: 1.1.0
+language: zh-CN
+purpose: Route a visual website brief to a local prompt knowledge base, produce an implementation spec, build a React/Tailwind landing page, optionally add GSAP and Three.js, harden assets, and ship with QA.
+
+knowledge_base:
+  inventory: kb/prompt_inventory.json
+  route_index: kb/route_index.yaml
+  tech_stack_routes: kb/tech_stack_routes.yaml
+  prompts_dir: kb/prompts
+
+upstream_official_references:
+  gsap:
+    upstream: https://github.com/greensock/gsap-skills
+    install: npx skills add https://github.com/greensock/gsap-skills
+    local_adapter: skills/08-gsap-landing-motion
+    provenance: vendor/official/greensock-gsap-skills/README.md
+  threejs:
+    docs: https://threejs.org/docs/
+    openai_skill_upstream: https://github.com/openai/plugins/tree/main/plugins/game-studio/skills/three-webgl-game
+    install: npx skills add https://github.com/openai/plugins --skill three-webgl-game
+    local_adapter: skills/09-threejs-landing-visuals
+    provenance: vendor/official/openai-three-webgl-game/README.md
+
+recommended_skill_order:
+  - skills/00-website-landing-orchestrator
+  - skills/01-website-kb-router
+  - skills/02-site-brief-to-spec
+  - skills/03-landing-copy-seo
+  - skills/04-react-tailwind-landing-builder
+  - skills/05-motion-video-interactions
+  - skills/08-gsap-landing-motion # optional when GSAP/ScrollTrigger/timeline is required
+  - skills/09-threejs-landing-visuals # optional when real Three.js/WebGL is required
+  - skills/10-gsap-threejs-composer # optional when GSAP drives Three.js
+  - skills/06-asset-brand-hardening
+  - skills/07-site-qa-shipping
+
+routing_defaults:
+  primary_prompt_count: 1
+  supporting_prompt_count: 3
+  avoid_prompt_quality:
+    - stub_or_empty
+  default_stack:
+    - React
+    - TypeScript
+    - Vite
+    - Tailwind CSS
+  optional_stack:
+    gsap_when:
+      - explicit GSAP/GreenSock/ScrollTrigger
+      - complex timeline sequencing
+      - pinned/scrubbed scroll scenes
+      - SplitText/ScrambleText/MorphSVG/Flip
+    threejs_when:
+      - explicit Three.js/WebGL
+      - GLB/glTF model showcase
+      - shader/material/uniform effects
+      - particles or camera-driven 3D hero

@@ -1,0 +1,39 @@
+project:
+  name: ""
+  one_liner: ""
+  audience: ""
+  conversion_goal: "book_demo|join_waitlist|contact|purchase|learn_more"
+
+route:
+  primary_prompt_id: ""
+  supporting_prompt_ids: []
+
+style:
+  mood: []
+  color_mode: "dark|light|mixed"
+  typography: ""
+  must_include: []
+  avoid: []
+
+motion:
+  video_background: false
+  scroll_parallax: false
+  css_3d: false
+  marquee: false
+  cursor_follow: false
+  reduced_motion_required: true
+
+implementation:
+  stack: ["React", "TypeScript", "Vite", "Tailwind CSS"]
+  allowed_dependencies: []
+  forbidden_dependencies: []
+  delivery_format: "source_code|zip|patch"
+
+content:
+  language: "zh|en|bilingual"
+  sections: []
+  ctas: []
+
+assets:
+  policy: "external_ok_with_fallback|local_only|placeholder_ok"
+  urls: []

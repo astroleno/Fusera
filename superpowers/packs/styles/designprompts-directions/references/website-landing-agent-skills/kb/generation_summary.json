@@ -1,0 +1,17 @@
+{
+  "prompt_count": 71,
+  "quality_counts": {
+    "usable_spec": 42,
+    "high_detail_spec": 12,
+    "stub_or_empty": 10,
+    "long_spec_or_code": 3,
+    "thin_reference": 4
+  },
+  "skills_count": 11,
+  "patterns_count": 8,
+  "source_readmes": [
+    "kb/source_readmes/README-提示词分类.md",
+    "kb/source_readmes/README-提示词索引.md"
+  ],
+  "fulltext": "kb/fulltext/ALL_PROMPTS.md"
+}

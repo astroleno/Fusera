@@ -1,0 +1,3106 @@
+{
+  "generated_from": "prompts-md.zip",
+  "generated_on": "2026-06-22",
+  "prompt_count": 71,
+  "notes": [
+    "Filenames were repaired from CP437-mojibake to UTF-8 where possible.",
+    "Tags are heuristic and intended for routing; agent should still inspect selected prompt files.",
+    "Prompts with quality=stub_or_empty should not be used as primary implementation references."
+  ],
+  "prompts": [
+    {
+      "id": "001",
+      "title": "复制出来的提示词",
+      "file": "kb/prompts/001-复制出来的提示词.md",
+      "filename": "001-复制出来的提示词.md",
+      "bytes": 4411,
+      "chars": 4392,
+      "quality": "usable_spec",
+      "summary": "复制出来的提示词: usable_spec; style=clean_white, cosmic_space; motion=canvas_frame, hover_microinteraction.",
+      "industry_tags": [],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "002",
+      "title": "3D Portfolio",
+      "file": "kb/prompts/002-3D Portfolio.md",
+      "filename": "002-3D Portfolio.md",
+      "bytes": 11895,
+      "chars": 11890,
+      "quality": "usable_spec",
+      "summary": "3D Portfolio: usable_spec; industry=agency_studio, portfolio_creator; style=bold_typography, cosmic_space; motion=css_3d, cursor_follow.",
+      "industry_tags": [
+        "agency_studio",
+        "portfolio_creator"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "marquee",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "003",
+      "title": "Prisma Creative Studio",
+      "file": "kb/prompts/003-Prisma Creative Studio.md",
+      "filename": "003-Prisma Creative Studio.md",
+      "bytes": 8583,
+      "chars": 8583,
+      "quality": "usable_spec",
+      "summary": "Prisma Creative Studio: usable_spec; industry=agency_studio; style=clean_white, dark_cinematic; motion=canvas_frame, framer_motion.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "custom_css",
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "004",
+      "title": "单屏-Portal",
+      "file": "kb/prompts/004-单屏-Portal.md",
+      "filename": "004-单屏-Portal.md",
+      "bytes": 5852,
+      "chars": 5848,
+      "quality": "usable_spec",
+      "summary": "单屏-Portal: usable_spec; industry=cybersecurity_security; style=dark_cinematic, editorial_art; motion=framer_motion, hamburger_menu.",
+      "industry_tags": [
+        "cybersecurity_security"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "hero_only",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts",
+        "online_webfonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "005",
+      "title": "Art Landing",
+      "file": "kb/prompts/005-Art Landing.md",
+      "filename": "005-Art Landing.md",
+      "bytes": 5992,
+      "chars": 5980,
+      "quality": "usable_spec",
+      "summary": "Art Landing: usable_spec; industry=art_museum_culture; style=clean_white, dark_cinematic; motion=cursor_follow, framer_motion.",
+      "industry_tags": [
+        "art_museum_culture"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "006",
+      "title": "Pulse 3D",
+      "file": "kb/prompts/006-Pulse 3D.md",
+      "filename": "006-Pulse 3D.md",
+      "bytes": 21045,
+      "chars": 20953,
+      "quality": "high_detail_spec",
+      "summary": "Pulse 3D: high_detail_spec; style=dark_cinematic, editorial_art; motion=canvas_frame, contact_form.",
+      "industry_tags": [],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "contact_form",
+        "css_3d",
+        "cursor_follow",
+        "gsap",
+        "hover_microinteraction",
+        "loader_animation",
+        "marquee",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "007",
+      "title": "Velorah",
+      "file": "kb/prompts/007-Velorah.md",
+      "filename": "007-Velorah.md",
+      "bytes": 9,
+      "chars": 9,
+      "quality": "stub_or_empty",
+      "summary": "Velorah: stub_or_empty; general visual landing/hero reference.",
+      "industry_tags": [],
+      "style_tags": [],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "008",
+      "title": "Luxury Real Estate",
+      "file": "kb/prompts/008-Luxury Real Estate.md",
+      "filename": "008-Luxury Real Estate.md",
+      "bytes": 13603,
+      "chars": 13536,
+      "quality": "high_detail_spec",
+      "summary": "Luxury Real Estate: high_detail_spec; industry=ai_saas, art_museum_culture; style=dark_cinematic, editorial_art; motion=canvas_frame, cursor_follow.",
+      "industry_tags": [
+        "ai_saas",
+        "art_museum_culture",
+        "real_estate_architecture"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "cursor_follow",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "loader_animation",
+        "marquee",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "intersection_observer",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "009",
+      "title": "Reveal Hero",
+      "file": "kb/prompts/009-Reveal Hero.md",
+      "filename": "009-Reveal Hero.md",
+      "bytes": 13,
+      "chars": 13,
+      "quality": "stub_or_empty",
+      "summary": "Reveal Hero: stub_or_empty; general visual landing/hero reference.",
+      "industry_tags": [],
+      "style_tags": [],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [
+        "hero_only"
+      ],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "010",
+      "title": "Mythic Naturecore",
+      "file": "kb/prompts/010-Mythic Naturecore.md",
+      "filename": "010-Mythic Naturecore.md",
+      "bytes": 8129,
+      "chars": 8125,
+      "quality": "usable_spec",
+      "summary": "Mythic Naturecore: usable_spec; industry=agriculture_nature; style=dark_cinematic, editorial_art; motion=canvas_frame, css_3d.",
+      "industry_tags": [
+        "agriculture_nature"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "css_3d",
+        "cursor_follow",
+        "scroll_parallax"
+      ],
+      "stack_tags": [
+        "custom_css",
+        "react",
+        "tailwind_css",
+        "typescript"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "carousel",
+        "full_viewport",
+        "hero_only",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "011",
+      "title": "Web3 EOS Hero",
+      "file": "kb/prompts/011-Web3 EOS Hero.md",
+      "filename": "011-Web3 EOS Hero.md",
+      "bytes": 15,
+      "chars": 15,
+      "quality": "stub_or_empty",
+      "summary": "Web3 EOS Hero: stub_or_empty; industry=web3_nft.",
+      "industry_tags": [
+        "web3_nft"
+      ],
+      "style_tags": [],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [
+        "hero_only"
+      ],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "012",
+      "title": "3D Collectible Hero",
+      "file": "kb/prompts/012-3D Collectible Hero.md",
+      "filename": "012-3D Collectible Hero.md",
+      "bytes": 5387,
+      "chars": 5379,
+      "quality": "usable_spec",
+      "summary": "3D Collectible Hero: usable_spec; industry=ecommerce_luxury, web3_nft; style=editorial_art, liquid_glass; motion=css_3d, hover_microinteraction.",
+      "industry_tags": [
+        "ecommerce_luxury",
+        "web3_nft"
+      ],
+      "style_tags": [
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "hover_microinteraction"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "carousel",
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "013",
+      "title": "Dreamcore Landing",
+      "file": "kb/prompts/013-Dreamcore Landing.md",
+      "filename": "013-Dreamcore Landing.md",
+      "bytes": 13735,
+      "chars": 13733,
+      "quality": "high_detail_spec",
+      "summary": "Dreamcore Landing: high_detail_spec; industry=ai_saas; style=dark_cinematic, editorial_art; motion=canvas_frame, cursor_follow.",
+      "industry_tags": [
+        "ai_saas"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "cursor_follow",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "carousel",
+        "full_viewport",
+        "hero_only",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "014",
+      "title": "Growth Marketing SaaS",
+      "file": "kb/prompts/014-Growth Marketing SaaS.md",
+      "filename": "014-Growth Marketing SaaS.md",
+      "bytes": 15194,
+      "chars": 15154,
+      "quality": "high_detail_spec",
+      "summary": "Growth Marketing SaaS: high_detail_spec; style=clean_white, dark_cinematic; motion=framer_motion, hover_microinteraction.",
+      "industry_tags": [],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "shadcn_ui",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "dashboard_mockup",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "015",
+      "title": "CoderCrest",
+      "file": "kb/prompts/015-CoderCrest.md",
+      "filename": "015-CoderCrest.md",
+      "bytes": 3891,
+      "chars": 3885,
+      "quality": "usable_spec",
+      "summary": "CoderCrest: usable_spec; industry=ai_saas; style=bold_typography, dark_cinematic; motion=cursor_follow, hover_microinteraction.",
+      "industry_tags": [
+        "ai_saas"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "hls_js",
+        "react",
+        "tailwind_css",
+        "typescript"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "016",
+      "title": "Aethera Studio",
+      "file": "kb/prompts/016-Aethera Studio.md",
+      "filename": "016-Aethera Studio.md",
+      "bytes": 3258,
+      "chars": 3257,
+      "quality": "usable_spec",
+      "summary": "Aethera Studio: usable_spec; industry=agency_studio; style=bold_typography, cyber_futuristic; motion=hover_microinteraction, video_background.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "017",
+      "title": "VEX Ventures",
+      "file": "kb/prompts/017-VEX Ventures.md",
+      "filename": "017-VEX Ventures.md",
+      "bytes": 5157,
+      "chars": 5157,
+      "quality": "usable_spec",
+      "summary": "VEX Ventures: usable_spec; industry=finance_fintech; style=clean_white, cosmic_space; motion=hover_microinteraction, video_background.",
+      "industry_tags": [
+        "finance_fintech"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "018",
+      "title": "Layered Depth",
+      "file": "kb/prompts/018-Layered Depth.md",
+      "filename": "018-Layered Depth.md",
+      "bytes": 12286,
+      "chars": 12286,
+      "quality": "high_detail_spec",
+      "summary": "Layered Depth: high_detail_spec; industry=agency_studio, real_estate_architecture; style=dark_cinematic, editorial_art; motion=hamburger_menu, scroll_parallax.",
+      "industry_tags": [
+        "agency_studio",
+        "real_estate_architecture"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hamburger_menu",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "custom_css",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "online_webfonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "019",
+      "title": "Luxury Botanical",
+      "file": "kb/prompts/019-Luxury Botanical.md",
+      "filename": "019-Luxury Botanical.md",
+      "bytes": 36714,
+      "chars": 36698,
+      "quality": "long_spec_or_code",
+      "summary": "Luxury Botanical: long_spec_or_code; industry=agriculture_nature; style=cosmic_space, dark_cinematic; motion=contact_form, css_3d.",
+      "industry_tags": [
+        "agriculture_nature"
+      ],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "css_3d",
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [],
+      "asset_tags": [
+        "cloudfront_video",
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Use as a deep implementation/reference prompt when the domain and motion style match.",
+      "avoid_when": "Avoid mixing wholesale with unrelated prompts; extract one pattern at a time."
+    },
+    {
+      "id": "020",
+      "title": "Cursor Follow",
+      "file": "kb/prompts/020-Cursor Follow.md",
+      "filename": "020-Cursor Follow.md",
+      "bytes": 15,
+      "chars": 15,
+      "quality": "stub_or_empty",
+      "summary": "Cursor Follow: stub_or_empty; motion=cursor_follow.",
+      "industry_tags": [],
+      "style_tags": [],
+      "interaction_tags": [
+        "cursor_follow"
+      ],
+      "stack_tags": [],
+      "layout_tags": [],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "021",
+      "title": "Build With Us",
+      "file": "kb/prompts/021-Build With Us.md",
+      "filename": "021-Build With Us.md",
+      "bytes": 6322,
+      "chars": 6299,
+      "quality": "usable_spec",
+      "summary": "Build With Us: usable_spec; industry=agency_studio; style=bold_typography, clean_white; motion=contact_form, css_3d.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "css_3d",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "022",
+      "title": "Liquid Glass Agency",
+      "file": "kb/prompts/022-Liquid Glass Agency.md",
+      "filename": "022-Liquid Glass Agency.md",
+      "bytes": 13547,
+      "chars": 13428,
+      "quality": "high_detail_spec",
+      "summary": "Liquid Glass Agency: high_detail_spec; industry=agency_studio, ai_saas; style=dark_cinematic, editorial_art; motion=framer_motion, scroll_parallax.",
+      "industry_tags": [
+        "agency_studio",
+        "ai_saas"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "intersection_observer",
+        "lucide_react",
+        "react",
+        "shadcn_ui",
+        "tailwind_css",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts",
+        "mux_video"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "023",
+      "title": "Grow AI Talent Platform",
+      "file": "kb/prompts/023-Grow AI Talent Platform.md",
+      "filename": "023-Grow AI Talent Platform.md",
+      "bytes": 5627,
+      "chars": 5623,
+      "quality": "usable_spec",
+      "summary": "Grow AI Talent Platform: usable_spec; industry=ai_saas, developer_tools; style=bold_typography, clean_white; motion=hover_microinteraction, marquee.",
+      "industry_tags": [
+        "ai_saas",
+        "developer_tools",
+        "hr_recruiting"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "hover_microinteraction",
+        "marquee",
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "shadcn_ui",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "024",
+      "title": "Luxury Ecommerce Design",
+      "file": "kb/prompts/024-Luxury Ecommerce Design.md",
+      "filename": "024-Luxury Ecommerce Design.md",
+      "bytes": 10623,
+      "chars": 10553,
+      "quality": "usable_spec",
+      "summary": "Luxury Ecommerce Design: usable_spec; industry=ai_saas, ecommerce_luxury; style=clean_white, cosmic_space; motion=cursor_follow, hamburger_menu.",
+      "industry_tags": [
+        "ai_saas",
+        "ecommerce_luxury"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "dark_cinematic",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "intersection_observer",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "carousel",
+        "full_viewport",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "025",
+      "title": "Contact Cybernetic",
+      "file": "kb/prompts/025-Contact Cybernetic.md",
+      "filename": "025-Contact Cybernetic.md",
+      "bytes": 6490,
+      "chars": 6485,
+      "quality": "usable_spec",
+      "summary": "Contact Cybernetic: usable_spec; industry=developer_tools, real_estate_architecture; style=bold_typography, clean_white; motion=canvas_frame, cursor_follow.",
+      "industry_tags": [
+        "developer_tools",
+        "real_estate_architecture"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "dark_cinematic",
+        "liquid_glass"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "cursor_follow",
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "026",
+      "title": "Glassmorphism Agency Hero",
+      "file": "kb/prompts/026-Glassmorphism Agency Hero.md",
+      "filename": "026-Glassmorphism Agency Hero.md",
+      "bytes": 3428,
+      "chars": 3428,
+      "quality": "usable_spec",
+      "summary": "Glassmorphism Agency Hero: usable_spec; industry=agency_studio; style=bold_typography, clean_white; motion=framer_motion, video_background.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "carousel",
+        "cta_waitlist",
+        "hero_only",
+        "single_page"
+      ],
+      "asset_tags": [
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "027",
+      "title": "AeroCore",
+      "file": "kb/prompts/027-AeroCore.md",
+      "filename": "027-AeroCore.md",
+      "bytes": 75467,
+      "chars": 75461,
+      "quality": "long_spec_or_code",
+      "summary": "AeroCore: long_spec_or_code; industry=space_futuristic; style=editorial_art, gradient_glow; motion=canvas_frame, cursor_follow.",
+      "industry_tags": [
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "cursor_follow",
+        "hover_microinteraction",
+        "marquee",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "cloudinary_asset",
+        "external_media"
+      ],
+      "recommended_use": "Use as a deep implementation/reference prompt when the domain and motion style match.",
+      "avoid_when": "Avoid mixing wholesale with unrelated prompts; extract one pattern at a time."
+    },
+    {
+      "id": "028",
+      "title": "Asme-Hero Section",
+      "file": "kb/prompts/028-Asme-Hero Section.md",
+      "filename": "028-Asme-Hero Section.md",
+      "bytes": 4429,
+      "chars": 4429,
+      "quality": "usable_spec",
+      "summary": "Asme-Hero Section: usable_spec; style=clean_white, cosmic_space; motion=canvas_frame, hover_microinteraction.",
+      "industry_tags": [],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "029",
+      "title": "Scroll Landing Page",
+      "file": "kb/prompts/029-Scroll Landing Page.md",
+      "filename": "029-Scroll Landing Page.md",
+      "bytes": 15934,
+      "chars": 15934,
+      "quality": "high_detail_spec",
+      "summary": "Scroll Landing Page: high_detail_spec; style=cosmic_space, dark_cinematic; motion=canvas_frame, cursor_follow.",
+      "industry_tags": [],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "cursor_follow",
+        "framer_motion",
+        "gsap",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "custom_css",
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "030",
+      "title": "Logoisum Video Agency Hero",
+      "file": "kb/prompts/030-Logoisum Video Agency Hero.md",
+      "filename": "030-Logoisum Video Agency Hero.md",
+      "bytes": 1615,
+      "chars": 1615,
+      "quality": "thin_reference",
+      "summary": "Logoisum Video Agency Hero: thin_reference; industry=agency_studio; style=bold_typography, dark_cinematic; motion=contact_form, video_background.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "video_background"
+      ],
+      "stack_tags": [],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "031",
+      "title": "Orbis NFT",
+      "file": "kb/prompts/031-Orbis NFT.md",
+      "filename": "031-Orbis NFT.md",
+      "bytes": 8489,
+      "chars": 8489,
+      "quality": "usable_spec",
+      "summary": "Orbis NFT: usable_spec; industry=space_futuristic, web3_nft; style=clean_white, cosmic_space; motion=contact_form, hover_microinteraction.",
+      "industry_tags": [
+        "space_futuristic",
+        "web3_nft"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "032",
+      "title": "Innovation",
+      "file": "kb/prompts/032-Innovation.md",
+      "filename": "032-Innovation.md",
+      "bytes": 9131,
+      "chars": 9131,
+      "quality": "usable_spec",
+      "summary": "Innovation: usable_spec; style=clean_white, dark_cinematic; motion=framer_motion, hover_microinteraction.",
+      "industry_tags": [],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "033",
+      "title": "FinFlow",
+      "file": "kb/prompts/033-FinFlow.md",
+      "filename": "033-FinFlow.md",
+      "bytes": 9,
+      "chars": 9,
+      "quality": "stub_or_empty",
+      "summary": "FinFlow: stub_or_empty; industry=finance_fintech.",
+      "industry_tags": [
+        "finance_fintech"
+      ],
+      "style_tags": [],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "034",
+      "title": "AI Automation Hero",
+      "file": "kb/prompts/034-AI Automation Hero.md",
+      "filename": "034-AI Automation Hero.md",
+      "bytes": 2730,
+      "chars": 2730,
+      "quality": "usable_spec",
+      "summary": "AI Automation Hero: usable_spec; industry=ai_saas, developer_tools; style=clean_white, dark_cinematic; motion=framer_motion, video_background.",
+      "industry_tags": [
+        "ai_saas",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "video_background"
+      ],
+      "stack_tags": [
+        "hls_js",
+        "lucide_react",
+        "react"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "external_media",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "035",
+      "title": "Bio-Digital-HERO（单首屏）",
+      "file": "kb/prompts/035-Bio-Digital-HERO（单首屏）.md",
+      "filename": "035-Bio-Digital-HERO（单首屏）.md",
+      "bytes": 8156,
+      "chars": 8146,
+      "quality": "usable_spec",
+      "summary": "Bio-Digital-HERO（单首屏）: usable_spec; industry=agency_studio; style=bold_typography, clean_white; motion=contact_form, cursor_follow.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "036",
+      "title": "Shamoni",
+      "file": "kb/prompts/036-Shamoni.md",
+      "filename": "036-Shamoni.md",
+      "bytes": 21611,
+      "chars": 21609,
+      "quality": "high_detail_spec",
+      "summary": "Shamoni: high_detail_spec; industry=art_museum_culture, developer_tools; style=cosmic_space, dark_cinematic; motion=css_3d, cursor_follow.",
+      "industry_tags": [
+        "art_museum_culture",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "037",
+      "title": "Velorix IIC",
+      "file": "kb/prompts/037-Velorix IIC.md",
+      "filename": "037-Velorix IIC.md",
+      "bytes": 9348,
+      "chars": 9318,
+      "quality": "usable_spec",
+      "summary": "Velorix IIC: usable_spec; industry=ai_saas, cybersecurity_security; style=clean_white, dark_cinematic; motion=framer_motion, hamburger_menu.",
+      "industry_tags": [
+        "ai_saas",
+        "cybersecurity_security",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "typescript"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "038",
+      "title": "Synapse Dark Hero",
+      "file": "kb/prompts/038-Synapse Dark Hero.md",
+      "filename": "038-Synapse Dark Hero.md",
+      "bytes": 1664,
+      "chars": 1664,
+      "quality": "thin_reference",
+      "summary": "Synapse Dark Hero: thin_reference; style=bold_typography, dark_cinematic; motion=framer_motion, marquee.",
+      "industry_tags": [],
+      "style_tags": [
+        "bold_typography",
+        "dark_cinematic",
+        "gradient_glow",
+        "liquid_glass"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "marquee",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "hero_only",
+        "multi_section",
+        "navbar"
+      ],
+      "asset_tags": [
+        "external_media",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "039",
+      "title": "No-Code Waitlist",
+      "file": "kb/prompts/039-No-Code Waitlist.md",
+      "filename": "039-No-Code Waitlist.md",
+      "bytes": 6568,
+      "chars": 6568,
+      "quality": "usable_spec",
+      "summary": "No-Code Waitlist: usable_spec; industry=ai_saas, developer_tools; style=dark_cinematic, editorial_art; motion=contact_form, cursor_follow.",
+      "industry_tags": [
+        "ai_saas",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "hls_js",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "tailwind_v4",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "external_media",
+        "google_fonts",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "040",
+      "title": "Portfolio Cosmic",
+      "file": "kb/prompts/040-Portfolio Cosmic.md",
+      "filename": "040-Portfolio Cosmic.md",
+      "bytes": 8494,
+      "chars": 8411,
+      "quality": "usable_spec",
+      "summary": "Portfolio Cosmic: usable_spec; industry=agency_studio, portfolio_creator; style=bold_typography, cosmic_space; motion=css_3d, framer_motion.",
+      "industry_tags": [
+        "agency_studio",
+        "portfolio_creator",
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "framer_motion",
+        "gsap",
+        "hover_microinteraction",
+        "marquee",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "external_media",
+        "google_fonts",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "041",
+      "title": "HR SaaS Hero",
+      "file": "kb/prompts/041-HR SaaS Hero.md",
+      "filename": "041-HR SaaS Hero.md",
+      "bytes": 2264,
+      "chars": 2264,
+      "quality": "usable_spec",
+      "summary": "HR SaaS Hero: usable_spec; industry=hr_recruiting; style=dark_cinematic, editorial_art; motion=video_background.",
+      "industry_tags": [
+        "hr_recruiting"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "tailwind_css",
+        "tailwind_v4"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "042",
+      "title": "Securify Data Security",
+      "file": "kb/prompts/042-Securify Data Security.md",
+      "filename": "042-Securify Data Security.md",
+      "bytes": 3921,
+      "chars": 3903,
+      "quality": "usable_spec",
+      "summary": "Securify Data Security: usable_spec; industry=cybersecurity_security, developer_tools; style=bold_typography, clean_white; motion=hover_microinteraction, video_background.",
+      "industry_tags": [
+        "cybersecurity_security",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "tailwind_css",
+        "typescript"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "043",
+      "title": "New Era Bold Hero",
+      "file": "kb/prompts/043-New Era Bold Hero.md",
+      "filename": "043-New Era Bold Hero.md",
+      "bytes": 1708,
+      "chars": 1708,
+      "quality": "thin_reference",
+      "summary": "New Era Bold Hero: thin_reference; style=bold_typography, dark_cinematic; motion=hover_microinteraction, video_background.",
+      "industry_tags": [],
+      "style_tags": [
+        "bold_typography",
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "044",
+      "title": "VaultShield Hero",
+      "file": "kb/prompts/044-VaultShield Hero.md",
+      "filename": "044-VaultShield Hero.md",
+      "bytes": 4826,
+      "chars": 4820,
+      "quality": "usable_spec",
+      "summary": "VaultShield Hero: usable_spec; industry=cybersecurity_security, space_futuristic; style=cosmic_space, dark_cinematic; motion=framer_motion, hamburger_menu.",
+      "industry_tags": [
+        "cybersecurity_security",
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts",
+        "online_webfonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "045",
+      "title": "Portal",
+      "file": "kb/prompts/045-Portal.md",
+      "filename": "045-Portal.md",
+      "bytes": 6788,
+      "chars": 6788,
+      "quality": "usable_spec",
+      "summary": "Portal: usable_spec; style=cosmic_space, dark_cinematic; motion=hamburger_menu, hover_microinteraction.",
+      "industry_tags": [],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "046",
+      "title": "Solar Energy Hero",
+      "file": "kb/prompts/046-Solar Energy Hero.md",
+      "filename": "046-Solar Energy Hero.md",
+      "bytes": 13859,
+      "chars": 13843,
+      "quality": "high_detail_spec",
+      "summary": "Solar Energy Hero: high_detail_spec; industry=energy_solar; style=cyber_futuristic, dark_cinematic; motion=cursor_follow, hamburger_menu.",
+      "industry_tags": [
+        "energy_solar"
+      ],
+      "style_tags": [
+        "cyber_futuristic",
+        "dark_cinematic",
+        "gradient_glow",
+        "liquid_glass"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "hamburger_menu",
+        "hover_microinteraction"
+      ],
+      "stack_tags": [
+        "custom_css",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "047",
+      "title": "Celestia",
+      "file": "kb/prompts/047-Celestia.md",
+      "filename": "047-Celestia.md",
+      "bytes": 10,
+      "chars": 10,
+      "quality": "stub_or_empty",
+      "summary": "Celestia: stub_or_empty; industry=space_futuristic; style=cosmic_space.",
+      "industry_tags": [
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "cosmic_space"
+      ],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "048",
+      "title": "Buzzentic Agency",
+      "file": "kb/prompts/048-Buzzentic Agency.md",
+      "filename": "048-Buzzentic Agency.md",
+      "bytes": 18,
+      "chars": 18,
+      "quality": "stub_or_empty",
+      "summary": "Buzzentic Agency: stub_or_empty; industry=agency_studio.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "049",
+      "title": "Cinematic Landing Page",
+      "file": "kb/prompts/049-Cinematic Landing Page.md",
+      "filename": "049-Cinematic Landing Page.md",
+      "bytes": 24,
+      "chars": 24,
+      "quality": "stub_or_empty",
+      "summary": "Cinematic Landing Page: stub_or_empty; style=dark_cinematic.",
+      "industry_tags": [],
+      "style_tags": [
+        "dark_cinematic"
+      ],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [
+        "single_page"
+      ],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "050",
+      "title": "Mindloop Landing",
+      "file": "kb/prompts/050-Mindloop Landing.md",
+      "filename": "050-Mindloop Landing.md",
+      "bytes": 7416,
+      "chars": 7391,
+      "quality": "usable_spec",
+      "summary": "Mindloop Landing: usable_spec; industry=ai_saas, developer_tools; style=cosmic_space, dark_cinematic; motion=contact_form, framer_motion.",
+      "industry_tags": [
+        "ai_saas",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "lucide_react",
+        "react",
+        "shadcn_ui",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "051",
+      "title": "AI Workflow Hero",
+      "file": "kb/prompts/051-AI Workflow Hero.md",
+      "filename": "051-AI Workflow Hero.md",
+      "bytes": 16646,
+      "chars": 16646,
+      "quality": "high_detail_spec",
+      "summary": "AI Workflow Hero: high_detail_spec; industry=ai_saas, real_estate_architecture; style=dark_cinematic, editorial_art; motion=canvas_frame, framer_motion.",
+      "industry_tags": [
+        "ai_saas",
+        "real_estate_architecture"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts",
+        "online_webfonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "052",
+      "title": "Loader Animation",
+      "file": "kb/prompts/052-Loader Animation.md",
+      "filename": "052-Loader Animation.md",
+      "bytes": 3445,
+      "chars": 3413,
+      "quality": "usable_spec",
+      "summary": "Loader Animation: usable_spec; industry=agency_studio, portfolio_creator; style=bold_typography, editorial_art; motion=canvas_frame, framer_motion.",
+      "industry_tags": [
+        "agency_studio",
+        "portfolio_creator"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "framer_motion",
+        "loader_animation"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "react",
+        "typescript"
+      ],
+      "layout_tags": [
+        "full_viewport"
+      ],
+      "asset_tags": [
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "053",
+      "title": "AI Automation",
+      "file": "kb/prompts/053-AI Automation.md",
+      "filename": "053-AI Automation.md",
+      "bytes": 9512,
+      "chars": 9512,
+      "quality": "usable_spec",
+      "summary": "AI Automation: usable_spec; industry=agency_studio, ai_saas; style=cosmic_space, editorial_art; motion=cursor_follow, framer_motion.",
+      "industry_tags": [
+        "agency_studio",
+        "ai_saas",
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "cosmic_space",
+        "editorial_art",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "online_webfonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "054",
+      "title": "EMBER.dsgn",
+      "file": "kb/prompts/054-EMBER.dsgn.md",
+      "filename": "054-EMBER.dsgn.md",
+      "bytes": 6439,
+      "chars": 6410,
+      "quality": "usable_spec",
+      "summary": "EMBER.dsgn: usable_spec; industry=agency_studio; style=clean_white, cyber_futuristic; motion=framer_motion, hamburger_menu.",
+      "industry_tags": [
+        "agency_studio"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "external_media",
+        "google_fonts",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "055",
+      "title": "Cybersecurity Hero v2",
+      "file": "kb/prompts/055-Cybersecurity Hero v2.md",
+      "filename": "055-Cybersecurity Hero v2.md",
+      "bytes": 7259,
+      "chars": 7233,
+      "quality": "usable_spec",
+      "summary": "Cybersecurity Hero v2: usable_spec; industry=cybersecurity_security; style=clean_white, dark_cinematic; motion=canvas_frame, hamburger_menu.",
+      "industry_tags": [
+        "cybersecurity_security"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "hamburger_menu",
+        "hover_microinteraction"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "056",
+      "title": "ClearInvoice SaaS Hero",
+      "file": "kb/prompts/056-ClearInvoice SaaS Hero.md",
+      "filename": "056-ClearInvoice SaaS Hero.md",
+      "bytes": 2151,
+      "chars": 2151,
+      "quality": "usable_spec",
+      "summary": "ClearInvoice SaaS Hero: usable_spec; industry=finance_fintech; style=bold_typography, clean_white; motion=framer_motion, hamburger_menu.",
+      "industry_tags": [
+        "finance_fintech"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "gradient_glow",
+        "liquid_glass"
+      ],
+      "interaction_tags": [
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "hls_js",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "vite"
+      ],
+      "layout_tags": [
+        "hero_only",
+        "multi_section",
+        "navbar"
+      ],
+      "asset_tags": [
+        "external_media",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "057",
+      "title": "RIVR",
+      "file": "kb/prompts/057-RIVR.md",
+      "filename": "057-RIVR.md",
+      "bytes": 8137,
+      "chars": 8137,
+      "quality": "usable_spec",
+      "summary": "RIVR: usable_spec; style=clean_white, dark_cinematic; motion=cursor_follow, framer_motion.",
+      "industry_tags": [],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "framer_motion",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript"
+      ],
+      "layout_tags": [
+        "dashboard_mockup",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "local_font",
+        "online_webfonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "058",
+      "title": "Nimbus Grid",
+      "file": "kb/prompts/058-Nimbus Grid.md",
+      "filename": "058-Nimbus Grid.md",
+      "bytes": 16943,
+      "chars": 16826,
+      "quality": "high_detail_spec",
+      "summary": "Nimbus Grid: high_detail_spec; industry=cybersecurity_security, developer_tools; style=cosmic_space, dark_cinematic; motion=contact_form, css_3d.",
+      "industry_tags": [
+        "cybersecurity_security",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "cosmic_space",
+        "dark_cinematic",
+        "gradient_glow",
+        "liquid_glass",
+        "organic_nature",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "css_3d",
+        "cursor_follow",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "multi_section",
+        "single_page"
+      ],
+      "asset_tags": [
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "059",
+      "title": "WISA Space-Hero Section",
+      "file": "kb/prompts/059-WISA Space-Hero Section.md",
+      "filename": "059-WISA Space-Hero Section.md",
+      "bytes": 66,
+      "chars": 64,
+      "quality": "stub_or_empty",
+      "summary": "WISA Space-Hero Section: stub_or_empty; industry=agency_studio, ai_saas; style=cosmic_space.",
+      "industry_tags": [
+        "agency_studio",
+        "ai_saas",
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "cosmic_space"
+      ],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [
+        "hero_only"
+      ],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "060",
+      "title": "Book Hero",
+      "file": "kb/prompts/060-Book Hero.md",
+      "filename": "060-Book Hero.md",
+      "bytes": 11,
+      "chars": 11,
+      "quality": "stub_or_empty",
+      "summary": "Book Hero: stub_or_empty; industry=art_museum_culture.",
+      "industry_tags": [
+        "art_museum_culture"
+      ],
+      "style_tags": [],
+      "interaction_tags": [],
+      "stack_tags": [],
+      "layout_tags": [
+        "hero_only"
+      ],
+      "asset_tags": [],
+      "recommended_use": "Only use as a title/theme hint; do not select as primary implementation reference.",
+      "avoid_when": "Avoid as primary pattern because prompt body is missing or nearly empty."
+    },
+    {
+      "id": "061",
+      "title": "AI Designer Portfolio",
+      "file": "kb/prompts/061-AI Designer Portfolio.md",
+      "filename": "061-AI Designer Portfolio.md",
+      "bytes": 11628,
+      "chars": 11628,
+      "quality": "usable_spec",
+      "summary": "AI Designer Portfolio: usable_spec; industry=agency_studio, ai_saas; style=clean_white, cosmic_space; motion=cursor_follow, hover_microinteraction.",
+      "industry_tags": [
+        "agency_studio",
+        "ai_saas",
+        "portfolio_creator"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "cursor_follow",
+        "hover_microinteraction",
+        "marquee",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "intersection_observer",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "carousel",
+        "hero_only",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "local_font"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "062",
+      "title": "Neo Museum",
+      "file": "kb/prompts/062-Neo Museum.md",
+      "filename": "062-Neo Museum.md",
+      "bytes": 15218,
+      "chars": 15218,
+      "quality": "high_detail_spec",
+      "summary": "Neo Museum: high_detail_spec; industry=art_museum_culture; style=clean_white, dark_cinematic; motion=css_3d, framer_motion.",
+      "industry_tags": [
+        "art_museum_culture"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "luxury_minimal",
+        "organic_nature",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section"
+      ],
+      "asset_tags": [
+        "cloudinary_asset",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Strong primary reference for matching landing pages.",
+      "avoid_when": "Avoid when the requested brand/content conflicts with its highly specific art direction."
+    },
+    {
+      "id": "063",
+      "title": "Targo Logistics Hero",
+      "file": "kb/prompts/063-Targo Logistics Hero.md",
+      "filename": "063-Targo Logistics Hero.md",
+      "bytes": 2215,
+      "chars": 2215,
+      "quality": "usable_spec",
+      "summary": "Targo Logistics Hero: usable_spec; industry=logistics; style=bold_typography, dark_cinematic; motion=video_background.",
+      "industry_tags": [
+        "logistics"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "dark_cinematic",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "hero_only",
+        "multi_section",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "064",
+      "title": "Minimal Workflow SaaS",
+      "file": "kb/prompts/064-Minimal Workflow SaaS.md",
+      "filename": "064-Minimal Workflow SaaS.md",
+      "bytes": 11018,
+      "chars": 11016,
+      "quality": "usable_spec",
+      "summary": "Minimal Workflow SaaS: usable_spec; industry=ai_saas; style=bold_typography, clean_white; motion=contact_form, framer_motion.",
+      "industry_tags": [
+        "ai_saas"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "clean_white",
+        "cyber_futuristic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "framer_motion",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "react_19",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "dashboard_mockup",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "065",
+      "title": "Futuristic Tech",
+      "file": "kb/prompts/065-Futuristic Tech.md",
+      "filename": "065-Futuristic Tech.md",
+      "bytes": 4841,
+      "chars": 4841,
+      "quality": "usable_spec",
+      "summary": "Futuristic Tech: usable_spec; industry=ai_saas, cybersecurity_security; style=clean_white, cyber_futuristic; motion=hamburger_menu, hover_microinteraction.",
+      "industry_tags": [
+        "ai_saas",
+        "cybersecurity_security",
+        "developer_tools",
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "hamburger_menu",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "navbar"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "066",
+      "title": "CodeNest Coding Platform",
+      "file": "kb/prompts/066-CodeNest Coding Platform.md",
+      "filename": "066-CodeNest Coding Platform.md",
+      "bytes": 2651,
+      "chars": 2651,
+      "quality": "usable_spec",
+      "summary": "CodeNest Coding Platform: usable_spec; industry=developer_tools, space_futuristic; style=bold_typography, dark_cinematic; motion=canvas_frame, hamburger_menu.",
+      "industry_tags": [
+        "developer_tools",
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "bold_typography",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "hls_js",
+        "lucide_react",
+        "react",
+        "tailwind_css"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar"
+      ],
+      "asset_tags": [
+        "external_media",
+        "mux_video"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "067",
+      "title": "Stellar Launch",
+      "file": "kb/prompts/067-Stellar Launch.md",
+      "filename": "067-Stellar Launch.md",
+      "bytes": 10887,
+      "chars": 10887,
+      "quality": "usable_spec",
+      "summary": "Stellar Launch: usable_spec; industry=space_futuristic; style=clean_white, cosmic_space; motion=contact_form, hover_microinteraction.",
+      "industry_tags": [
+        "space_futuristic"
+      ],
+      "style_tags": [
+        "clean_white",
+        "cosmic_space",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal"
+      ],
+      "interaction_tags": [
+        "contact_form",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "custom_css",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts",
+        "online_webfonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "068",
+      "title": "Acreage Farming",
+      "file": "kb/prompts/068-Acreage Farming.md",
+      "filename": "068-Acreage Farming.md",
+      "bytes": 143,
+      "chars": 143,
+      "quality": "thin_reference",
+      "summary": "Acreage Farming: thin_reference; industry=agriculture_nature; style=dark_cinematic, gradient_glow; motion=marquee, video_background.",
+      "industry_tags": [
+        "agriculture_nature"
+      ],
+      "style_tags": [
+        "dark_cinematic",
+        "gradient_glow",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "marquee",
+        "video_background"
+      ],
+      "stack_tags": [],
+      "layout_tags": [
+        "single_page"
+      ],
+      "asset_tags": [],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "069",
+      "title": "Evergreen Finance",
+      "file": "kb/prompts/069-Evergreen Finance.md",
+      "filename": "069-Evergreen Finance.md",
+      "bytes": 11010,
+      "chars": 10972,
+      "quality": "usable_spec",
+      "summary": "Evergreen Finance: usable_spec; industry=finance_fintech; style=clean_white, dark_cinematic; motion=canvas_frame, framer_motion.",
+      "industry_tags": [
+        "finance_fintech"
+      ],
+      "style_tags": [
+        "clean_white",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "canvas_frame",
+        "framer_motion",
+        "hamburger_menu",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "framer_motion",
+        "lucide_react",
+        "react",
+        "tailwind_css",
+        "typescript",
+        "vite"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "dashboard_mockup",
+        "full_viewport",
+        "hero_only",
+        "multi_section",
+        "navbar",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "online_webfonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "070",
+      "title": "Bloom AI Hero Section",
+      "file": "kb/prompts/070-Bloom AI Hero Section.md",
+      "filename": "070-Bloom AI Hero Section.md",
+      "bytes": 4008,
+      "chars": 3987,
+      "quality": "usable_spec",
+      "summary": "Bloom AI Hero Section: usable_spec; industry=ai_saas, developer_tools; style=clean_white, editorial_art; motion=css_3d, hover_microinteraction.",
+      "industry_tags": [
+        "ai_saas",
+        "developer_tools"
+      ],
+      "style_tags": [
+        "clean_white",
+        "editorial_art",
+        "gradient_glow",
+        "liquid_glass",
+        "luxury_minimal",
+        "split_panel"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "hover_microinteraction",
+        "video_background"
+      ],
+      "stack_tags": [
+        "lucide_react",
+        "react"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "cta_waitlist",
+        "full_viewport",
+        "hero_only",
+        "single_page"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Good supporting or primary reference depending on style/domain fit.",
+      "avoid_when": "Avoid if asset dependencies cannot be replaced or if requested scope is much larger."
+    },
+    {
+      "id": "071",
+      "title": "FinancialFocus",
+      "file": "kb/prompts/071-FinancialFocus.md",
+      "filename": "071-FinancialFocus.md",
+      "bytes": 55120,
+      "chars": 55116,
+      "quality": "long_spec_or_code",
+      "summary": "FinancialFocus: long_spec_or_code; industry=finance_fintech; style=cyber_futuristic, dark_cinematic; motion=css_3d, cursor_follow.",
+      "industry_tags": [
+        "finance_fintech"
+      ],
+      "style_tags": [
+        "cyber_futuristic",
+        "dark_cinematic",
+        "editorial_art",
+        "gradient_glow",
+        "luxury_minimal",
+        "organic_nature"
+      ],
+      "interaction_tags": [
+        "css_3d",
+        "cursor_follow",
+        "hover_microinteraction",
+        "scroll_parallax",
+        "video_background"
+      ],
+      "stack_tags": [
+        "react",
+        "tailwind_css",
+        "tailwind_v4",
+        "typescript"
+      ],
+      "layout_tags": [
+        "card_shell",
+        "carousel",
+        "full_viewport",
+        "hero_only"
+      ],
+      "asset_tags": [
+        "cloudfront_video",
+        "external_media",
+        "google_fonts"
+      ],
+      "recommended_use": "Use as a deep implementation/reference prompt when the domain and motion style match.",
+      "avoid_when": "Avoid mixing wholesale with unrelated prompts; extract one pattern at a time."
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+version: 1
+bundle: website-landing-agent-skills
+knowledge_base:
+  inventory: kb/prompt_inventory.json
+  prompts_dir: kb/prompts
+  fulltext: kb/fulltext/ALL_PROMPTS.md
+routing_contract:
+  max_primary_prompts: 1
+  max_supporting_prompts: 3
+  avoid_quality: [stub_or_empty]
+  default_stack: [React, TypeScript, Vite, Tailwind CSS, motion/react, lucide-react]
+  selection_order: [industry, visual_style, interaction, scope, implementation]
+dimensions:
+  industry:
+    ai_saas:
+      aliases: ["AI", "SaaS", "automation", "workflow", "no-code", "智能体", "自动化"]
+      tag: ai_saas
+      candidate_prompt_ids: ["008", "013", "015", "022", "023", "024", "034", "037", "039", "050", "051", "053", "061", "064", "065", "070"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    agency_studio:
+      aliases: ["agency", "studio", "portfolio", "creative", "设计工作室"]
+      tag: agency_studio
+      candidate_prompt_ids: ["002", "003", "016", "018", "021", "022", "026", "030", "035", "040", "052", "053", "054", "061"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    finance_fintech:
+      aliases: ["finance", "fintech", "invoice", "financial", "金融", "财务"]
+      tag: finance_fintech
+      candidate_prompt_ids: ["017", "056", "069", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    cybersecurity_security:
+      aliases: ["security", "password manager", "encryption", "cybersecurity", "数据安全"]
+      tag: cybersecurity_security
+      candidate_prompt_ids: ["004", "037", "042", "044", "055", "058", "065"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    real_estate_architecture:
+      aliases: ["real estate", "architecture", "地产", "建筑"]
+      tag: real_estate_architecture
+      candidate_prompt_ids: ["008", "018", "025", "051"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    ecommerce_luxury:
+      aliases: ["ecommerce", "beauty", "skincare", "luxury retail", "电商", "美妆"]
+      tag: ecommerce_luxury
+      candidate_prompt_ids: ["012", "024"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    web3_nft:
+      aliases: ["web3", "nft", "collectible"]
+      tag: web3_nft
+      candidate_prompt_ids: ["012", "031"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    energy_solar:
+      aliases: ["solar", "energy", "clean energy", "光伏", "能源"]
+      tag: energy_solar
+      candidate_prompt_ids: ["046"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    logistics:
+      aliases: ["logistics", "shipping", "supply chain", "物流"]
+      tag: logistics
+      candidate_prompt_ids: ["063"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    agriculture_nature:
+      aliases: ["farming", "agriculture", "botanical", "nature", "农业", "自然"]
+      tag: agriculture_nature
+      candidate_prompt_ids: ["010", "019", "068"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    art_museum_culture:
+      aliases: ["art", "museum", "gallery", "文化", "艺术"]
+      tag: art_museum_culture
+      candidate_prompt_ids: ["005", "008", "036", "062"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    space_futuristic:
+      aliases: ["space", "launch", "cosmic", "futuristic", "太空", "未来感"]
+      tag: space_futuristic
+      candidate_prompt_ids: ["027", "031", "040", "044", "053", "065", "066", "067"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+  visual_style:
+    dark_cinematic:
+      aliases: ["dark", "cinematic", "black", "moody", "暗色", "电影感"]
+      tag: dark_cinematic
+      candidate_prompt_ids: ["001", "002", "003", "004", "005", "006", "008", "010", "013", "014", "015", "016", "017", "018", "019", "021", "022", "023", "024", "025", "026", "028", "029", "030", "031", "032", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "046", "050", "051", "054", "055", "056", "057", "058", "061", "062", "063", "065", "066", "067", "068", "069", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    liquid_glass:
+      aliases: ["glassmorphism", "liquid glass", "frosted glass", "毛玻璃", "液态玻璃"]
+      tag: liquid_glass
+      candidate_prompt_ids: ["001", "004", "005", "012", "014", "017", "018", "021", "022", "023", "024", "025", "026", "028", "029", "031", "032", "034", "037", "038", "039", "040", "042", "044", "045", "046", "050", "054", "056", "057", "058", "063", "064", "065", "066", "069", "070"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    luxury_minimal:
+      aliases: ["luxury", "minimal", "premium", "高端", "极简", "奢华"]
+      tag: luxury_minimal
+      candidate_prompt_ids: ["001", "002", "003", "004", "005", "006", "008", "010", "012", "013", "014", "015", "016", "017", "018", "019", "021", "022", "023", "024", "026", "027", "028", "029", "030", "032", "034", "035", "036", "037", "039", "040", "041", "042", "043", "044", "045", "050", "051", "052", "053", "054", "055", "057", "061", "062", "063", "064", "065", "066", "067", "069", "070", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    bold_typography:
+      aliases: ["bold typography", "huge headline", "大标题", "强排版"]
+      tag: bold_typography
+      candidate_prompt_ids: ["002", "015", "016", "021", "023", "025", "026", "030", "035", "038", "040", "042", "043", "052", "056", "063", "064", "066"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    gradient_glow:
+      aliases: ["gradient", "glow", "neon", "渐变", "光晕"]
+      tag: gradient_glow
+      candidate_prompt_ids: ["001", "002", "003", "006", "008", "014", "015", "016", "017", "021", "022", "023", "024", "026", "027", "028", "031", "032", "034", "035", "038", "039", "040", "041", "042", "045", "046", "050", "052", "055", "056", "058", "063", "064", "065", "066", "067", "068", "069", "070", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    organic_nature:
+      aliases: ["organic", "botanical", "nature", "自然", "植物"]
+      tag: organic_nature
+      candidate_prompt_ids: ["005", "008", "013", "014", "015", "019", "026", "027", "031", "035", "051", "058", "062", "066", "068", "069", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    cosmic_space:
+      aliases: ["cosmic", "space", "stellar", "宇宙", "太空"]
+      tag: cosmic_space
+      candidate_prompt_ids: ["001", "002", "017", "019", "024", "028", "029", "031", "036", "040", "044", "045", "050", "053", "058", "061", "067"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    clean_white:
+      aliases: ["white", "clean", "minimal white", "白底", "干净"]
+      tag: clean_white
+      candidate_prompt_ids: ["001", "003", "005", "014", "017", "021", "023", "024", "025", "026", "028", "031", "032", "034", "035", "037", "042", "054", "055", "056", "057", "061", "062", "064", "065", "067", "069", "070"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    cyber_futuristic:
+      aliases: ["cyber", "futuristic", "neural", "科技感", "赛博"]
+      tag: cyber_futuristic
+      candidate_prompt_ids: ["001", "016", "026", "028", "031", "035", "046", "054", "056", "064", "065", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    editorial_art:
+      aliases: ["editorial", "museum", "gallery", "serif", "艺术展"]
+      tag: editorial_art
+      candidate_prompt_ids: ["001", "002", "003", "004", "005", "006", "008", "010", "012", "013", "014", "015", "016", "017", "018", "019", "021", "022", "023", "026", "027", "028", "029", "030", "031", "032", "034", "035", "036", "037", "039", "040", "041", "042", "043", "044", "045", "050", "051", "052", "053", "054", "057", "061", "062", "064", "065", "066", "067", "069", "070", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+  interaction:
+    video_background:
+      aliases: ["video", "background video", "HLS", "视频背景"]
+      tag: video_background
+      candidate_prompt_ids: ["001", "002", "003", "004", "005", "006", "008", "013", "014", "015", "016", "017", "018", "019", "021", "022", "023", "024", "025", "026", "027", "028", "029", "030", "031", "032", "034", "035", "036", "037", "038", "039", "040", "041", "042", "043", "044", "045", "050", "051", "053", "054", "056", "057", "058", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    scroll_parallax:
+      aliases: ["scroll", "parallax", "scroll-driven", "滚动", "视差"]
+      tag: scroll_parallax
+      candidate_prompt_ids: ["002", "003", "005", "006", "008", "010", "013", "014", "018", "019", "022", "024", "025", "027", "029", "036", "039", "040", "050", "053", "058", "061", "062", "064", "066", "067", "069", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    css_3d:
+      aliases: ["3D", "perspective", "CSS 3D", "立体", "透视"]
+      tag: css_3d
+      candidate_prompt_ids: ["002", "006", "010", "012", "019", "021", "036", "040", "058", "062", "070", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    canvas_frame:
+      aliases: ["canvas", "video frame", "帧处理"]
+      tag: canvas_frame
+      candidate_prompt_ids: ["001", "003", "006", "008", "010", "013", "025", "027", "028", "029", "051", "052", "055", "066", "069"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    marquee:
+      aliases: ["marquee", "logo strip", "跑马灯"]
+      tag: marquee
+      candidate_prompt_ids: ["002", "006", "008", "023", "027", "038", "040", "061", "068"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    contact_form:
+      aliases: ["contact", "waitlist", "email capture", "表单", "留资"]
+      tag: contact_form
+      candidate_prompt_ids: ["006", "019", "021", "030", "031", "035", "039", "050", "058", "064", "067"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    cursor_follow:
+      aliases: ["cursor", "mouse follow", "光标跟随"]
+      tag: cursor_follow
+      candidate_prompt_ids: ["002", "005", "006", "008", "010", "013", "015", "019", "024", "025", "027", "029", "035", "036", "039", "046", "053", "057", "058", "061", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    loader_animation:
+      aliases: ["loader", "preloader", "加载动画"]
+      tag: loader_animation
+      candidate_prompt_ids: ["006", "008", "052"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+  implementation:
+    tailwind_v4:
+      aliases: ["Tailwind v4", "@tailwindcss/vite"]
+      tag: tailwind_v4
+      candidate_prompt_ids: ["005", "006", "026", "029", "035", "036", "039", "041", "054", "062", "064", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    motion_react:
+      aliases: ["motion/react", "Framer Motion", "motion v12"]
+      tag: framer_motion
+      candidate_prompt_ids: ["002", "003", "004", "005", "022", "025", "026", "029", "035", "036", "037", "038", "040", "044", "050", "051", "052", "053", "054", "056", "057", "062", "064", "069"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    hls_video:
+      aliases: ["hls.js", "m3u8", "Mux"]
+      tag: hls_js
+      candidate_prompt_ids: ["015", "022", "026", "034", "038", "039", "040", "050", "054", "056", "066"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    custom_css:
+      aliases: ["vanilla CSS", "inline styles", "custom CSS"]
+      tag: custom_css
+      candidate_prompt_ids: ["003", "010", "018", "029", "046", "067"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+  scope:
+    hero_only:
+      aliases: ["hero only", "single screen", "单首屏"]
+      tag: hero_only
+      candidate_prompt_ids: ["001", "002", "003", "004", "005", "006", "008", "010", "012", "013", "014", "015", "016", "017", "018", "021", "022", "023", "025", "026", "027", "028", "030", "032", "034", "035", "037", "038", "039", "041", "042", "043", "044", "045", "046", "050", "051", "053", "054", "055", "056", "057", "061", "062", "063", "064", "065", "066", "067", "069", "070", "071"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    multi_section:
+      aliases: ["multi-section", "sections", "完整落地页", "多 section"]
+      tag: multi_section
+      candidate_prompt_ids: ["001", "002", "003", "005", "006", "008", "014", "016", "018", "021", "022", "023", "024", "025", "028", "029", "030", "031", "032", "035", "038", "039", "040", "046", "050", "053", "054", "056", "058", "062", "063", "066", "067", "069"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+    waitlist_or_form:
+      aliases: ["waitlist", "contact form", "email capture", "留资"]
+      tag: cta_waitlist
+      candidate_prompt_ids: ["003", "004", "005", "014", "015", "016", "018", "021", "022", "023", "025", "026", "030", "031", "034", "038", "039", "040", "041", "043", "044", "045", "046", "050", "055", "058", "062", "064", "065", "066", "067", "069", "070"]
+      notes: "Select by business fit first; then style/motion fit. Inspect files before implementation."
+
+
+# Added in v1.1: technology-specific implementation routes.
+tech_implementation_routes:
+  gsap_landing_motion:
+    aliases: ["GSAP", "GreenSock", "ScrollTrigger", "SplitText", "timeline", "pin", "scrub", "滚动驱动", "吸顶动效"]
+    local_skill: "skills/08-gsap-landing-motion/SKILL.md"
+    upstream_reference: "vendor/official/greensock-gsap-skills/README.md"
+    notes: "Use for complex timelines, pinned/scrubbed scroll scenes, text/SVG/plugin animations. Avoid for simple CSS/motion-react transitions."
+  threejs_landing_visuals:
+    aliases: ["Three.js", "threejs", "WebGL", "GLB", "glTF", "shader", "particles", "3D model", "真实 3D", "产品模型"]
+    local_skill: "skills/09-threejs-landing-visuals/SKILL.md"
+    upstream_reference: "vendor/official/openai-three-webgl-game/README.md"
+    docs_reference: "vendor/official/threejs-docs/README.md"
+    notes: "Use only for real WebGL/model/shader/camera visuals. Do not use for CSS 3D or video-only effects."
+  gsap_threejs_composer:
+    aliases: ["GSAP + Three.js", "ScrollTrigger camera", "WebGL scroll", "滚动驱动 3D"]
+    local_skill: "skills/10-gsap-threejs-composer/SKILL.md"
+    upstream_reference: ["vendor/official/greensock-gsap-skills/README.md", "vendor/official/openai-three-webgl-game/README.md"]
+    notes: "Use when ScrollTrigger/timeline controls Three.js camera, mesh, material, or shader uniforms."
