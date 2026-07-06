@@ -176,6 +176,9 @@ export async function verifyLiveCodexQuality(options: {
       findings
     );
   }
+  if (expectedArtifactTypes.includes("SectionGraph") && expectedArtifactTypes.includes("ThemeTokens")) {
+    scoreVisualQuality(artifacts, input, expectedArtifactTypes, artifactScores, findings);
+  }
   scoreCrossArtifactConsistency(artifacts, expectedArtifactTypes, findings);
 
   const modelOwnedStageStatuses = await readModelOwnedStageStatuses(run.run_dir, targetStage);
@@ -564,6 +567,308 @@ function scoreDesignSpec(
   scores.DesignSpec = withMax(scores.DesignSpec, score, maxScore);
 }
 
+function scoreVisualQuality(
+  artifacts: Record<string, Record<string, any> | null>,
+  input: Record<string, any>,
+  expectedArtifactTypes: string[],
+  scores: LiveQualityReport["artifact_scores"],
+  findings: QualityFinding[]
+): void {
+  const sectionGraph = artifacts.SectionGraph;
+  const themeTokens = artifacts.ThemeTokens;
+  const designSpec = artifacts.DesignSpec;
+  const includesDesignSpec = expectedArtifactTypes.includes("DesignSpec");
+  const maxScore = includesDesignSpec ? 8 : 7;
+  let score = 0;
+
+  if (!sectionGraph || !themeTokens) {
+    scores.VisualQuality = {
+      present: false,
+      status: "missing-prerequisite",
+      score: 0,
+      max_score: maxScore
+    };
+    return;
+  }
+
+  const sectionPayload = sectionGraph.payload ?? {};
+  const themePayload = themeTokens.payload ?? {};
+  const colors = isNonEmptyObject(themePayload.colors) ? themePayload.colors : {};
+  const nodes = Array.isArray(sectionPayload.nodes) ? sectionPayload.nodes : [];
+
+  score += scoreThemeColorContrast(colors, findings);
+  score += scorePaletteDistinction(colors, findings);
+  score += scoreThemeDirectionFit(themeTokens, input, artifacts.BrandProfile);
+  score += scoreSectionRoleDiversity(nodes, findings);
+  score += scoreCtaVisibility(nodes, findings);
+  score += scoreVisibleLanguageSpecificity(sectionPayload, themePayload, findings);
+  score += scoreTokenRhythm(themePayload, findings);
+
+  if (includesDesignSpec) {
+    score += scoreDesignIntentDiversity(designSpec, sectionPayload, findings);
+  }
+
+  scores.VisualQuality = {
+    present: true,
+    status: "evaluated",
+    score: Math.min(score, maxScore),
+    max_score: maxScore
+  };
+}
+
+function scoreThemeColorContrast(colors: Record<string, unknown>, findings: QualityFinding[]): number {
+  const pairs = [
+    { foreground: "text", background: "background", minimum: 4.5 },
+    { foreground: "text", background: "surface", minimum: 4.5 },
+    { foreground: "accent", background: "background", minimum: 3 }
+  ];
+  const evaluated = pairs.flatMap((pair) => {
+    const ratio = contrastRatioFromColorValues(colors[pair.foreground], colors[pair.background]);
+    return ratio === null ? [] : [{ ...pair, ratio }];
+  });
+
+  if (evaluated.length === 0) {
+    return 1;
+  }
+
+  const weakPairs = evaluated.filter((pair) => pair.ratio < pair.minimum);
+
+  if (weakPairs.length === 0) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "visual-contrast",
+    summary: "ThemeTokens must keep body text, surfaces, and primary action colors readable.",
+    details: {
+      weak_pairs: weakPairs.map((pair) => ({
+        foreground: pair.foreground,
+        background: pair.background,
+        ratio: Number(pair.ratio.toFixed(2)),
+        minimum: pair.minimum
+      }))
+    }
+  });
+  return 0;
+}
+
+function scorePaletteDistinction(colors: Record<string, unknown>, findings: QualityFinding[]): number {
+  const roleColors = ["background", "surface", "text", "accent"]
+    .map((key) => normalizedColor(colors[key]))
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+  const uniqueColors = new Set(roleColors);
+  const accent = normalizedColor(colors.accent);
+  const nonAccentRoles = ["background", "surface", "text"]
+    .map((key) => normalizedColor(colors[key]))
+    .filter(Boolean);
+
+  if (roleColors.length >= 4 && uniqueColors.size >= 3 && accent && !nonAccentRoles.includes(accent)) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "visual-palette",
+    summary: "ThemeTokens must distinguish background, text, and accent roles instead of collapsing into one palette.",
+    details: {
+      colors: roleColors
+    }
+  });
+  return 0;
+}
+
+function scoreThemeDirectionFit(
+  artifact: Record<string, any> | null,
+  input: Record<string, any>,
+  brandProfile: Record<string, any> | null
+): number {
+  if (!artifact) {
+    return 0;
+  }
+
+  const payload = artifact.payload ?? {};
+  const inputDirections = stringArray(input.visual_directions);
+  const brandDirections = stringArray(brandProfile?.payload?.visual_directions);
+  const dominantDirection = dominantKnownDirection([...inputDirections, ...brandDirections]);
+
+  if (!dominantDirection) {
+    return 1;
+  }
+
+  const colors = isNonEmptyObject(payload.colors) ? payload.colors : {};
+  return themeHasDirectionSignal(dominantDirection, colors, payload, normalizedText(payload)) ? 1 : 0;
+}
+
+function scoreSectionRoleDiversity(nodes: Record<string, any>[], findings: QualityFinding[]): number {
+  const sectionTypes = nodes
+    .map((node) => node.section_type)
+    .filter((sectionType): sectionType is string => typeof sectionType === "string" && sectionType.length > 0);
+  const uniqueTypes = new Set(sectionTypes);
+  const requiredUniqueCount = Math.min(4, sectionTypes.length);
+
+  if (sectionTypes.length > 0 && uniqueTypes.size >= requiredUniqueCount) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "section-role-diversity",
+    summary: "SectionGraph should give the page enough distinct visual/content section roles.",
+    details: {
+      section_types: sectionTypes,
+      unique_count: uniqueTypes.size,
+      required_unique_count: requiredUniqueCount
+    }
+  });
+  return 0;
+}
+
+function scoreCtaVisibility(nodes: Record<string, any>[], findings: QualityFinding[]): number {
+  const ctaLabels = nodes
+    .filter((node) => node.section_type === "hero" || node.section_type === "cta")
+    .flatMap((node) => ctaLabelCandidates(node))
+    .filter((label) => !looksPlaceholder(label));
+
+  if (ctaLabels.length > 0) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "cta-visibility",
+    summary: "Hero or CTA sections must include a concrete CTA label for the primary action."
+  });
+  return 0;
+}
+
+function scoreVisibleLanguageSpecificity(
+  sectionPayload: Record<string, any>,
+  themePayload: Record<string, any>,
+  findings: QualityFinding[]
+): number {
+  const visibleText = normalizedText({
+    nodes: sectionPayload.nodes,
+    colors: themePayload.colors,
+    typography: themePayload.typography,
+    spacing: themePayload.spacing,
+    radii: themePayload.radii,
+    motion: themePayload.motion
+  });
+  const genericPatterns = [
+    /\bgeneric\b/i,
+    /\bpurple[-\s]?blue\b/i,
+    /\bai\s+glow\b/i,
+    /\bthree[-\s]?card\b/i,
+    /\bstock\s+photo\b/i,
+    /\blorem\b/i,
+    /\bplaceholder\b/i
+  ];
+  const matchedPatterns = genericPatterns
+    .filter((pattern) => pattern.test(visibleText))
+    .map((pattern) => pattern.source);
+
+  if (matchedPatterns.length === 0) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "visual-language-specificity",
+    summary: "Visible section and token language should not rely on generic AI-design placeholders.",
+    details: {
+      matched_patterns: matchedPatterns
+    }
+  });
+  return 0;
+}
+
+function scoreTokenRhythm(themePayload: Record<string, any>, findings: QualityFinding[]): number {
+  const spacing = isNonEmptyObject(themePayload.spacing) ? themePayload.spacing : {};
+  const radii = isNonEmptyObject(themePayload.radii) ? themePayload.radii : {};
+  const motion = isNonEmptyObject(themePayload.motion) ? themePayload.motion : {};
+  const cardRadius = cssNumber(radii.card);
+  const controlRadius = cssNumber(radii.control);
+  const hasSpacing = typeof spacing.section_y === "string" && typeof spacing.grid_gap === "string";
+  const hasMotion = typeof motion.duration_ms === "number" && Number.isFinite(motion.duration_ms);
+  const radiiAreBounded =
+    cardRadius !== null &&
+    controlRadius !== null &&
+    cardRadius <= 8 &&
+    controlRadius <= 8;
+
+  if (hasSpacing && hasMotion && radiiAreBounded) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "token-rhythm",
+    summary: "ThemeTokens must define stable spacing, motion, and bounded radii for dense landing-page UI.",
+    details: {
+      has_spacing: hasSpacing,
+      has_motion: hasMotion,
+      card_radius: cardRadius,
+      control_radius: controlRadius
+    }
+  });
+  return 0;
+}
+
+function scoreDesignIntentDiversity(
+  artifact: Record<string, any> | null,
+  sectionPayload: Record<string, any>,
+  findings: QualityFinding[]
+): number {
+  if (!artifact) {
+    findings.push({
+      severity: "fail",
+      artifact_type: "VisualQuality",
+      criterion: "design-intent-diversity",
+      summary: "VisualQuality requires DesignSpec when evaluating design-spec-pass."
+    });
+    return 0;
+  }
+
+  const intents = Array.isArray(artifact.payload?.section_design_intents)
+    ? artifact.payload.section_design_intents
+    : [];
+  const sectionOrder = stringArray(sectionPayload.section_order);
+  const expectedCount = sectionOrder.length;
+  const intentLayouts = uniqueStrings(intents.map((intent: Record<string, any>) => intent.layout));
+  const intentMedia = uniqueStrings(intents.map((intent: Record<string, any>) => intent.media));
+  const requiredDiversity = Math.min(2, expectedCount);
+
+  if (
+    expectedCount > 0 &&
+    intents.length === expectedCount &&
+    intentLayouts.length >= requiredDiversity &&
+    intentMedia.length >= requiredDiversity
+  ) {
+    return 1;
+  }
+
+  findings.push({
+    severity: "fail",
+    artifact_type: "VisualQuality",
+    criterion: "design-intent-diversity",
+    summary: "DesignSpec should vary section layout/media intent instead of repeating one visual recipe.",
+    details: {
+      expected_sections: sectionOrder,
+      intent_count: intents.length,
+      unique_layouts: intentLayouts.length,
+      unique_media: intentMedia.length
+    }
+  });
+  return 0;
+}
+
 function scoreProofInputsByPolicy(
   payload: Record<string, any>,
   input: Record<string, any>,
@@ -678,30 +983,12 @@ function scoreThemeVisualDirectionSignals(
   const colors = typeof payload.colors === "object" && payload.colors !== null ? payload.colors : {};
   const tokenText = normalizedText(payload);
 
-  if (dominantDirection === "terminal" && !hasTerminalTokenSignal(colors, tokenText)) {
+  if (!themeHasDirectionSignal(dominantDirection, colors, payload, tokenText)) {
     findings.push({
       severity: "fail",
       artifact_type: "ThemeTokens",
       criterion: "visual-direction-signal",
-      summary: "ThemeTokens must show terminal-specific signals for terminal visual direction."
-    });
-  }
-
-  if (dominantDirection === "bauhaus" && !hasBauhausTokenSignal(colors, payload, tokenText)) {
-    findings.push({
-      severity: "fail",
-      artifact_type: "ThemeTokens",
-      criterion: "visual-direction-signal",
-      summary: "ThemeTokens must show Bauhaus-specific signals for bauhaus visual direction."
-    });
-  }
-
-  if (dominantDirection === "industrial" && !hasIndustrialTokenSignal(colors, tokenText)) {
-    findings.push({
-      severity: "fail",
-      artifact_type: "ThemeTokens",
-      criterion: "visual-direction-signal",
-      summary: "ThemeTokens must show industrial-specific signals for industrial visual direction."
+      summary: `ThemeTokens must show ${dominantDirection}-specific signals for ${dominantDirection} visual direction.`
     });
   }
 }
@@ -1040,6 +1327,55 @@ function stringArray(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function normalizedColor(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim().toLowerCase() : null;
+}
+
+function ctaLabelCandidates(node: Record<string, any>): string[] {
+  const props = typeof node.props === "object" && node.props !== null ? node.props : {};
+  const candidates = [
+    props.cta_label,
+    props.cta,
+    props.primary_cta,
+    props.button_label,
+    props.buttonText,
+    props.label
+  ];
+
+  return candidates
+    .flatMap((candidate) => {
+      if (typeof candidate === "string") {
+        return [candidate.trim()];
+      }
+
+      if (Array.isArray(candidate)) {
+        return candidate.filter((item): item is string => typeof item === "string").map((item) => item.trim());
+      }
+
+      return [];
+    })
+    .filter(Boolean);
+}
+
+function cssNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const match = value.trim().match(/^(-?[0-9]+(?:\.[0-9]+)?)(px|rem|em|%)?$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function numberValue(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
@@ -1315,6 +1651,23 @@ function hasIndustrialTokenSignal(colors: Record<string, unknown>, tokenText: st
   return hasIndustrialVocabulary || hasSafetyAccent;
 }
 
+function themeHasDirectionSignal(
+  direction: "bauhaus" | "industrial" | "terminal",
+  colors: Record<string, unknown>,
+  payload: Record<string, unknown>,
+  tokenText: string
+): boolean {
+  if (direction === "terminal") {
+    return hasTerminalTokenSignal(colors, tokenText);
+  }
+
+  if (direction === "bauhaus") {
+    return hasBauhausTokenSignal(colors, payload, tokenText);
+  }
+
+  return hasIndustrialTokenSignal(colors, tokenText);
+}
+
 function hasHueInRange(colors: Record<string, unknown>, min: number, max: number): boolean {
   return Object.values(colors)
     .filter((value): value is string => typeof value === "string")
@@ -1337,6 +1690,65 @@ function isDarkColor(value: unknown): boolean {
 
   const luminance = hexLuminance(value);
   return luminance !== null && luminance < 0.22;
+}
+
+function contrastRatioFromColorValues(foreground: unknown, background: unknown): number | null {
+  const foregroundLuminance = colorRelativeLuminance(foreground);
+  const backgroundLuminance = colorRelativeLuminance(background);
+
+  if (foregroundLuminance === null || backgroundLuminance === null) {
+    return null;
+  }
+
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function colorRelativeLuminance(value: unknown): number | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const oklchValue = oklchLightness(value);
+
+  if (oklchValue !== null) {
+    return clamp(oklchValue / 100, 0, 1);
+  }
+
+  const rgb = hexRgb(value);
+
+  if (!rgb) {
+    return null;
+  }
+
+  return 0.2126 * srgbToLinear(rgb.red) + 0.7152 * srgbToLinear(rgb.green) + 0.0722 * srgbToLinear(rgb.blue);
+}
+
+function hexRgb(value: string): { red: number; green: number; blue: number } | null {
+  const match = value.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const hex = match[1].length === 3
+    ? match[1].split("").map((part) => `${part}${part}`).join("")
+    : match[1];
+
+  return {
+    red: Number.parseInt(hex.slice(0, 2), 16) / 255,
+    green: Number.parseInt(hex.slice(2, 4), 16) / 255,
+    blue: Number.parseInt(hex.slice(4, 6), 16) / 255
+  };
+}
+
+function srgbToLinear(value: number): number {
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 function oklchLightness(value: string): number | null {

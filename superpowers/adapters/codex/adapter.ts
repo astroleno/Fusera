@@ -123,12 +123,7 @@ function makeProductBrief(bundle: CodexInvocationBundle): Record<string, unknown
   const input = getInput(bundle);
   const proofInputs = stringArrayFrom(input.proof_inputs, []);
   const proofSources = proofSourcesFrom(input.proof_sources, proofInputs);
-  const inputClaimPolicy = stringFrom(input.claim_policy, "");
-  const claimPolicy = ["proof-required", "low-proof", "no-claims"].includes(inputClaimPolicy)
-    ? inputClaimPolicy
-    : proofInputs.length > 0 || proofSources.length > 0
-      ? "proof-required"
-      : "low-proof";
+  const claimPolicy = claimPolicyFromInput(input, proofInputs, proofSources);
 
   return makeArtifact(bundle, "ProductBrief", "product-and-brand-brief", ["stages/normalize-input/normalized-input.json"], {
     product_name: stringFrom(input.product_name, "Fusera"),
@@ -181,7 +176,26 @@ function makePagePlan(bundle: CodexInvocationBundle): Record<string, unknown> {
 }
 
 function makeSectionGraph(bundle: CodexInvocationBundle): Record<string, unknown> {
+  const input = getInput(bundle);
   const pagePlan = artifact(bundle, "PagePlan");
+  const claimPolicy = claimPolicyFromInput(input);
+  const proofBindings =
+    claimPolicy === "proof-required"
+      ? [
+          {
+            section_id: "proof",
+            proof_ref: "proof:preview-publish-handoff"
+          }
+        ]
+      : [];
+  const proofProps =
+    claimPolicy === "proof-required"
+      ? {
+          proof_ref: "proof:preview-publish-handoff"
+        }
+      : {
+          proof_note: "Keep proof language qualitative until stronger evidence is attached."
+        };
 
   return makeArtifact(bundle, "SectionGraph", "section-planning", [artifactId(pagePlan)], {
     nodes: [
@@ -215,9 +229,7 @@ function makeSectionGraph(bundle: CodexInvocationBundle): Record<string, unknown
         section_id: "proof",
         section_type: "proof",
         title: "Preview publish is gated",
-        props: {
-          proof_ref: "proof:preview-publish-handoff"
-        }
+        props: proofProps
       },
       {
         section_id: "cta",
@@ -239,16 +251,11 @@ function makeSectionGraph(bundle: CodexInvocationBundle): Record<string, unknown
       hero: ["headline", "cta_label"],
       problem: ["body"],
       features: ["items"],
-      proof: ["proof_ref"],
+      proof: claimPolicy === "proof-required" ? ["proof_ref"] : ["proof_note"],
       cta: ["cta_label"]
     },
-    proof_bindings: [
-      {
-        section_id: "proof",
-        proof_ref: "proof:preview-publish-handoff"
-      }
-    ],
-    claim_policy: "proof-required"
+    proof_bindings: proofBindings,
+    claim_policy: claimPolicy
   });
 }
 
@@ -256,6 +263,9 @@ function makeThemeTokens(bundle: CodexInvocationBundle): Record<string, unknown>
   const productBrief = artifact(bundle, "ProductBrief");
   const brandProfile = artifact(bundle, "BrandProfile");
   const pagePlan = artifact(bundle, "PagePlan");
+  const tokenPreset = themeTokenPresetFor(
+    stringArrayFrom(payload(brandProfile).visual_directions, [])
+  );
 
   return makeArtifact(
     bundle,
@@ -263,16 +273,12 @@ function makeThemeTokens(bundle: CodexInvocationBundle): Record<string, unknown>
     "design-system-pass",
     [artifactId(productBrief), artifactId(brandProfile), artifactId(pagePlan)],
     {
-      colors: {
-        background: "#f7f4ee",
-        surface: "#ffffff",
-        text: "#171717",
-        accent: "#0f766e"
-      },
+      colors: tokenPreset.colors,
       typography: {
         heading_family: "Inter",
         body_family: "Inter",
-        scale: "compact",
+        scale: tokenPreset.scale,
+        direction_signal: tokenPreset.directionSignal,
         source_pack_ids: bundle.selected_pack_ids.filter(
           (packId) =>
             packId.startsWith("base/") ||
@@ -281,22 +287,123 @@ function makeThemeTokens(bundle: CodexInvocationBundle): Record<string, unknown>
         )
       },
       spacing: {
-        section_y: "72px",
-        grid_gap: "24px"
+        section_y: tokenPreset.sectionY,
+        grid_gap: tokenPreset.gridGap,
+        direction_signal: tokenPreset.directionSignal
       },
       radii: {
-        card: "8px",
-        control: "6px"
+        card: tokenPreset.cardRadius,
+        control: tokenPreset.controlRadius,
+        direction_signal: tokenPreset.radiusSignal
       },
       shadows: {
-        soft: "0 12px 36px rgba(23, 23, 23, 0.10)"
+        soft: tokenPreset.shadow
       },
       motion: {
-        duration_ms: 160,
-        easing: "ease-out"
+        duration_ms: tokenPreset.motionDurationMs,
+        easing: "ease-out",
+        direction_signal: tokenPreset.motionSignal
       }
     }
   );
+}
+
+function themeTokenPresetFor(visualDirections: string[]): {
+  colors: Record<string, string>;
+  scale: string;
+  sectionY: string;
+  gridGap: string;
+  cardRadius: string;
+  controlRadius: string;
+  shadow: string;
+  motionDurationMs: number;
+  directionSignal: string;
+  radiusSignal: string;
+  motionSignal: string;
+} {
+  const joined = visualDirections.join(" ");
+
+  if (/\b(terminal|console|command\s*line|shell|cli|monochrome|status)\b/i.test(joined)) {
+    return {
+      colors: {
+        background: "#101418",
+        surface: "#151d22",
+        text: "#e5f2ef",
+        accent: "#22c55e"
+      },
+      scale: "compact terminal console status",
+      sectionY: "64px",
+      gridGap: "20px",
+      cardRadius: "4px",
+      controlRadius: "4px",
+      shadow: "0 0 0 1px rgba(34, 197, 94, 0.24)",
+      motionDurationMs: 120,
+      directionSignal: "terminal console status monochrome",
+      radiusSignal: "terminal command line controls",
+      motionSignal: "terminal prompt transition"
+    };
+  }
+
+  if (/\b(industrial|mechanical|tactile|safety|caution|steel|metal|control\s*panel|factory)\b/i.test(joined)) {
+    return {
+      colors: {
+        background: "#f1efe7",
+        surface: "#ffffff",
+        text: "#1f2424",
+        accent: "#f59e0b"
+      },
+      scale: "compact industrial",
+      sectionY: "72px",
+      gridGap: "24px",
+      cardRadius: "4px",
+      controlRadius: "4px",
+      shadow: "0 12px 28px rgba(31, 36, 36, 0.14)",
+      motionDurationMs: 140,
+      directionSignal: "industrial safety steel control panel",
+      radiusSignal: "industrial hardwearing edges",
+      motionSignal: "industrial status change"
+    };
+  }
+
+  if (/\b(bauhaus|geometric|primary|color\s+blocking|poster|hard\s+edge|hard\s+shadow)\b/i.test(joined)) {
+    return {
+      colors: {
+        background: "#f7f1df",
+        surface: "#ffffff",
+        text: "#171717",
+        accent: "#e11d48"
+      },
+      scale: "compact bauhaus poster",
+      sectionY: "76px",
+      gridGap: "24px",
+      cardRadius: "0px",
+      controlRadius: "0px",
+      shadow: "8px 8px 0 rgba(23, 23, 23, 0.18)",
+      motionDurationMs: 150,
+      directionSignal: "bauhaus primary color blocking hard edge",
+      radiusSignal: "hard edge bauhaus poster block",
+      motionSignal: "bauhaus block transition"
+    };
+  }
+
+  return {
+    colors: {
+      background: "#f7f4ee",
+      surface: "#ffffff",
+      text: "#171717",
+      accent: "#0f766e"
+    },
+    scale: "compact",
+    sectionY: "72px",
+    gridGap: "24px",
+    cardRadius: "8px",
+    controlRadius: "6px",
+    shadow: "0 12px 36px rgba(23, 23, 23, 0.10)",
+    motionDurationMs: 160,
+    directionSignal: "structured editorial",
+    radiusSignal: "restrained controls",
+    motionSignal: "restrained entrance motion"
+  };
 }
 
 function makeDesignSpec(bundle: CodexInvocationBundle): Record<string, unknown> {
@@ -512,4 +619,18 @@ function proofSourcesFrom(
     source: "normalized-input.proof_inputs",
     url: null
   }));
+}
+
+function claimPolicyFromInput(
+  input: Record<string, unknown>,
+  proofInputs = stringArrayFrom(input.proof_inputs, []),
+  proofSources = proofSourcesFrom(input.proof_sources, proofInputs)
+): string {
+  const inputClaimPolicy = stringFrom(input.claim_policy, "");
+
+  return ["proof-required", "low-proof", "no-claims"].includes(inputClaimPolicy)
+    ? inputClaimPolicy
+    : proofInputs.length > 0 || proofSources.length > 0
+      ? "proof-required"
+      : "low-proof";
 }

@@ -73,6 +73,44 @@ fusera inspect path/to/run-dir --json
 
 The installed CLI resolves its Fusera `source_root` from the linked package. It resolves caller-provided relative paths from the directory where `fusera` was invoked before delegating to the harness runner.
 
+## Harness Golden Path
+
+Canonical source paths:
+
+- Harness source: `superpowers/`
+- Artifact schemas: `superpowers/contracts/artifacts/`
+- Pack routing: `superpowers/packs/registry.yaml`
+- Stage ownership and transitions: `superpowers/packs/stage-profiles.yaml`
+- Runtime evidence: `.fusera/runs/<run-id>/`
+- CLI entrypoint without global linking: `node ./bin/fusera.mjs`
+
+Use this path for a local mock proof run:
+
+```bash
+npm run harness:verify
+node ./bin/fusera.mjs run mock-publish superpowers/runner/fixtures/landing-input.json
+node ./bin/fusera.mjs inspect .fusera/runs/<run-id> --json --graph
+node ./bin/fusera.mjs verify live-quality .fusera/runs/<run-id> design-system-pass
+node ./bin/fusera.mjs verify live-preview .fusera/runs/<run-id>
+```
+
+Use this path for a live Codex quality proof:
+
+```bash
+node ./bin/fusera.mjs doctor --live
+node ./bin/fusera.mjs run live-publish superpowers/runner/fixtures/landing-input.json
+node ./bin/fusera.mjs verify live-quality .fusera/runs/<run-id> design-system-pass
+```
+
+The harness mock/live artifact flow does not require the Next.js dev server. Start the server only when testing the app UI or browser E2E path:
+
+```bash
+npm run dev -- --hostname 127.0.0.1 --port 3001
+npm run test:e2e
+```
+
+P0 runtime execution is Codex-first. Claude Code may use the companion instructions and skills as a host interface, but it is not the P0 harness driver until a real `superpowers/adapters/claude-code/` adapter exists.
+
 ## Companion Skills Install
 
 ```bash
