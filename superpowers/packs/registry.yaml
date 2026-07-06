@@ -731,3 +731,76 @@ packs:
       mode: fail
     parallelism_policy:
       mode: serial
+  - id: tools/web-shader-extractor
+    path: superpowers/packs/tools/web-shader-extractor/SKILL.md
+    kind: tool
+    description: Extract and locally replay target-bound WebGL, WebGPU, Canvas, shader-like, animated background, or interactive 3D effects from authorized webpages.
+    priority: 65
+    selection_role: tool
+    stage: web-shader-extraction
+    output_modes:
+      - web-shader-extraction
+    positive_triggers:
+      - web shader extractor
+      - extract shader
+      - extract webgl
+      - extract canvas effect
+      - replay webgl effect
+      - port shader from webpage
+    negative_triggers:
+      - ordinary DOM cloning
+      - CSS-only page clone
+      - generic website copy
+      - product UI redesign
+    backend_support:
+      tier: portable-core
+      adapters:
+        - codex
+      preferred_adapters:
+        - codex
+      instruction_only_adapters:
+        - claude-code
+    capabilities_required:
+      - workspace.read
+      - workspace.search
+      - process.exec
+      - image.inspect
+      - screenshot.capture
+    required_inputs:
+      - target_url
+      - target_visual
+      - output_directory
+    required_artifacts: []
+    produces_artifacts: []
+    task_role: tool
+    allowed_auxiliary_tasks: []
+    stage_outputs: []
+    output_contract: none
+    verifier_pack: none
+    fallback_policy:
+      mode: fail
+    parallelism_policy:
+      mode: serial
+    references:
+      - superpowers/packs/tools/web-shader-extractor/UPSTREAM.md
+      - superpowers/packs/tools/web-shader-extractor/references/operating-contract.md
+      - superpowers/packs/tools/web-shader-extractor/references/recon-kernel.md
+      - superpowers/packs/tools/web-shader-extractor/references/surface-discovery.md
+      - superpowers/packs/tools/web-shader-extractor/references/target-lock.md
+      - superpowers/packs/tools/web-shader-extractor/references/evidence-policy.md
+      - superpowers/packs/tools/web-shader-extractor/references/tool-capability-matrix.md
+      - superpowers/packs/tools/web-shader-extractor/references/capture-backends.md
+      - superpowers/packs/tools/web-shader-extractor/references/source-analysis.md
+      - superpowers/packs/tools/web-shader-extractor/references/replay-policy.md
+      - superpowers/packs/tools/web-shader-extractor/references/qa-failure-policy.md
+      - superpowers/packs/tools/web-shader-extractor/references/three-shader-reconstruction.md
+      - superpowers/packs/tools/web-shader-extractor/references/unicorn-studio.md
+      - superpowers/packs/tools/web-shader-extractor/references/shaders-com.md
+      - superpowers/packs/tools/web-shader-extractor/templates/scout-card.json
+      - superpowers/packs/tools/web-shader-extractor/templates/replay-manifest.json
+      - superpowers/packs/tools/web-shader-extractor/templates/run-state.json
+      - superpowers/packs/tools/web-shader-extractor/templates/qa-report.md
+      - superpowers/packs/tools/web-shader-extractor/templates/known-gaps.md
+      - superpowers/packs/tools/web-shader-extractor/templates/extraction-report.md
+      - superpowers/packs/tools/web-shader-extractor/scripts/fetch-rendered-dom.mjs
+      - superpowers/packs/tools/web-shader-extractor/scripts/scan-bundle.sh
