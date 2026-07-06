@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "VuVWwwNgxioetskON9vc1oJVnae",
+    "title": "Loader Animation",
+    "token": "A6wTdMUjJoX6NAx3UcrcCeF5noe",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/A6wTdMUjJoX6NAx3UcrcCeF5noe",
+    "wiki_node": {
+      "node_token": "VuVWwwNgxioetskON9vc1oJVnae",
+      "obj_token": "A6wTdMUjJoX6NAx3UcrcCeF5noe",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

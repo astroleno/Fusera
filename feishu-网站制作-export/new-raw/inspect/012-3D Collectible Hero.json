@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "YNkZwJcbViQRMpkYLsSchp7knQb",
+    "title": "  3D Collectible Hero",
+    "token": "BcHadhmKOoz5SYx7Zuncpu3zncf",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/BcHadhmKOoz5SYx7Zuncpu3zncf",
+    "wiki_node": {
+      "node_token": "YNkZwJcbViQRMpkYLsSchp7knQb",
+      "obj_token": "BcHadhmKOoz5SYx7Zuncpu3zncf",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

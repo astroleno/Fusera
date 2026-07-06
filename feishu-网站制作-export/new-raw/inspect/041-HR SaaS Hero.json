@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "ICBOwiitnilc9VkAG5gcVBeLnKf",
+    "title": "  HR SaaS Hero",
+    "token": "Lmh5dk6xYoPBNXxHaDxceV2LnSd",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Lmh5dk6xYoPBNXxHaDxceV2LnSd",
+    "wiki_node": {
+      "node_token": "ICBOwiitnilc9VkAG5gcVBeLnKf",
+      "obj_token": "Lmh5dk6xYoPBNXxHaDxceV2LnSd",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

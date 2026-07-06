@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "M9WhwF4YriNSedkBJ1xc4TR0noc",
+    "title": "  Minimal Workflow SaaS",
+    "token": "OWqDdmPMzoRwjaxdYV0cVKL8nEg",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/OWqDdmPMzoRwjaxdYV0cVKL8nEg",
+    "wiki_node": {
+      "node_token": "M9WhwF4YriNSedkBJ1xc4TR0noc",
+      "obj_token": "OWqDdmPMzoRwjaxdYV0cVKL8nEg",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "Ddvrw1ZJcixi85kHHDXclj86nef",
+    "title": "Prisma Creative Studio",
+    "token": "J6Y6dsakCoPutCxpd6Lcw0Y6nzd",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/J6Y6dsakCoPutCxpd6Lcw0Y6nzd",
+    "wiki_node": {
+      "node_token": "Ddvrw1ZJcixi85kHHDXclj86nef",
+      "obj_token": "J6Y6dsakCoPutCxpd6Lcw0Y6nzd",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

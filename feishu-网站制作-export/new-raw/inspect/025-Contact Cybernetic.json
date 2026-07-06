@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "My7YwqYkciKPUUkYkgqcsZbjnib",
+    "title": "Contact Cybernetic",
+    "token": "U4MxdawQOouyMxxS0VMcuO7BnIR",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/U4MxdawQOouyMxxS0VMcuO7BnIR",
+    "wiki_node": {
+      "node_token": "My7YwqYkciKPUUkYkgqcsZbjnib",
+      "obj_token": "U4MxdawQOouyMxxS0VMcuO7BnIR",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

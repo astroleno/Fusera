@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "ODKkw2HrGiL8cEkLCMBc47CHnFg",
+    "title": "  Nimbus Grid",
+    "token": "NvGYd0nhkozmpDx0Levc2zCznId",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/NvGYd0nhkozmpDx0Levc2zCznId",
+    "wiki_node": {
+      "node_token": "ODKkw2HrGiL8cEkLCMBc47CHnFg",
+      "obj_token": "NvGYd0nhkozmpDx0Levc2zCznId",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

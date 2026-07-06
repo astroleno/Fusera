@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "AlnYwoPWSi9NrNkS7V8cVu3onqc",
+    "title": "  Build With Us",
+    "token": "TRTgddCetojA6KxDSyTchIiZnue",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/TRTgddCetojA6KxDSyTchIiZnue",
+    "wiki_node": {
+      "node_token": "AlnYwoPWSi9NrNkS7V8cVu3onqc",
+      "obj_token": "TRTgddCetojA6KxDSyTchIiZnue",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

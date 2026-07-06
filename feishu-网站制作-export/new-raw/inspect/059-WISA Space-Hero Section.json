@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "XMI7wqHZkiKJHekIwGvcbE08nLf",
+    "title": "  WISA Space-Hero Section",
+    "token": "JGd9dNBH0otBJGxQVPUcalcOn8g",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/JGd9dNBH0otBJGxQVPUcalcOn8g",
+    "wiki_node": {
+      "node_token": "XMI7wqHZkiKJHekIwGvcbE08nLf",
+      "obj_token": "JGd9dNBH0otBJGxQVPUcalcOn8g",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

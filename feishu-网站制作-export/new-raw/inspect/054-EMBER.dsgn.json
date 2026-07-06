@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "ApQSwAhBMianLKkNY7zcFiArnZP",
+    "title": "  EMBER.dsgn",
+    "token": "RWW6dR50NoGpEkxzNDBc47yznYf",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/RWW6dR50NoGpEkxzNDBc47yznYf",
+    "wiki_node": {
+      "node_token": "ApQSwAhBMianLKkNY7zcFiArnZP",
+      "obj_token": "RWW6dR50NoGpEkxzNDBc47yznYf",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

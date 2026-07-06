@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "FN6twaxDCi4P8Hk4IXDchfALnqh",
+    "title": "Web3 EOS Hero",
+    "token": "XqsMdskroo4lwNxkD49cUk4kncb",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/XqsMdskroo4lwNxkD49cUk4kncb",
+    "wiki_node": {
+      "node_token": "FN6twaxDCi4P8Hk4IXDchfALnqh",
+      "obj_token": "XqsMdskroo4lwNxkD49cUk4kncb",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

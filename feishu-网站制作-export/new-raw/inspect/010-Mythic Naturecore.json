@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "KPxwwNg45iU4nVksCt4c4xQ5n2N",
+    "title": "Mythic Naturecore",
+    "token": "VdDGd4svioc7inxW8zncNMITngY",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/VdDGd4svioc7inxW8zncNMITngY",
+    "wiki_node": {
+      "node_token": "KPxwwNg45iU4nVksCt4c4xQ5n2N",
+      "obj_token": "VdDGd4svioc7inxW8zncNMITngY",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

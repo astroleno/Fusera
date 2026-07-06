@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "Okg0woBPYiFqgWk1WnvcQFFInif",
+    "title": "单屏-Portal",
+    "token": "IDp8dQMlpowDYbxDreTcOOFCn2v",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/IDp8dQMlpowDYbxDreTcOOFCn2v",
+    "wiki_node": {
+      "node_token": "Okg0woBPYiFqgWk1WnvcQFFInif",
+      "obj_token": "IDp8dQMlpowDYbxDreTcOOFCn2v",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

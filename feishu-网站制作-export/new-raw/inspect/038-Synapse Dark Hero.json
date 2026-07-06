@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "Zk6SwI1DhiQMlEkHpqFc2yU4ned",
+    "title": "Synapse Dark Hero",
+    "token": "Mq8AdM8IuoQBVdxMdOtcjNQBnzg",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Mq8AdM8IuoQBVdxMdOtcjNQBnzg",
+    "wiki_node": {
+      "node_token": "Zk6SwI1DhiQMlEkHpqFc2yU4ned",
+      "obj_token": "Mq8AdM8IuoQBVdxMdOtcjNQBnzg",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

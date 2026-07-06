@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "RN9iwhtToiYFQVkIz1CcNF5onif",
+    "title": "Shamoni",
+    "token": "SD9TdEYi4olrWNxCOpgcHXwMnkg",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/SD9TdEYi4olrWNxCOpgcHXwMnkg",
+    "wiki_node": {
+      "node_token": "RN9iwhtToiYFQVkIz1CcNF5onif",
+      "obj_token": "SD9TdEYi4olrWNxCOpgcHXwMnkg",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

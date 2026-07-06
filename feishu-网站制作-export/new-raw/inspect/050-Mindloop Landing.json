@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "IaB0w9O02idRIek0Z41c8pHNn0d",
+    "title": "  Mindloop Landing",
+    "token": "Cog9d9h6JoDvK1xr7q6cWBwynTe",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Cog9d9h6JoDvK1xr7q6cWBwynTe",
+    "wiki_node": {
+      "node_token": "IaB0w9O02idRIek0Z41c8pHNn0d",
+      "obj_token": "Cog9d9h6JoDvK1xr7q6cWBwynTe",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

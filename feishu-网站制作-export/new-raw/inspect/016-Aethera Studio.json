@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "AGp3ws2azixbYSkryGRcxNtdnjd",
+    "title": "  Aethera Studio",
+    "token": "CQAadViBjosN5zxEdqeckdXVnPd",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/CQAadViBjosN5zxEdqeckdXVnPd",
+    "wiki_node": {
+      "node_token": "AGp3ws2azixbYSkryGRcxNtdnjd",
+      "obj_token": "CQAadViBjosN5zxEdqeckdXVnPd",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

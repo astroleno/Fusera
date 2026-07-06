@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "N1IAwCnA2iFreGk4vg1cVuS9nsf",
+    "title": "Reveal Hero",
+    "token": "NzPOdxE5ooHpzrx1vn6cEnrVn2c",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/NzPOdxE5ooHpzrx1vn6cEnrVn2c",
+    "wiki_node": {
+      "node_token": "N1IAwCnA2iFreGk4vg1cVuS9nsf",
+      "obj_token": "NzPOdxE5ooHpzrx1vn6cEnrVn2c",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

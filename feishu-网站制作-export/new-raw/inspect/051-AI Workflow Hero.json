@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "Haz3wd4qgiS8n4k7hA9ccjQqnLb",
+    "title": "  AI Workflow Hero",
+    "token": "BzfZdMhN0oqmK3x3fIbcu1qNnef",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/BzfZdMhN0oqmK3x3fIbcu1qNnef",
+    "wiki_node": {
+      "node_token": "Haz3wd4qgiS8n4k7hA9ccjQqnLb",
+      "obj_token": "BzfZdMhN0oqmK3x3fIbcu1qNnef",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

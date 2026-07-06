@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "LT6hwpNWMifuMykZGgWcGxTEnde",
+    "title": "  Buzzentic Agency",
+    "token": "C2hadXjKBoDw4ixdNYvcwPMhnCb",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/C2hadXjKBoDw4ixdNYvcwPMhnCb",
+    "wiki_node": {
+      "node_token": "LT6hwpNWMifuMykZGgWcGxTEnde",
+      "obj_token": "C2hadXjKBoDw4ixdNYvcwPMhnCb",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

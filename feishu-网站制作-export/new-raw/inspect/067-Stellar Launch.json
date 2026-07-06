@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "GUBDw3JCeiSlVak4hWWcn4OvnOb",
+    "title": "Stellar Launch",
+    "token": "Fht8d51p8oR1UyxnjYScA1YHnmb",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Fht8d51p8oR1UyxnjYScA1YHnmb",
+    "wiki_node": {
+      "node_token": "GUBDw3JCeiSlVak4hWWcn4OvnOb",
+      "obj_token": "Fht8d51p8oR1UyxnjYScA1YHnmb",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

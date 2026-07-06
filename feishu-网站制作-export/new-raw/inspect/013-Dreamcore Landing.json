@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "CwZGw0SQkiw6gmkoiomcJv6Xn6b",
+    "title": "Dreamcore Landing",
+    "token": "D48PdY8umohkytxrYKrcfXJFnLh",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/D48PdY8umohkytxrYKrcfXJFnLh",
+    "wiki_node": {
+      "node_token": "CwZGw0SQkiw6gmkoiomcJv6Xn6b",
+      "obj_token": "D48PdY8umohkytxrYKrcfXJFnLh",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

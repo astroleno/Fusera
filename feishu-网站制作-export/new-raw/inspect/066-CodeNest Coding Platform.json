@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "M2xCwodUoiKqEtkCSL3cWgYPn9d",
+    "title": "CodeNest Coding Platform",
+    "token": "A2Y6dIioXoWzuUxXCh8c4Gdnnod",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/A2Y6dIioXoWzuUxXCh8c4Gdnnod",
+    "wiki_node": {
+      "node_token": "M2xCwodUoiKqEtkCSL3cWgYPn9d",
+      "obj_token": "A2Y6dIioXoWzuUxXCh8c4Gdnnod",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "UGprwD8ZBiGOnzkegDJcwwALn3c",
+    "title": "  CoderCrest",
+    "token": "LI46dIqpwoN7thxW1LscK8VJn6d",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/LI46dIqpwoN7thxW1LscK8VJn6d",
+    "wiki_node": {
+      "node_token": "UGprwD8ZBiGOnzkegDJcwwALn3c",
+      "obj_token": "LI46dIqpwoN7thxW1LscK8VJn6d",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "UPXJwfqJIiTrSgkciuTcEB6enYf",
+    "title": "  ClearInvoice SaaS Hero",
+    "token": "Nnr3dpDtaosBbdxrMkUcI9jlnub",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Nnr3dpDtaosBbdxrMkUcI9jlnub",
+    "wiki_node": {
+      "node_token": "UPXJwfqJIiTrSgkciuTcEB6enYf",
+      "obj_token": "Nnr3dpDtaosBbdxrMkUcI9jlnub",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

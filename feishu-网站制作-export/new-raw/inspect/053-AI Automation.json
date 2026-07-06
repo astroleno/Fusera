@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "NC7wwm1pOib57ikvII7ccVGrnrc",
+    "title": "  AI Automation",
+    "token": "APSKdNIBRoS7QsxDg9Ec7rs5nIh",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/APSKdNIBRoS7QsxDg9Ec7rs5nIh",
+    "wiki_node": {
+      "node_token": "NC7wwm1pOib57ikvII7ccVGrnrc",
+      "obj_token": "APSKdNIBRoS7QsxDg9Ec7rs5nIh",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

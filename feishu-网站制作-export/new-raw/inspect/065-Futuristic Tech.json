@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "BuOewalM1iMyZAkuwJ8coe16ncf",
+    "title": "  Futuristic Tech",
+    "token": "Mwqed1R5dol1anxxiKvcfkCGnph",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Mwqed1R5dol1anxxiKvcfkCGnph",
+    "wiki_node": {
+      "node_token": "BuOewalM1iMyZAkuwJ8coe16ncf",
+      "obj_token": "Mwqed1R5dol1anxxiKvcfkCGnph",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

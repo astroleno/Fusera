@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "DmrpwWxzAiz3T4kai7AcwyoSnhe",
+    "title": "  Portal",
+    "token": "BvQzdl5VNocux2xfeGHcenMVnAb",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/BvQzdl5VNocux2xfeGHcenMVnAb",
+    "wiki_node": {
+      "node_token": "DmrpwWxzAiz3T4kai7AcwyoSnhe",
+      "obj_token": "BvQzdl5VNocux2xfeGHcenMVnAb",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

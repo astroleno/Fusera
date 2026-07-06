@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "GpCewYvYCiqNJ4k6uiLcOBwwnSd",
+    "title": "  VEX Ventures",
+    "token": "BUzId0eqwoh784x6iqpcC7ECnWb",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/BUzId0eqwoh784x6iqpcC7ECnWb",
+    "wiki_node": {
+      "node_token": "GpCewYvYCiqNJ4k6uiLcOBwwnSd",
+      "obj_token": "BUzId0eqwoh784x6iqpcC7ECnWb",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

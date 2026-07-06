@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "F1X5wSq34iaLxfkU3vhcqBctn5b",
+    "title": "  Art Landing",
+    "token": "Od9ad7mcuoazZJx8MX4cMW9AnGe",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/Od9ad7mcuoazZJx8MX4cMW9AnGe",
+    "wiki_node": {
+      "node_token": "F1X5wSq34iaLxfkU3vhcqBctn5b",
+      "obj_token": "Od9ad7mcuoazZJx8MX4cMW9AnGe",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

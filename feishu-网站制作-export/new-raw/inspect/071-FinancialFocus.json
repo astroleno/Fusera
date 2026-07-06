@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "Hr7twx02yiTKOWkuIn0cGHHPnZe",
+    "title": "  FinancialFocus",
+    "token": "VcnTd2AyioYMpDxcUqQcPPdOnrb",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/VcnTd2AyioYMpDxcUqQcPPdOnrb",
+    "wiki_node": {
+      "node_token": "Hr7twx02yiTKOWkuIn0cGHHPnZe",
+      "obj_token": "VcnTd2AyioYMpDxcUqQcPPdOnrb",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

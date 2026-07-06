@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "BH2Hw5xgJiu4HLkjKHZcoB6NnXd",
+    "title": "  Neo Museum",
+    "token": "OvDSdHLbioUr7jxTcbncNlGmnbg",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/OvDSdHLbioUr7jxTcbncNlGmnbg",
+    "wiki_node": {
+      "node_token": "BH2Hw5xgJiu4HLkjKHZcoB6NnXd",
+      "obj_token": "OvDSdHLbioUr7jxTcbncNlGmnbg",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "input_url": "TWJ1wwn0xiYvzWksOAmceL3DnQc",
+    "title": "AI Designer Portfolio",
+    "token": "XO1WdZQ5loOQnHxIP1QcfuRXniK",
+    "type": "docx",
+    "url": "https://www.feishu.cn/docx/XO1WdZQ5loOQnHxIP1QcfuRXniK",
+    "wiki_node": {
+      "node_token": "TWJ1wwn0xiYvzWksOAmceL3DnQc",
+      "obj_token": "XO1WdZQ5loOQnHxIP1QcfuRXniK",
+      "obj_type": "docx",
+      "space_id": "7527235611800272899"
+    }
+  }
+}
