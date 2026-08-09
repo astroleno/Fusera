@@ -1,0 +1,60 @@
+name: Web generation
+run-name: web-generation-${{ inputs.run_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: Supabase project UUID
+        required: true
+        type: string
+      run_id:
+        description: Supabase generation run UUID
+        required: true
+        type: string
+
+concurrency:
+  group: web-generation-${{ inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: [self-hosted, fusera-live]
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CODEX_HOME: ${{ runner.temp }}/fusera-codex-${{ github.run_id }}
+      FUSERA_CODEX_ADAPTER: real
+      FUSERA_CODEX_TIMEOUT_MS: "240000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Authenticate Codex for this run
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          mkdir -p "$CODEX_HOME"
+          printenv OPENAI_API_KEY | codex login --with-api-key
+      - name: Generate page
+        run: >-
+          npx tsx superpowers/runner/run-web-generation.ts
+          --project-id "${{ inputs.project_id }}"
+          --run-id "${{ inputs.run_id }}"
+      - name: Remove temporary Codex credentials
+        if: always()
+        run: rm -rf "$CODEX_HOME"
+      - name: Preserve secondary workflow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-generation-${{ inputs.run_id }}
+          path: .fusera/runs/
+          if-no-files-found: warn
+          retention-days: 14
