@@ -9,6 +9,7 @@ import { publishPreview } from "./publish-preview.ts";
 import { persistRepairDecision } from "./repair-run.ts";
 import { decideRetry, persistRetryDecision } from "./retry-policy.ts";
 import { resolveStage, type StageResolution } from "./resolve-packs.ts";
+import type { HarnessRunObserver } from "./run-observer.ts";
 import {
   readValidatedArtifact,
   validateAndPersistArtifact,
@@ -19,7 +20,19 @@ import { writeRunEvent } from "./write-run-event.ts";
 
 const RUNNER_OWNED_ARTIFACTS = new Set(["PageSpec", "QAReport", "PublishVersion"]);
 
-export type FixtureRunResult = {
+export type RunGenerationOptions = {
+  rootDir?: string;
+  runsRoot?: string;
+  runId?: string;
+  input: Record<string, unknown>;
+  inputRef?: string | null;
+  mode?: "publish" | "qa-failure";
+  stopAfterStage?: string;
+  adapterMode?: CodexAdapterMode;
+  observer?: HarnessRunObserver;
+};
+
+export type GenerationRunResult = {
   run_id: string;
   run_dir: string;
   final_state: string;
@@ -27,22 +40,17 @@ export type FixtureRunResult = {
   preview_build_ref?: string;
 };
 
-export async function runFixture(options: {
-  rootDir?: string;
-  inputPath?: string;
-  mode?: "publish" | "qa-failure";
-  stopAfterStage?: string;
-  adapterMode?: CodexAdapterMode;
-} = {}): Promise<FixtureRunResult> {
+export type FixtureRunResult = GenerationRunResult;
+
+export async function runGeneration(options: RunGenerationOptions): Promise<GenerationRunResult> {
   const rootDir = options.rootDir ?? process.cwd();
+  const runsRoot = options.runsRoot ?? path.join(rootDir, ".fusera/runs");
+  const runId = options.runId ?? makeRunId();
+  const runDir = path.join(runsRoot, runId);
+  const input = structuredClone(options.input);
+  const inputRef = options.inputRef ?? null;
   const mode = options.mode ?? "publish";
   const contractsDir = path.join(rootDir, "superpowers/contracts/artifacts");
-  const runId = `run_${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}_${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
-  const runDir = path.join(rootDir, ".fusera/runs", runId);
-  const inputPath = options.inputPath ?? path.join(rootDir, "superpowers/runner/fixtures/landing-input.json");
-  const input = JSON.parse(await readFile(inputPath, "utf8")) as Record<string, unknown>;
   await writeCapabilityReport({
     rootDir,
     runDir,
@@ -86,7 +94,7 @@ export async function runFixture(options: {
     max_repair_attempts: 2,
     max_backend_retry_attempts: 2,
     created_at: new Date().toISOString(),
-    input_ref: path.relative(rootDir, inputPath),
+    input_ref: inputRef,
     input_payload: input,
     proof_target_stage: stopAfterStage ?? null
   };
@@ -96,7 +104,7 @@ export async function runFixture(options: {
   let failureMode: string | null = null;
 
   await createRunSkeleton(runDir, stageSequence);
-  await writeRunRecord(runDir, runRecord);
+  await writeRunRecord(runDir, runRecord, options.observer);
   await writeRunEvent(runDir, {
     run_id: runId,
     type: "start_run",
@@ -107,7 +115,7 @@ export async function runFixture(options: {
       adapter_mode: adapterMode,
       output_mode: "landing-page"
     }
-  });
+  }, options.observer);
 
   try {
     for (const stage of stageSequence) {
@@ -118,7 +126,8 @@ export async function runFixture(options: {
         contractsDir,
         stage,
         mode,
-        adapterMode
+        adapterMode,
+        observer: options.observer
       });
 
       if (mode === "qa-failure" && stage === "page-compile") {
@@ -130,7 +139,7 @@ export async function runFixture(options: {
           data: {
             reason: "negative QA fixture"
           }
-        });
+        }, options.observer);
       }
 
       if (result.stop) {
@@ -150,7 +159,7 @@ export async function runFixture(options: {
             proof_target_stage: stage,
             next_stage: await nextStageFor(rootDir, stage)
           }
-        });
+        }, options.observer);
         break;
       }
     }
@@ -168,7 +177,7 @@ export async function runFixture(options: {
         message: failureMessage,
         failure_mode: failureMode
       }
-    });
+    }, options.observer);
   }
 
   const previewBuild = await readJsonIfPresent(path.join(runDir, "compiled/preview-build.json"));
@@ -187,7 +196,7 @@ export async function runFixture(options: {
     failure_mode: failureMode
   };
 
-  await writeRunRecord(runDir, finalRecord);
+  await writeRunRecord(runDir, finalRecord, options.observer);
 
   return {
     run_id: runId,
@@ -196,6 +205,30 @@ export async function runFixture(options: {
     artifacts: await listMaterializedArtifactFiles(runDir),
     preview_build_ref: typeof previewBuild?.preview_build_ref === "string" ? previewBuild.preview_build_ref : undefined
   };
+}
+
+export async function runFixture(options: {
+  rootDir?: string;
+  inputPath?: string;
+  mode?: "publish" | "qa-failure";
+  stopAfterStage?: string;
+  adapterMode?: CodexAdapterMode;
+} = {}): Promise<FixtureRunResult> {
+  const rootDir = options.rootDir ?? process.cwd();
+  const inputPath = options.inputPath ?? path.join(
+    rootDir,
+    "superpowers/runner/fixtures/landing-input.json"
+  );
+  const input = JSON.parse(await readFile(inputPath, "utf8")) as Record<string, unknown>;
+
+  return runGeneration({
+    rootDir,
+    input,
+    inputRef: path.relative(rootDir, inputPath),
+    mode: options.mode,
+    stopAfterStage: options.stopAfterStage,
+    adapterMode: options.adapterMode
+  });
 }
 
 export async function runStageProof(options: {
@@ -606,6 +639,7 @@ async function executeStage(options: {
   stage: string;
   mode: "publish" | "qa-failure";
   adapterMode: CodexAdapterMode;
+  observer?: HarnessRunObserver;
 }): Promise<{ stop: boolean; final_state: string }> {
   try {
     const resolution = await resolveStage({
@@ -625,7 +659,7 @@ async function executeStage(options: {
         next_stage: resolution.next_stage,
         adapter_mode: options.adapterMode
       }
-    });
+    }, options.observer);
 
     const needsBackend = shouldInvokeBackend(options.stage, resolution);
     const adapterResult = needsBackend
@@ -655,7 +689,7 @@ async function executeStage(options: {
           attempt_id: attemptIdFrom(adapterResult),
           attempt_dir: attemptDirFrom(adapterResult)
         }
-      });
+      }, options.observer);
     }
 
     if (adapterResult.status !== "ok") {
@@ -669,7 +703,7 @@ async function executeStage(options: {
           failure_mode: adapterResult.failure_mode,
           stderr: adapterResult.stderr
         }
-      });
+      }, options.observer);
 
       throw new StageExecutionError(
         options.stage,
@@ -698,7 +732,7 @@ async function executeStage(options: {
             artifact_refs: [],
             attempt_id: attemptIdFrom(adapterResult)
           }
-        });
+        }, options.observer);
         await writeRunEvent(options.runDir, {
           run_id: options.runId,
           type: "stage_completed",
@@ -708,7 +742,7 @@ async function executeStage(options: {
             next_stage: resolution.next_stage,
             stopped_in: error.final_state
           }
-        });
+        }, options.observer);
 
         return { stop: true, final_state: error.final_state };
       }
@@ -727,7 +761,7 @@ async function executeStage(options: {
         type: "stage_join_ready",
         stage: options.stage,
         data: joinReadyData
-      });
+      }, options.observer);
     }
 
     await writeRunEvent(options.runDir, {
@@ -738,7 +772,7 @@ async function executeStage(options: {
         attempt_id: attemptIdFrom(adapterResult),
         next_stage: resolution.next_stage
       }
-    });
+    }, options.observer);
 
     return { stop: false, final_state: "running" };
   } catch (error) {
@@ -783,6 +817,7 @@ async function persistStageOutputs(options: {
   mode: "publish" | "qa-failure";
   resolution: StageResolution;
   adapterResult: CodexInvocationResult;
+  observer?: HarnessRunObserver;
 }): Promise<void> {
   if (options.stage === "normalize-input") {
     await persistNormalizedInput(options.runDir, options.adapterResult);
@@ -826,7 +861,7 @@ async function persistStageOutputs(options: {
         preview_build_ref: compiled.preview_build_ref,
         attempt_id: attemptIdFrom(options.adapterResult)
       }
-    });
+    }, options.observer);
     return;
   }
 
@@ -854,7 +889,7 @@ async function persistStageOutputs(options: {
           transition: verified.repair_decision.transition,
           reason: verified.repair_decision.reason
         }
-      });
+      }, options.observer);
     }
 
     await writeRunEvent(options.runDir, {
@@ -868,7 +903,7 @@ async function persistStageOutputs(options: {
         verdict: verified.qa_report.payload.verdict,
         attempt_id: attemptIdFrom(options.adapterResult)
       }
-    });
+    }, options.observer);
 
     if (verified.transition !== "approved") {
       throw new StageStopError(verified.transition);
@@ -894,7 +929,7 @@ async function persistStageOutputs(options: {
         handoff_path: path.relative(options.runDir, published.handoff_path),
         attempt_id: attemptIdFrom(options.adapterResult)
       }
-    });
+    }, options.observer);
   }
 }
 
@@ -1289,8 +1324,19 @@ async function corruptPreviewBuildBinding(runDir: string): Promise<void> {
   await writeFile(previewBuildPath, `${JSON.stringify(corrupted, null, 2)}\n`, "utf8");
 }
 
-async function writeRunRecord(runDir: string, record: Record<string, unknown>): Promise<void> {
+async function writeRunRecord(
+  runDir: string,
+  record: Record<string, unknown>,
+  observer?: HarnessRunObserver
+): Promise<void> {
   await writeFile(path.join(runDir, "run.json"), `${JSON.stringify(record, null, 2)}\n`, "utf8");
+  await observer?.onRunRecord?.({ runDir, record });
+}
+
+function makeRunId(): string {
+  return `run_${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}_${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
 }
 
 async function readJsonIfPresent(filePath: string): Promise<Record<string, unknown> | null> {

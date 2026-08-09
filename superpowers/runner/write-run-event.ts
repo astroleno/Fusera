@@ -2,6 +2,7 @@ import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { validateRunEventRecord, type RunEventType } from "./run-event-types.ts";
+import type { HarnessRunObserver } from "./run-observer.ts";
 
 export type RunEvent = {
   event_id?: string;
@@ -14,7 +15,11 @@ export type RunEvent = {
   ts?: string;
 };
 
-export async function writeRunEvent(runDir: string, event: RunEvent): Promise<RunEvent> {
+export async function writeRunEvent(
+  runDir: string,
+  event: RunEvent,
+  observer?: HarnessRunObserver
+): Promise<RunEvent> {
   await mkdir(runDir, { recursive: true });
 
   const normalized: RunEvent = {
@@ -33,6 +38,7 @@ export async function writeRunEvent(runDir: string, event: RunEvent): Promise<Ru
     `${JSON.stringify(normalized)}\n`,
     "utf8"
   );
+  await observer?.onRunEvent?.({ runDir, event: normalized });
 
   return normalized;
 }
